@@ -1,2 +1,2 @@
-# first_project?
+# first_project
 연습
