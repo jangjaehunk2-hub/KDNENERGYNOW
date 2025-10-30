@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KEPCO 발전량 콘솔 출력</title>
+
+  <!-- Firebase CDN -->
+  <script src="https://www.gstatic.com/firebasejs/12.4.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/12.4.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/12.4.0/firebase-storage-compat.js"></script>
+</head>
+<body>
+  <h1>KEPCO 발전량 API 콘솔 출력</h1>
+  <p>브라우저 콘솔(F12 → Console)에서 데이터를 확인하세요.</p>
+
+  <script>
+    // Firebase 초기화
+    const firebaseConfig = {
+      apiKey: "AIzaSyDsdvQy_GMYIuT7z1ObHbQsInWGsRI06yA",
+      authDomain: "kepcokdn-a5ebf.firebaseapp.com",
+      projectId: "kepcokdn-a5ebf",
+      storageBucket: "kepcokdn-a5ebf.firebasestorage.app",
+      messagingSenderId: "271367068072",
+      appId: "1:271367068072:web:ca424d18a08a839d6ae59d",
+      measurementId: "G-71MWZF52ER"
+    };
+    firebase.initializeApp(firebaseConfig);
+
+    // Functions API URL
+    const API_URL = "https://us-central1-kepcokdn-a5ebf.cloudfunctions.net/getPowerData";
+
+    async function loadPowerData() {
+      try {
+        const response = await fetch(`${API_URL}?stDt=2025-01&edDt=2025-02`);
+        const data = await response.json();
+        console.log("⚡ KEPCO 발전량 API 데이터:", data);
+      } catch (error) {
+        console.error("API 호출 오류:", error);
+      }
+    }
+
+    loadPowerData();
+  </script>
+</body>
+</html>
