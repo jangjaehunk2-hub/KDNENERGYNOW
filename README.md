@@ -1,2 +1,2 @@
 # first_project
-연습
+이건 연습이야
