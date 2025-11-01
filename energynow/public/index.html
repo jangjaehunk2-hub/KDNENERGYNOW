@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>KEPCO 발전량 콘솔 출력</title>
+  <title>⚡ KEPCO 발전량 데이터</title>
 
   <!-- Firebase CDN -->
   <script src="https://www.gstatic.com/firebasejs/12.4.0/firebase-app-compat.js"></script>
@@ -11,61 +11,162 @@
   <script src="https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/12.4.0/firebase-storage-compat.js"></script>
 
-<!-- firebase 정보 콘솔에 표시-->  
-<!-- <script>
-  const db = firebase.firestore();
-  db.collection('energynow').get().then((querySnapshot) => {
-    querySnapshot.forEach((doc) => {
-      console.log(doc.data());
-    });
-  });
-</script> -->
-
+  <style>
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      background-color: #f8f9fa;
+      margin: 30px;
+    }
+    h1 {
+      color: #333;
+    }
+    label {
+      font-weight: bold;
+      margin-right: 5px;
+    }
+    select, button {
+      padding: 8px 12px;
+      margin: 5px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      font-size: 15px;
+    }
+    button {
+      background-color: #007bff;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-top: 20px;
+      background-color: white;
+    }
+    .table-container {
+      max-height: 400px; /* 스크롤 생길 높이 지정 */
+      overflow: auto;     /* 내용이 넘치면 스크롤 생성 */
+      border: 1px solid #ccc;
+      margin-top: 20px;
+      background-color: white;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: center;
+    }
+    th {
+      background-color: #007bff;
+      color: white;
+    }
+    tr:nth-child(even) {
+      background-color: #f2f2f2;
+    }
+  </style>
 </head>
-  <body>
-  <h1>⚡ KEPCO 발전량 데이터</h1>
-  <p>아래 표는 Functions에서 가져온 발전량 정보입니다.</p>
 
-  <!-- 표 영역 -->
-  <table border="1" id="powerTable">
-    <thead>
-      <tr>
-        <th>발전량</th>
-        <th>날짜</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+<body>
+  <h1>⚡ KEPCO 발전량 데이터</h1>
+  <p>조회할 기간을 선택하세요.</p>
+
+  <!-- ✅ 날짜 선택 영역 -->
+  <div>
+    <label for="startMonth">시작 월:</label>
+    <select id="startMonth"></select>
+
+    <label for="endMonth">종료 월:</label>
+    <select id="endMonth"></select>
+
+    <button id="loadBtn">조회</button>
+  </div>
+
+  <!-- ✅ 표 영역 -->
+  <div class="table-container">
+    <table id="powerTable">
+      <thead>
+        <tr>
+          <th>발전량</th>
+          <th>날짜</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
 
   <script>
-  const API_URL = "https://us-central1-kepcokdn-a5ebf.cloudfunctions.net/getPowerData";
+    // ✅ Firebase Functions API 주소
+    const API_URL = "https://us-central1-kepcokdn-a5ebf.cloudfunctions.net/getPowerData";
 
-  async function loadPowerData() {
-    try {
-      const response = await fetch(`${API_URL}?stDt=2024-01&edDt=2025-01`);
-      const data = await response.json();
-      console.log("⚡ KEPCO 발전량 API 데이터:", data);
+    // ✅ 월 선택 박스 자동 생성
+    function fillMonthSelect() {
+      const startSelect = document.getElementById("startMonth");
+      const endSelect = document.getElementById("endMonth");
 
-      const items = data.response.body.items.item;
-      const tbody = document.querySelector("#powerTable tbody");
-      tbody.innerHTML = ""; 
+      const currentYear = new Date().getFullYear();
 
-      items.forEach(row => {
-        // 표에 데이터 표시
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${row.msr}</td>   
-          <td>${row.stdrDe}</td>
-        `;
-        tbody.appendChild(tr);
-      });
+      // 최근 3년간의 월 선택 옵션 생성
+      for (let y = currentYear - 2; y <= currentYear; y++) {
+        for (let m = 1; m <= 12; m++) {
+          const value = `${y}-${String(m).padStart(2, "0")}`;
+          const option1 = new Option(value, value);
+          const option2 = new Option(value, value);
+          startSelect.add(option1);
+          endSelect.add(option2);
+        }
+      }
 
-    } catch (error) {
-      console.error("API 호출 오류:", error);
+      // 기본값: 최근 1년
+      const thisMonth = `${currentYear}-${String(new Date().getMonth() + 1).padStart(2, "0")}`;
+      startSelect.value = `${currentYear - 1}-${String(new Date().getMonth() + 1).padStart(2, "0")}`;
+      endSelect.value = thisMonth;
     }
-  }
 
-  loadPowerData();
-</script>
+    // ✅ 발전량 데이터 불러오기 함수
+    async function loadPowerData(start, end) {
+      try {
+        const response = await fetch(`${API_URL}?stDt=${start}&edDt=${end}`);
+        const data = await response.json();
+        console.log("⚡ KEPCO 발전량 API 데이터:", data);
+
+        const tbody = document.querySelector("#powerTable tbody");
+        tbody.innerHTML = ""; // 기존 데이터 초기화
+
+        const items = data.response?.body?.items?.item || [];
+        if (items.length === 0) {
+          tbody.innerHTML = "<tr><td colspan='2'>데이터가 없습니다.</td></tr>";
+          return;
+        }
+
+        items.forEach(row => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${row.msr || "-"}</td>
+            <td>${row.stdrDe || "-"}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+
+      } catch (error) {
+        console.error("API 호출 오류:", error);
+        alert("데이터를 불러오는 중 오류가 발생했습니다.");
+      }
+    }
+
+    // ✅ "조회" 버튼 이벤트 리스너
+    document.getElementById("loadBtn").addEventListener("click", () => {
+      const start = document.getElementById("startMonth").value;
+      const end = document.getElementById("endMonth").value;
+      if (start > end) {
+        alert("시작 월은 종료 월보다 앞서야 합니다.");
+        return;
+      }
+      loadPowerData(start, end);
+    });
+
+    // 페이지 로드시 선택박스 채우기
+    fillMonthSelect();
+  </script>
 </body>
 </html>

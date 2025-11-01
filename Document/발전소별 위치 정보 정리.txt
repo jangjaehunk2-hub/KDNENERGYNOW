@@ -1,0 +1,4 @@
+한국에너지공단_풍력기 위치정보: https://www.data.go.kr/data/15085304/fileData.do
+경기도 성남시_태양광발전소_현황: https://www.data.go.kr/data/15037034/fileData.do
+원자력안전위원회_국내 원자력발전소 현황: https://www.data.go.kr/data/15046076/fileData.do
+재생에너지 발전설비: https://www.data.go.kr/data/15046076/fileData.do
