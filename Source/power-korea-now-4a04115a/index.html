@@ -225,187 +225,146 @@
              <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>발전량 예측 게임</title>
-  <style>
-    /* 전체 배경 및 기본 설정 */
-    body {
-      margin: 0;
-      padding: 0;
-      font-family: 'Pretendard', sans-serif;
-      background: linear-gradient(180deg, #0b1c3d, #091830);
-      color: white;
-      text-align: center;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>⚡ 발전량 예측 게임</title>
+<style>
+  body {
+    margin:0; padding:0;
+    font-family: 'Pretendard', sans-serif;
+    background: linear-gradient(180deg, #0b1c3d, #091830);
+    color:white; text-align:center;
+  }
+  .score-container {
+    display:flex; flex-direction:column; align-items:center; gap:12px; margin-top:30px;
+  }
+  .score-box {
+    width:90%; max-width:300px; border-radius:15px;
+    padding:15px 0; font-size:clamp(16px,2vw,22px);
+    font-weight:bold; color:white;
+    box-shadow:0 2px 6px rgba(0,0,0,0.3);
+  }
+  .today{background:#0026ff;}
+  .total{background:#0b7a00;}
+  .plays{background:#a00000;}
 
-    /* 점수 영역 */
-    .score-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 12px;
-      margin-top: 30px;
-    }
-
-    .score-box {
-      width: 90%;
-      max-width: 300px;
-      border-radius: 15px;
-      padding: 15px 0;
-      font-size: clamp(16px, 2vw, 22px);
-      font-weight: bold;
-      color: white;
-      box-sizing: border-box;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-    }
-
-    .today { background-color: #0026ff; }
-    .total { background-color: #0b7a00; }
-    .plays { background-color: #a00000; }
-
-    /* 입력 영역 */
-    .input-section {
-      background-color: rgba(20, 20, 20, 0.7);
-      border-radius: 15px;
-      padding: 20px;
-      width: 90%;
-      max-width: 350px;
-      margin: 25px auto;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-    }
-
-    .input-section h3 {
-      font-size: clamp(16px, 2vw, 20px);
-      margin: 10px 0;
-    }
-
-    .control {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 10px;
-      margin: 15px 0;
-    }
-
-    .control button {
-      background-color: #444;
-      color: white;
-      border: none;
-      border-radius: 10px;
-      padding: 10px 15px;
-      font-size: clamp(16px, 2vw, 20px);
-      font-weight: bold;
-      cursor: pointer;
-      transition: 0.2s;
-    }
-
-    .control button:hover {
-      background-color: #666;
-    }
-
-    .prediction {
-      background-color: white;
-      color: black;
-      border-radius: 10px;
-      width: 100px;
-      padding: 10px;
-      font-weight: bold;
-      font-size: clamp(16px, 2vw, 20px);
-    }
-
-    .hint-box {
-      background-color: rgba(255, 200, 0, 0.1);
-      border: 1px solid #ffcc00;
-      border-radius: 10px;
-      padding: 10px;
-      margin: 10px auto;
-      width: 85%;
-      max-width: 300px;
-      cursor: pointer;
-      font-size: clamp(14px, 2vw, 18px);
-    }
-
-    .hint-box:hover {
-      background-color: rgba(255, 200, 0, 0.2);
-    }
-
-    .submit-btn {
-      background-color: #0026ff;
-      color: white;
-      border: none;
-      border-radius: 10px;
-      padding: 12px 25px;
-      font-size: clamp(16px, 2vw, 20px);
-      font-weight: bold;
-      cursor: pointer;
-      transition: 0.3s;
-      margin-top: 10px;
-    }
-
-    .submit-btn:hover {
-      background-color: #0033cc;
-    }
-
-    /* 모바일 최적화 */
-    @media screen and (max-width: 600px) {
-      .score-container {
-        gap: 10px;
-      }
-
-      .score-box {
-        width: 95%;
-      }
-
-      .input-section {
-        width: 95%;
-      }
-    }
-  </style>
+  .input-section{
+    background:rgba(20,20,20,0.7); border-radius:15px;
+    padding:20px; width:90%; max-width:350px; margin:25px auto;
+    box-shadow:0 2px 6px rgba(0,0,0,0.3);
+  }
+  .input-section h3{font-size:clamp(16px,2vw,20px); margin:10px 0;}
+  .control{
+    display:flex; justify-content:center; align-items:center; gap:10px; margin:15px 0;
+  }
+  .control button{
+    background:#444; color:white; border:none; border-radius:10px;
+    padding:10px 15px; font-size:clamp(16px,2vw,20px); font-weight:bold;
+    cursor:pointer; transition:0.2s;
+  }
+  .control button:hover{background:#666;}
+  .prediction{
+    background:white; color:black; border-radius:10px; width:100px;
+    padding:10px; font-weight:bold; font-size:clamp(16px,2vw,20px);
+  }
+  .hint-box{
+    background:rgba(255,200,0,0.1); border:1px solid #ffcc00;
+    border-radius:10px; padding:10px; margin:10px auto;
+    width:85%; max-width:300px; cursor:pointer;
+    font-size:clamp(14px,2vw,18px);
+  }
+  .hint-box:hover{background:rgba(255,200,0,0.2);}
+  .submit-btn{
+    background:#0026ff; color:white; border:none; border-radius:10px;
+    padding:12px 25px; font-size:clamp(16px,2vw,20px);
+    font-weight:bold; cursor:pointer; transition:0.3s; margin-top:10px;
+  }
+  .submit-btn:hover{background:#0033cc;}
+  @media screen and (max-width:600px){
+    .score-container{gap:10px;}
+    .score-box{width:95%;}
+    .input-section{width:95%;}
+  }
+</style>
 </head>
 <body>
 
-  <!-- 점수 영역 -->
-  <div class="score-container">
-    <div class="score-box today">오늘 점수<br>0점</div>
-    <div class="score-box total">누적 점수<br>0점</div>
-    <div class="score-box plays">플레이 횟수<br>0회</div>
+<div class="score-container">
+  <div class="score-box today">오늘 점수<br><span id="todayScore">0</span>점</div>
+  <div class="score-box total">누적 점수<br><span id="totalScore">0</span>점</div>
+  <div class="score-box plays">플레이 횟수<br><span id="playCount">0</span>회</div>
+</div>
+
+<div class="input-section">
+  <h3>① 지역: <span id="region">인천</span></h3>
+  <h3>② 발전원: <span id="power">수력</span></h3>
+
+  <div class="control">
+    <button type="button" onclick="adjustPrediction(-100)">-100</button>
+    <div id="prediction" class="prediction">0</div>
+    <button type="button" onclick="adjustPrediction(100)">+100</button>
   </div>
 
-  <!-- 입력 영역 -->
-  <div class="input-section">
-    <h3>① 지역: 인천</h3>
-    <h3>② 발전원: 수력</h3>
+  <div class="hint-box" onclick="showHint()">🔒 힌트를 보려면 클릭하세요!</div>
 
-    <div class="control">
-      <button onclick="adjustPrediction(-100)">-100</button>
-      <div id="prediction" class="prediction">0</div>
-      <button onclick="adjustPrediction(100)">+100</button>
-    </div>
+  <button class="submit-btn" onclick="submitPrediction()">예측 제출</button>
+</div>
 
-    <div class="hint-box" onclick="alert('힌트를 보려면 일정 조건을 충족해야 합니다!')">
-      🔒 힌트를 보려면 클릭하세요!
-    </div>
+<script>
+let predictionValue = 0;
+let todayScore = 0;
+let totalScore = 0;
+let playCount = 0;
 
-    <button class="submit-btn" onclick="submitPrediction()">예측 제출</button>
-  </div>
+// 예시 랜덤 지역/발전원
+const regions = ['서울','부산','대구','인천','광주','대전','울산','세종','경기','강원','충북','충남','전북','전남','경북','경남','제주'];
+const powers = ['태양광','풍력','원자력','수력'];
 
-  <script>
-    let predictionValue = 0;
-    const display = document.getElementById("prediction");
+function randomScenario(){
+  document.getElementById('region').textContent = regions[Math.floor(Math.random()*regions.length)];
+  document.getElementById('power').textContent = powers[Math.floor(Math.random()*powers.length)];
+}
 
-    function adjustPrediction(amount) {
-      predictionValue += amount;
-      display.textContent = predictionValue;
-    }
+randomScenario();
 
-    function submitPrediction() {
-      alert(`예측 발전량: ${predictionValue} MWh`);
-    }
-  </script>
+// 예측값 조정
+function adjustPrediction(amount){
+  predictionValue = Math.max(0, predictionValue + amount);
+  document.getElementById('prediction').textContent = predictionValue;
+}
+
+// 힌트 바로 표시
+function showHint(){
+  document.querySelector('.hint-box').textContent = `💡 힌트: 전날 같은 시간 발전량은 ${Math.floor(Math.random()*300+200)} MWh`;
+}
+
+// 제출
+function submitPrediction(){
+  const actual = Math.floor(Math.random()*300+200); // 예시 실제값
+  const errorRate = Math.abs(predictionValue - actual)/actual*100;
+  let points = errorRate<=20 ? 3 : errorRate<=50 ? 2 : 1;
+
+  todayScore = points;
+  totalScore += points;
+  playCount += 1;
+
+  document.getElementById('todayScore').textContent = todayScore;
+  document.getElementById('totalScore').textContent = totalScore;
+  document.getElementById('playCount').textContent = playCount;
+
+  alert(`예측: ${predictionValue} MWh\n실제: ${actual} MWh\n오차율: ${errorRate.toFixed(1)}%\n획득 점수: ${points}점`);
+
+  // 초기화 및 새로운 시나리오
+  predictionValue = 0;
+  document.getElementById('prediction').textContent = predictionValue;
+  document.querySelector('.hint-box').textContent = "🔒 힌트를 보려면 클릭하세요!";
+  randomScenario();
+}
+</script>
 
 </body>
 </html>
+
 
 
 
@@ -689,6 +648,7 @@
     </script>
 </body>
 </html>
+
 
 
 
