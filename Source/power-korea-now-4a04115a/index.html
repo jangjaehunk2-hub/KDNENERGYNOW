@@ -342,7 +342,7 @@ function submitPrediction(){
   const prediction = parseInt(document.getElementById('prediction').value);
   const actual = Math.floor(Math.random()*300 + 200); 
   const errorRate = Math.abs(prediction-actual)/actual*100;
-  const points = errorRate<=5?5: errorRate<=15?3:1;
+  const points = errorRate<=20?3: errorRate<=50?2:1;
   totalScore += points; 
   gamesPlayed++;
 
@@ -662,4 +662,5 @@ function resetGame(){
     </script>
 </body>
 </html>
+
 
