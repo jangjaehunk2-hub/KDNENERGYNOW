@@ -222,38 +222,125 @@
                 <p>재미있게 배우는 발전소 관리</p>
             </div>
             <div class="game-content">
-              <!DOCTYPE html>
+             <!DOCTYPE html>
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>⚡ 발전량 예측 게임</title>
 <style>
-body { font-family: 'Arial', sans-serif; background: linear-gradient(to bottom right, #e0f2fe, #e0e7ff); margin:0; padding:20px; }
-.container { max-width:900px; margin:auto; }
-.card { background:white; border-radius:16px; box-shadow:0 6px 20px rgba(0,0,0,0.1); padding:25px; margin-bottom:25px; transition:0.3s; }
-.card:hover { box-shadow:0 8px 25px rgba(0,0,0,0.2); }
-h1 { text-align:center; color:#4f46e5; margin-bottom:10px; font-size:2.5rem; }
-h2 { text-align:center; color:#2563eb; margin-bottom:10px; }
-.grid { display:grid; gap:15px; }
-.grid-3 { grid-template-columns:repeat(3,1fr);}
-.score-box { text-align:center; padding:20px; border-radius:16px; font-weight:bold; color:white; position:relative; overflow:hidden; }
-.score-box::before { content:''; position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.05); }
-.score-today { background:#2563eb; }
-.score-total { background:#4ade80; }
-.score-played { background:#f97316; }
-button, input[type=number] { font-size:16px; }
-button { cursor:pointer; border:none; border-radius:10px; padding:10px 16px; font-weight:bold; transition:0.3s; }
-.btn-primary { background-color:#4f46e5; color:white; }
-.btn-primary:hover { background-color:#4338ca; }
-.btn-secondary { background-color:#e5e7eb; }
-.btn-secondary:hover { background-color:#d1d5db; }
-input[type=number] { border-radius:10px; padding:8px; border:1px solid #cbd5e1; width:100%; box-sizing:border-box; margin-top:5px;}
-.bar-container { display:flex; justify-content:center; align-items:flex-end; gap:50px; height:200px; margin-top:20px; }
-.bar { width:60px; border-radius:8px 8px 0 0; transition: height 0.8s; }
-.bar-pred { background:#06b6d4; }
-.bar-actual { background:#f97316; }
-.hint { background:#fef3c7; padding:12px; border-radius:12px; margin-top:12px; text-align:center; font-weight:bold; cursor:pointer; user-select:none; }
+body {
+  font-family: 'Arial', sans-serif;
+  background: linear-gradient(to bottom right, #e0f2fe, #e0e7ff);
+  margin: 0;
+  padding: 20px;
+}
+.container { max-width: 900px; margin: auto; }
+.card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+  padding: 25px;
+  margin-bottom: 25px;
+  transition: 0.3s;
+}
+.card:hover { box-shadow: 0 8px 25px rgba(0,0,0,0.2); }
+h1 {
+  text-align: center;
+  color: #4f46e5;
+  margin-bottom: 10px;
+  font-size: 2.2rem;
+}
+h2 {
+  text-align: center;
+  color: #2563eb;
+  margin-bottom: 10px;
+}
+.grid { display: grid; gap: 15px; }
+.grid-3 { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); } /* ✅ 반응형 변경 */
+
+.score-box {
+  text-align: center;
+  padding: 20px;
+  border-radius: 16px;
+  font-weight: bold;
+  color: white;
+  position: relative;
+  overflow: hidden;
+}
+.score-box::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(255,255,255,0.05);
+}
+.score-today { background: #2563eb; }
+.score-total { background: #4ade80; }
+.score-played { background: #f97316; }
+
+button, input[type=number] { font-size: 16px; }
+button {
+  cursor: pointer;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 16px;
+  font-weight: bold;
+  transition: 0.3s;
+}
+.btn-primary { background-color: #4f46e5; color: white; }
+.btn-primary:hover { background-color: #4338ca; }
+.btn-secondary { background-color: #e5e7eb; }
+.btn-secondary:hover { background-color: #d1d5db; }
+input[type=number] {
+  border-radius: 10px;
+  padding: 8px;
+  border: 1px solid #cbd5e1;
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 5px;
+}
+.bar-container {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 50px;
+  height: 200px;
+  margin-top: 20px;
+}
+.bar {
+  width: 60px;
+  border-radius: 8px 8px 0 0;
+  transition: height 0.8s;
+}
+.bar-pred { background: #06b6d4; }
+.bar-actual { background: #f97316; }
+.hint {
+  background: #fef3c7;
+  padding: 12px;
+  border-radius: 12px;
+  margin-top: 12px;
+  text-align: center;
+  font-weight: bold;
+  cursor: pointer;
+  user-select: none;
+}
+
+/* ✅ 반응형 스타일 */
+@media (max-width: 768px) {
+  h1 { font-size: 1.8rem; }
+  .bar-container { gap: 30px; height: 160px; }
+  .bar { width: 40px; }
+  .card { padding: 20px; }
+}
+@media (max-width: 480px) {
+  body { padding: 10px; }
+  h1 { font-size: 1.6rem; }
+  .grid-3 { grid-template-columns: 1fr; } /* ✅ 세로 1줄로 변경 */
+  button { font-size: 14px; padding: 8px 10px; }
+  .bar-container { gap: 20px; height: 140px; }
+  .bar { width: 35px; }
+}
 </style>
 </head>
 <body>
@@ -355,12 +442,11 @@ function submitPrediction(){
   document.getElementById('displayError').innerText = errorRate.toFixed(1);
   document.getElementById('displayPoints').innerText = points;
 
-  // 그래프: 큰 값 기준 비율
   const maxVal = Math.max(prediction, actual);
   document.getElementById('barPred').style.height = (prediction / maxVal * 200) + "px";
   document.getElementById('barActual').style.height = (actual / maxVal * 200) + "px";
 
-  let msg = errorRate<=5?"완벽합니다! 🎉":errorRate<=15?"좋습니다! 👍":"더 노력해보세요! 💪";
+  let msg = errorRate<=20?"좋아요! 😊":errorRate<=50?"괜찮아요 👍":"다시 도전! 💪";
   document.getElementById('resultMessage').innerText = msg;
 
   document.getElementById('inputCard').style.display = "none";
@@ -379,8 +465,6 @@ function resetGame(){
 </body>
 </html>
 
-            </div>
-        </div>
 
         <!-- 교육 콘텐츠 -->
         <div class="main-content content-section" id="educationContent" style="display: none;">
@@ -662,5 +746,6 @@ function resetGame(){
     </script>
 </body>
 </html>
+
 
 
