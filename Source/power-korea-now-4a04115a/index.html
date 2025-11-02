@@ -222,7 +222,7 @@
                 <p>재미있게 배우는 발전소 관리</p>
             </div>
             <div class="game-content">
-        <!DOCTYPE html>
+       <!DOCTYPE html>
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
@@ -237,12 +237,11 @@ h1 { text-align:center; color:#4f46e5; margin-bottom:10px; font-size:2.5rem; }
 h2 { text-align:center; color:#2563eb; margin-bottom:10px; }
 .grid { display:grid; gap:15px; }
 .grid-3 { grid-template-columns:repeat(3,1fr);}
-.score-box { text-align:center; padding:20px; border-radius:16px; font-weight:bold; color:white; position:relative; overflow:hidden; font-size:1.1rem;}
+.score-box { text-align:center; padding:20px; border-radius:16px; font-weight:bold; color:white; position:relative; overflow:hidden; }
 .score-box::before { content:''; position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.05); }
 .score-today { background:#2563eb; }
 .score-total { background:#4ade80; }
 .score-played { background:#f97316; }
-
 button, input[type=number] { font-size:16px; }
 button { cursor:pointer; border:none; border-radius:10px; padding:10px 16px; font-weight:bold; transition:0.3s; }
 .btn-primary { background-color:#4f46e5; color:white; }
@@ -250,24 +249,17 @@ button { cursor:pointer; border:none; border-radius:10px; padding:10px 16px; fon
 .btn-secondary { background-color:#e5e7eb; }
 .btn-secondary:hover { background-color:#d1d5db; }
 input[type=number] { border-radius:10px; padding:8px; border:1px solid #cbd5e1; width:100%; box-sizing:border-box; margin-top:5px;}
-
 .bar-container { display:flex; justify-content:center; align-items:flex-end; gap:50px; height:200px; margin-top:20px; }
 .bar { width:60px; border-radius:8px 8px 0 0; transition: height 0.8s; }
 .bar-pred { background:#06b6d4; }
 .bar-actual { background:#f97316; }
-
 .hint { background:#fef3c7; padding:12px; border-radius:12px; margin-top:12px; text-align:center; font-weight:bold; cursor:pointer; user-select:none; }
-
-.score-criteria { display:flex; justify-content:center; gap:10px; flex-wrap:wrap; margin-bottom:20px; }
-.score-criteria div { padding:10px 15px; border-radius:10px; color:white; font-weight:bold; min-width:100px; text-align:center; }
-
-.criteria-high { background:#4ade80; } /* 오차 ≤20% */
-.criteria-mid { background:#fbbf24; }  /* 20% < 오차 ≤50% */
-.criteria-low { background:#f87171; }  /* 오차 >50% */
-
-@media screen and (max-width:600px) {
+/* 예측 입력 + 버튼 한 줄 */
+.prediction-container { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:10px; }
+.prediction-container input { width:100px; text-align:center; }
+.prediction-score { font-size:14px; color:#333; background:#f0f0f0; padding:5px 10px; border-radius:8px; font-weight:bold; white-space:nowrap; }
+@media screen and (max-width:600px){
   .grid-3 { grid-template-columns:1fr; }
-  .bar-container { gap:25px; }
 }
 </style>
 </head>
@@ -281,16 +273,15 @@ input[type=number] { border-radius:10px; padding:8px; border:1px solid #cbd5e1; 
 
   <!-- 점수판 -->
   <div class="card grid grid-3">
-    <div class="score-box score-today">오늘 점수<br><span id="score">0점</span></div>
-    <div class="score-box score-total">누적 점수<br><span id="totalScore">0점</span></div>
-    <div class="score-box score-played">플레이 횟수<br><span id="gamesPlayed">0회</span></div>
-  </div>
-
-  <!-- 점수 기준 -->
-  <div class="card score-criteria">
-    <div class="criteria-high">오차 ≤ 20% → 3점</div>
-    <div class="criteria-mid">20% < 오차 ≤ 50% → 2점</div>
-    <div class="criteria-low">오차 > 50% → 1점</div>
+    <div class="score-box score-today">
+      오늘 점수<br><span id="score">0점</span>
+    </div>
+    <div class="score-box score-total">
+      누적 점수<br><span id="totalScore">0점</span>
+    </div>
+    <div class="score-box score-played">
+      플레이 횟수<br><span id="gamesPlayed">0회</span>
+    </div>
   </div>
 
   <!-- 입력 카드 -->
@@ -299,10 +290,13 @@ input[type=number] { border-radius:10px; padding:8px; border:1px solid #cbd5e1; 
     <p>② 발전원: <span id="powerDisplay"></span></p>
 
     <label style="margin-top:15px;">예측 발전량 (MWh)</label>
-    <div style="display:flex; gap:10px; margin-bottom:10px; flex-wrap:wrap;">
+    <div class="prediction-container">
       <button onclick="adjustPrediction(-100)">-100</button>
       <input type="number" id="prediction" value="500" min="0" step="100">
       <button onclick="adjustPrediction(100)">+100</button>
+      <div class="prediction-score">
+        오차 ≤20% → 3점 | 20~50% → 2점 | 그 외 → 1점
+      </div>
     </div>
 
     <div id="hint" class="hint" onclick="revealHint()">🔒 힌트를 보려면 클릭하세요!</div>
@@ -325,21 +319,26 @@ input[type=number] { border-radius:10px; padding:8px; border:1px solid #cbd5e1; 
 </div>
 
 <script>
+// 점수 관리
 let totalScore = 0, gamesPlayed = 0;
 
+// 지역, 발전원 목록
 const regions = ['서울','부산','대구','인천','광주','대전','울산','세종','경기','강원','충북','충남','전북','전남','경북','경남','제주'];
 const powerTypes = ['태양광','풍력','원자력','수력'];
 
+// 랜덤 선택
 const region = regions[Math.floor(Math.random()*regions.length)];
 const power = powerTypes[Math.floor(Math.random()*powerTypes.length)];
 document.getElementById('regionDisplay').innerText = region;
 document.getElementById('powerDisplay').innerText = power;
 
+// 예측값 조정
 function adjustPrediction(val){
   const input = document.getElementById('prediction');
   input.value = Math.max(0, parseInt(input.value)+val);
 }
 
+// 힌트 생성
 function generateHint(){
   return Math.floor(Math.random()*300 + 200) + " MWh (전날 같은 시간)";
 }
@@ -348,6 +347,7 @@ function revealHint(){
   document.getElementById('hint').innerText = generateHint();
 }
 
+// 제출
 function submitPrediction(){
   const prediction = parseInt(document.getElementById('prediction').value);
   const actual = Math.floor(Math.random()*300 + 200); 
@@ -365,17 +365,19 @@ function submitPrediction(){
   document.getElementById('displayError').innerText = errorRate.toFixed(1);
   document.getElementById('displayPoints').innerText = points;
 
+  // 그래프: 큰 값 기준 비율
   const maxVal = Math.max(prediction, actual);
   document.getElementById('barPred').style.height = (prediction / maxVal * 200) + "px";
   document.getElementById('barActual').style.height = (actual / maxVal * 200) + "px";
 
-  let msg = errorRate<=20?"높은 점수! 🎉":errorRate<=50?"중간 점수! 👍":"낮은 점수! 💪";
+  let msg = errorRate<=5?"완벽합니다! 🎉":errorRate<=15?"좋습니다! 👍":"더 노력해보세요! 💪";
   document.getElementById('resultMessage').innerText = msg;
 
   document.getElementById('inputCard').style.display = "none";
   document.getElementById('resultCard').style.display="block";
 }
 
+// 다시 시작
 function resetGame(){
   document.getElementById('resultCard').style.display="none";
   document.getElementById('inputCard').style.display="block";
@@ -667,6 +669,7 @@ function resetGame(){
     </script>
 </body>
 </html>
+
 
 
 
