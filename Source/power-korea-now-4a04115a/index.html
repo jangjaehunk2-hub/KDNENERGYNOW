@@ -172,40 +172,36 @@
         </aside>
 
         <div class="main-content" id="mapContent">
-            <div class="header">
-                <h1>대한민국 발전소 현황</h1>
-                <p>실시간 발전량 모니터링 시스템</p>
-            </div>
+    <div class="header">
+        <h1>대한민국 발전소 현황</h1>
+        <p>실시간 발전량 모니터링 시스템</p>
+    </div>
 
-            <div class="filter-tabs">
-                <button class="filter-tab active" data-type="all">전체</button>
-                <button class="filter-tab" data-type="solar">태양광</button>
-                <button class="filter-tab" data-type="hydro">수력</button>
-                <button class="filter-tab" data-type="wind">풍력</button>
-                <button class="filter-tab" data-type="nuclear">원자력</button>
-            </div>
+    <div class="filter-tabs">
+        <button class="filter-tab active" data-type="all">전체</button>
+        <button class="filter-tab" data-type="solar">태양광</button>
+        <button class="filter-tab" data-type="hydro">수력</button>
+        <button class="filter-tab" data-type="wind">풍력</button>
+        <button class="filter-tab" data-type="nuclear">원자력</button>
+    </div>
 
-        <main class="main-content">
-            <div class="header">
-                <h1>대한민국 발전소 현황</h1>
-                <p>실시간 발전량 모니터링 시스템</p>
+    <!-- 🔥 여기에 바로 지도 컨테이너 넣기 -->
+    <div class="map-container" id="map">
+        <div class="stats-card">
+            <div class="stats-title">발전 현황 요약</div>
+            <div class="stats-row">
+                <span class="stats-label">활성 발전소:</span>
+                <span class="stats-value" id="activePlants">0개</span>
             </div>
-
-            <div class="map-container" id="map">
-                <div class="stats-card">
-                    <div class="stats-title">발전 현황 요약</div>
-                    <div class="stats-row">
-                        <span class="stats-label">활성 발전소:</span>
-                        <span class="stats-value" id="activePlants">0개</span>
-                    </div>
-                    <div class="stats-row" style="border-top: 1px solid #eee; padding-top: 10px; margin-top: 10px;">
-                        <span class="stats-label">총 발전량</span>
-                        <span class="stats-value" id="totalGeneration">0</span>
-                    </div>
-                    <div style="text-align: right; color: #666; font-size: 0.9em;">kWh</div>
-                </div>
+            <div class="stats-row" style="border-top: 1px solid #eee; padding-top: 10px; margin-top: 10px;">
+                <span class="stats-label">총 발전량</span>
+                <span class="stats-value" id="totalGeneration">0</span>
             </div>
+            <div style="text-align: right; color: #666; font-size: 0.9em;">kWh</div>
         </div>
+    </div>
+</div>
+
 
         <!-- 슬라이드 콘텐츠 -->
         <div class="main-content content-section" id="slideContent" style="display: none;">

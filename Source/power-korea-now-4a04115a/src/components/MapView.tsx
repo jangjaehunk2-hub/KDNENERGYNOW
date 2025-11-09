@@ -1,3 +1,5 @@
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
 import { useState, useMemo, useEffect, useRef } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -12,7 +14,7 @@ const powerPlants = [
     location: "서울시 강남구",
     capacity: 15000,
     generation: 12500,
-    position: { x: 52, y: 35 },
+    position: { lat: 37.5665, lng: 126.9780 },
   },
   {
     id: "2",
@@ -21,7 +23,7 @@ const powerPlants = [
     location: "부산시 해운대구",
     capacity: 25000,
     generation: 22000,
-    position: { x: 75, y: 75 },
+    position: { lat: 35.1796, lng: 129.0756 },
   },
   {
     id: "3",
@@ -30,7 +32,7 @@ const powerPlants = [
     location: "대전시 유성구",
     capacity: 50000,
     generation: 48000,
-    position: { x: 45, y: 50 },
+    position: { lat: 36.3504, lng: 127.3845 },
   },
   {
     id: "4",
@@ -39,7 +41,7 @@ const powerPlants = [
     location: "제주시 서귀포",
     capacity: 18000,
     generation: 15000,
-    position: { x: 25, y: 90 },
+    position: { lat: 33.2890, lng: 126.5603 },
   },
   {
     id: "5",
@@ -48,7 +50,7 @@ const powerPlants = [
     location: "인천시 연수구",
     capacity: 12000,
     generation: 10000,
-    position: { x: 48, y: 30 },
+    position: { lat: 37.4563, lng: 126.7052 },
   },
   {
     id: "6",
@@ -57,7 +59,7 @@ const powerPlants = [
     location: "경상북도 경주시",
     capacity: 60000,
     generation: 55000,
-    position: { x: 70, y: 55 },
+    position: { lat: 35.8562, lng: 129.2247 },
   },
   {
     id: "7",
@@ -66,7 +68,7 @@ const powerPlants = [
     location: "강원도 강릉시",
     capacity: 20000,
     generation: 17000,
-    position: { x: 85, y: 25 },
+    position: { lat: 37.7519, lng: 128.8761 },
   },
   {
     id: "8",
@@ -75,58 +77,134 @@ const powerPlants = [
     location: "광주시 북구",
     capacity: 22000,
     generation: 19500,
-    position: { x: 30, y: 70 },
+    position: { lat: 35.1595, lng: 126.8526 },
   },
 ];
 
-const MapView = () => {
+interface MapViewProps {
+  isActive: boolean;
+}
+
+const MapView = ({ isActive }: MapViewProps) => {
   const [activeFilter, setActiveFilter] = useState("all");
   const mapRef = useRef<L.Map | null>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const markersRef = useRef<L.Marker[]>([]);
+=======
+import { useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 
-  const filteredPlants = useMemo(() => {
-    if (activeFilter === "all") return powerPlants;
-    return powerPlants.filter((plant) => plant.type === activeFilter);
-  }, [activeFilter]);
+const MapView = () => {
+  const mapRef = useRef<HTMLDivElement | null>(null);
+  const mapInstanceRef = useRef<L.Map | null>(null);
+>>>>>>> Stashed changes
 
+  // ✅ 발전소 데이터 (예시: 위도/경도 기반)
+  const powerPlants = [
+    { name: "서울화력발전소", lat: 37.5281, lng: 126.9317, capacity: "800MW" },
+    { name: "당진화력발전소", lat: 36.9671, lng: 126.4523, capacity: "6,000MW" },
+    { name: "한빛원자력발전소", lat: 35.4037, lng: 126.4162, capacity: "5,875MW" },
+  ];
+
+<<<<<<< Updated upstream
   const totalGeneration = useMemo(() => {
     return filteredPlants.reduce((sum, plant) => sum + plant.generation, 0);
   }, [filteredPlants]);
 
-  // 실제 한국 좌표로 변환 (기존 % 좌표를 실제 위경도로)
-  const getActualCoordinates = (position: { x: number; y: number }) => {
-    // x: 0-100% -> 경도: 124-132 (대한민국 범위)
-    // y: 0-100% -> 위도: 43-33 (북쪽이 낮은 숫자)
-    const lng = 124 + (position.x / 100) * 8;
-    const lat = 43 - (position.y / 100) * 10;
-    return { lat, lng };
-  };
 
   // Leaflet 지도 초기화
   useEffect(() => {
-    if (!mapContainerRef.current || mapRef.current) return;
+    if (!mapContainerRef.current || mapRef.current || !isActive) return;
+=======
+  useEffect(() => {
+=======
+import { useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+
+const MapView = () => {
+  const mapRef = useRef<HTMLDivElement | null>(null);
+  const mapInstanceRef = useRef<L.Map | null>(null);
+
+  // ✅ 발전소 데이터 (예시: 위도/경도 기반)
+  const powerPlants = [
+    { name: "서울화력발전소", lat: 37.5281, lng: 126.9317, capacity: "800MW" },
+    { name: "당진화력발전소", lat: 36.9671, lng: 126.4523, capacity: "6,000MW" },
+    { name: "한빛원자력발전소", lat: 35.4037, lng: 126.4162, capacity: "5,875MW" },
+  ];
+
+  useEffect(() => {
+>>>>>>> Stashed changes
+    const container = mapRef.current;
+    if (!container) return;
+
+    // 이미 만들어진 지도 제거
+    if (mapInstanceRef.current) {
+      mapInstanceRef.current.remove();
+    }
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
 
     // 지도 생성
-    const map = L.map(mapContainerRef.current, {
-      center: [36.5, 127.5], // 대한민국 중심
-      zoom: 7,
-      minZoom: 6,
-      maxZoom: 10,
-    });
+    const map = L.map(container).setView([37.5665, 126.9780], 7);
 
-    // OpenStreetMap 타일 추가
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    // 기본 지도 타일
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors',
     }).addTo(map);
 
-    mapRef.current = map;
+    // ✅ 발전소 마커 추가
+    powerPlants.forEach((plant) => {
+      L.marker([plant.lat, plant.lng])
+        .addTo(map)
+        .bindPopup(`<b>${plant.name}</b><br/>용량: ${plant.capacity}`);
+    });
+
+    mapInstanceRef.current = map;
+<<<<<<< Updated upstream
+
+    // 초기화 직후 크기 재계산
+    setTimeout(() => {
+      map.invalidateSize();
+    }, 100);
 
     return () => {
+<<<<<<< Updated upstream
       map.remove();
-    };
-  }, []);
+      mapRef.current = null;
+=======
+=======
 
+    return () => {
+>>>>>>> Stashed changes
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove();
+        mapInstanceRef.current = null;
+      }
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+    };
+  }, [isActive]);
+
+<<<<<<< Updated upstream
+  // 탭이 활성화될 때 지도 크기 재계산
+  useEffect(() => {
+    if (isActive && mapRef.current) {
+      // 약간의 지연을 두고 invalidateSize 호출 (CSS 전환 대기)
+      setTimeout(() => {
+        mapRef.current?.invalidateSize();
+      }, 100);
+    }
+  }, [isActive]);
+
+<<<<<<< Updated upstream
   // 마커 업데이트
   useEffect(() => {
     if (!mapRef.current) return;
@@ -151,7 +229,6 @@ const MapView = () => {
 
     // 새 마커 추가
     filteredPlants.forEach((plant) => {
-      const coords = getActualCoordinates(plant.position);
       
       // 커스텀 아이콘 생성
       const icon = L.divIcon({
@@ -180,9 +257,9 @@ const MapView = () => {
         iconAnchor: [16, 16],
       });
 
-      const marker = L.marker([coords.lat, coords.lng], { icon }).addTo(mapRef.current!);
+      const marker = L.marker([plant.position.lat, plant.position.lng], { icon }).addTo(mapRef.current!);
 
-      // 팝업 추가
+      // 팝업 추가 (hover 시 열리도록 설정)
       const popupContent = `
         <div style="font-family: system-ui; min-width: 200px;">
           <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
@@ -212,49 +289,67 @@ const MapView = () => {
         </div>
       `;
 
-      marker.bindPopup(popupContent);
+      // 팝업 바인딩 (autoClose 비활성화)
+      marker.bindPopup(popupContent, {
+        closeButton: false,
+        autoClose: false,
+        closeOnClick: false
+      });
+      
+      // 마커와 팝업 모두에 이벤트 추가
+      marker.on('mouseover', function() {
+        this.openPopup();
+      });
+      
+      marker.on('mouseout', function() {
+        this.closePopup();
+      });
+      
+      // 팝업에도 mouseenter/leave 이벤트 추가
+      marker.on('popupopen', function() {
+        const popup = this.getPopup();
+        const popupElement = popup?.getElement();
+        
+        if (popupElement) {
+          popupElement.addEventListener('mouseenter', () => {
+            this.openPopup();
+          });
+          
+          popupElement.addEventListener('mouseleave', () => {
+            this.closePopup();
+          });
+        }
+      });
+      
       markersRef.current.push(marker);
     });
   }, [filteredPlants]);
 
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
   return (
-    <div className="flex-1 flex flex-col p-8">
+    <div className={`flex-1 flex flex-col p-8 ${!isActive ? 'hidden' : ''}`}>
       <div className="mb-8">
-        <h1 className="text-4xl font-bold mb-2 text-foreground">
-          대한민국 발전소 현황
-        </h1>
-        <p className="text-lg text-muted-foreground">
-          실시간 발전량 모니터링 시스템
-        </p>
+        <h1 className="text-4xl font-bold mb-2">대한민국 발전소 현황</h1>
+        <p className="text-lg text-gray-600">실시간 발전량 모니터링 시스템</p>
       </div>
 
-      <FilterTabs activeFilter={activeFilter} onFilterChange={setActiveFilter} />
-
-      <div className="flex-1 relative rounded-2xl shadow-xl overflow-hidden border-2 border-border">
-        {/* Leaflet Map Container */}
-        <div ref={mapContainerRef} className="absolute inset-0 z-0" />
-
-        {/* Stats Card */}
-        <div className="absolute bottom-8 right-8 bg-card border-2 border-border rounded-xl shadow-xl p-6 min-w-[280px]">
-          <h3 className="text-lg font-bold mb-4 text-foreground">
-            발전 현황 요약
-          </h3>
-          <div className="space-y-3">
-            <div className="flex justify-between items-center">
-              <span className="text-muted-foreground">활성 발전소:</span>
-              <span className="text-2xl font-bold text-foreground">
-                {filteredPlants.length}개
-              </span>
-            </div>
-            <div className="border-t border-border pt-3">
-              <div className="text-sm text-muted-foreground mb-1">총 발전량</div>
-              <div className="text-3xl font-bold text-[hsl(var(--accent))]">
-                {totalGeneration.toLocaleString()}
-              </div>
-              <div className="text-sm text-muted-foreground">kWh</div>
-            </div>
-          </div>
-        </div>
+      <div className="flex-1 relative rounded-2xl shadow-xl overflow-hidden border-2" style={{ minHeight: '600px' }}>
+        <div
+          ref={mapRef}
+          id="map"
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            width: '100%',
+            height: '100%',
+          }}
+        />
       </div>
     </div>
   );
