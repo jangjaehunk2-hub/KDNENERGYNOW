@@ -1,15 +1,17 @@
+type PowerPlantType = 'solar' | 'hydro' | 'nuclear' | 'wind';
+
 interface FilterTabsProps {
-  activeFilter: string;
-  onFilterChange: (filter: string) => void;
+  activeFilter: PowerPlantType | 'all';
+  onFilterChange: (filter: PowerPlantType | 'all') => void;
 }
 
 const FilterTabs = ({ activeFilter, onFilterChange }: FilterTabsProps) => {
-  const filters = [
-    { id: "all", label: "전체" },
-    { id: "solar", label: "태양광" },
-    { id: "hydro", label: "수력" },
-    { id: "wind", label: "풍력" },
-    { id: "nuclear", label: "원자력" },
+  const filters: Array<{ id: PowerPlantType | 'all'; label: string }> = [
+    { id: 'all', label: "전체" },
+    { id: 'solar', label: "태양광" },
+    { id: 'hydro', label: "수력" },
+    { id: 'wind', label: "풍력" },
+    { id: 'nuclear', label: "원자력" },
   ];
 
   return (
