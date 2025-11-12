@@ -192,6 +192,17 @@ input[type=number] { border-radius:10px; padding:8px; border:1px solid #cbd5e1; 
 <!-- ===== JS ===== -->
 <script>
 let totalScore = 0, gamesPlayed = 0;
+const userId = localStorage.getItem('userId');
+if (!userId) {
+    window.location.href = 'login.html';
+} else {
+    fetch(`http://localhost:3000/get-score?user_id=${userId}`)
+      .then(res => res.json())
+      .then(data => {
+          totalScore = data.score || 0;
+          document.getElementById('totalScore').innerText = totalScore + "점";
+      });
+}
 
 const regions = ['서울','부산','대구','인천','광주','대전','울산','세종','경기','강원','충북','충남','전북','전남','경북','경남','제주'];
 const powerTypes = ['태양광','풍력','원자력','수력'];
@@ -225,6 +236,21 @@ function submitPrediction(){
   document.getElementById('score').innerText = points+"점";
   document.getElementById('totalScore').innerText = totalScore+"점";
   document.getElementById('gamesPlayed').innerText = gamesPlayed+"회";
+
+  // 서버로 점수 전송
+  fetch('http://localhost:3000/update-score', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ user_id: userId, score: points })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if(data.success){
+      console.log("DB 업데이트 완료, 현재 누적점수:", data.newScore);
+    } else {
+      console.error("DB 업데이트 실패:", data.message);
+    }
+  });
 
   document.getElementById('displayPred').innerText = prediction;
   document.getElementById('displayActual').innerText = actual;

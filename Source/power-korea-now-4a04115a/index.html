@@ -160,7 +160,7 @@
                 <i class='bx bx-map'></i>
                 <span>Map</span>
             </button>
-            <button class="sidebar-button" data-tab="slide">
+            <button class="sidebar-button" data-tab="slide" onclick="window.location.href='slide.html'">
                 <i class='bx bx-slideshow'></i>
                 <span>Slide</span>
             </button>
@@ -168,11 +168,11 @@
                 <i class='bx bx-game'></i>
                 <span>Game</span>
             </button>
-            <button class="sidebar-button" data-tab="education">
+            <button class="sidebar-button" data-tab="education" onclick="window.location.href='education.html'">
                 <i class='bx bx-graduation'></i>
                 <span>Education</span>
             </button>
-            <button class="sidebar-button" data-tab="login">
+            <button class="sidebar-button" data-tab="login" onclick="window.location.href='login.html'">
                 <i class='bx bx-log-in'></i>
                 <span>Login</span>
             </button>
@@ -457,6 +457,52 @@ function updateMarkers() {
 
         // 초기 마커 표시
         updateMarkers();
+    // 로그인 상태 변수 (초기: false)
+    let isLoggedIn = false;
+
+    // 로그인 처리 예시
+    document.querySelector('.login-form')?.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+
+        fetch('/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if(data.success){
+                alert('로그인 성공!');
+                isLoggedIn = true;
+            } else {
+                alert(data.message);
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert('로그인 중 오류 발생');
+        });
+    });
+
+    // 게임 버튼 클릭 시 로그인 체크
+    document.querySelector('.sidebar-button[data-tab="game"]').addEventListener('click', (e) => {
+        if(!isLoggedIn){
+            e.preventDefault();
+            alert('게임을 이용하려면 먼저 로그인해야 합니다.');
+            window.location.href = 'login.html';
+        }
+    });
+
+    // 교육 버튼 클릭 시 로그인 체크
+    document.querySelector('.sidebar-button[data-tab="education"]').addEventListener('click', (e) => {
+        if(!isLoggedIn){
+            e.preventDefault();
+            alert('교육 콘텐츠를 이용하려면 먼저 로그인해야 합니다.');
+            window.location.href = 'login.html';
+        }
+    });
     </script>
 </body>
 </html>
