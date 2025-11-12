@@ -411,86 +411,91 @@
         let activeFilter = 'all';
 
         // 마커 업데이트 함수
-        function updateMarkers() {
-            // 기존 마커 제거
-            currentMarkers.forEach(marker => marker.remove());
-            currentMarkers = [];
+function updateMarkers() {
+    // 기존 마커 제거
+    currentMarkers.forEach(marker => marker.remove());
+    currentMarkers = [];
 
-            // 필터링된 발전소
-            const filteredPlants = activeFilter === 'all' 
-                ? powerPlants 
-                : powerPlants.filter(plant => plant.type === activeFilter);
+    // 필터링된 발전소
+    const filteredPlants = activeFilter === 'all'
+        ? powerPlants
+        : powerPlants.filter(plant => plant.type === activeFilter);
 
-            // 통계 업데이트
-            document.getElementById('activePlants').textContent = `${filteredPlants.length}개`;
-            const totalGeneration = filteredPlants.reduce((sum, plant) => sum + plant.generation, 0);
-            document.getElementById('totalGeneration').textContent = totalGeneration.toLocaleString();
+    // 통계 업데이트
+    document.getElementById('activePlants').textContent = `${filteredPlants.length}개`;
+    const totalGeneration = filteredPlants.reduce((sum, plant) => sum + plant.generation, 0);
+    document.getElementById('totalGeneration').textContent = totalGeneration.toLocaleString();
 
-            // 새 마커 추가
-            filteredPlants.forEach(plant => {
-                const coords = getActualCoordinates(plant.position);
-                
-                const icon = L.divIcon({
-                    className: 'custom-marker',
-                    html: `
-                        <div style="position: relative;">
-                            <div style="
-                                width: 32px;
-                                height: 32px;
-                                background-color: ${colorMap[plant.type]};
-                                border: 4px solid white;
-                                border-radius: 50%;
-                                box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-                            "></div>
-                            <div style="
-                                position: absolute;
-                                inset: 0;
-                                background-color: ${colorMap[plant.type]};
-                                border-radius: 50%;
-                                animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
-                                opacity: 0.3;
-                            "></div>
-                        </div>
-                    `,
-                    iconSize: [32, 32],
-                    iconAnchor: [16, 16]
-                });
+    // 새 마커 추가
+    filteredPlants.forEach(plant => {
+        const coords = getActualCoordinates(plant.position);
 
-                const marker = L.marker([coords.lat, coords.lng], { icon }).addTo(map);
+        const icon = L.divIcon({
+            className: 'custom-marker',
+            html: `
+                <div style="position: relative; pointer-events: none;">
+                    <div style="
+                        width: 32px;
+                        height: 32px;
+                        background-color: ${colorMap[plant.type]};
+                        border: 4px solid white;
+                        border-radius: 50%;
+                        box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+                    "></div>
+                    <div style="
+                        position: absolute;
+                        inset: 0;
+                        background-color: ${colorMap[plant.type]};
+                        border-radius: 50%;
+                        animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+                        opacity: 0.3;
+                    "></div>
+                </div>
+            `,
+            iconSize: [32, 32],
+            iconAnchor: [16, 16]
+        });
 
-                const popupContent = `
-                    <div style="font-family: system-ui; min-width: 200px;">
-                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
-                            <div style="width: 12px; height: 12px; background-color: ${colorMap[plant.type]}; border-radius: 50%;"></div>
-                            <h3 style="font-weight: bold; font-size: 16px; margin: 0;">${plant.name}</h3>
-                        </div>
-                        <div style="display: flex; flex-direction: column; gap: 8px; font-size: 14px;">
-                            <div style="display: flex; justify-content: space-between;">
-                                <span style="color: #666;">유형:</span>
-                                <span style="font-weight: 500;">${typeLabels[plant.type]}</span>
-                            </div>
-                            <div style="display: flex; justify-content: space-between;">
-                                <span style="color: #666;">위치:</span>
-                                <span style="font-weight: 500;">${plant.location}</span>
-                            </div>
-                            <div style="display: flex; justify-content: space-between;">
-                                <span style="color: #666;">용량:</span>
-                                <span style="font-weight: 500;">${plant.capacity.toLocaleString()} kWh</span>
-                            </div>
-                            <div style="display: flex; justify-content: space-between; padding-top: 8px; border-top: 1px solid #eee;">
-                                <span style="color: #666;">현재 발전량:</span>
-                                <span style="font-weight: bold; font-size: 16px; color: ${colorMap[plant.type]};">
-                                    ${plant.generation.toLocaleString()} kWh
-                                </span>
-                            </div>
-                        </div>
+        const marker = L.marker([coords.lat, coords.lng], { icon }).addTo(map);
+
+        const popupContent = `
+            <div style="font-family: system-ui; min-width: 200px;">
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                    <div style="width: 12px; height: 12px; background-color: ${colorMap[plant.type]}; border-radius: 50%;"></div>
+                    <h3 style="font-weight: bold; font-size: 16px; margin: 0;">${plant.name}</h3>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 8px; font-size: 14px;">
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="color: #666;">유형:</span>
+                        <span style="font-weight: 500;">${typeLabels[plant.type]}</span>
                     </div>
-                `;
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="color: #666;">위치:</span>
+                        <span style="font-weight: 500;">${plant.location}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="color: #666;">용량:</span>
+                        <span style="font-weight: 500;">${plant.capacity.toLocaleString()} kWh</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; padding-top: 8px; border-top: 1px solid #eee;">
+                        <span style="color: #666;">현재 발전량:</span>
+                        <span style="font-weight: bold; font-size: 16px; color: ${colorMap[plant.type]};">
+                            ${plant.generation.toLocaleString()} kWh
+                        </span>
+                    </div>
+                </div>
+            </div>
+        `;
 
-                marker.bindPopup(popupContent);
-                currentMarkers.push(marker);
-            });
-        }
+        // 마우스 호버 시 툴팁 표시 (bindTooltip)
+        marker.bindTooltip(popupContent, {
+            sticky: true,
+            className: 'custom-leaflet-tooltip' // 아래 CSS를 적용하기 위한 클래스
+        });
+
+        currentMarkers.push(marker);
+    });
+}
 
         // 필터 버튼 이벤트 리스너
         document.querySelectorAll('.filter-tab').forEach(button => {
