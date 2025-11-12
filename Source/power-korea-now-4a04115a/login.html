@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>login</title>
+    <!-- Boxicons (사이드바 아이콘용) -->
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+    <style>
+    /* 전체 레이아웃 */
+    body {
+        font-family: 'Arial', sans-serif;
+        background: #f5f5f5;
+        margin: 0;
+        display: flex;
+        height: 100vh;
+    }
+
+    /* ===== 사이드바 ===== */
+    .sidebar {
+        width: 140px;
+        background-color: #1a1a1a;
+        color: white;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    /* 사이드바 버튼 기본 스타일 */
+    .sidebar-button {
+        width: 100%;
+        padding: 24px 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        border: none;
+        background: transparent;
+        color: white;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    /* 마우스를 올렸을 때 효과 */
+    .sidebar-button:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    /* 현재 선택된 버튼 (왼쪽 파란색 선 표시) */
+    .sidebar-button.active {
+        background-color: rgba(255, 255, 255, 0.1);
+        border-left: 4px solid #0066ff;
+    }
+
+    /* 아이콘 크기 */
+    .sidebar-button i {
+        font-size: 24px;
+    }
+
+    /* 버튼 아래 글자 스타일 */
+    .sidebar-button span {
+        font-size: 14px;
+    }
+</style>
+</head>
+<body>
+    <!-- ===== 사이드바 ===== -->
+    <aside class="sidebar">
+        <button class="sidebar-button" onclick="window.location.href='index.html'">
+            <i class='bx bx-map'></i>
+            <span>Map</span>
+        </button>
+        <button class="sidebar-button" onclick="window.location.href='slide.html'">
+            <i class='bx bx-slideshow'></i>
+            <span>Slide</span>
+        </button>
+        <button class="sidebar-button" onclick="window.location.href='game.html'">
+            <i class='bx bx-game'></i>
+            <span>Game</span>
+        </button>
+        <button class="sidebar-button" onclick="window.location.href='education.html'">
+            <i class='bx bx-graduation'></i>
+            <span>Education</span>
+        </button>
+        <button class="sidebar-button active" onclick="window.location.href='login.html'">
+            <i class='bx bx-log-in'></i>
+            <span>Login</span>
+        </button>
+    </aside>
+            <!-- 로그인 콘텐츠 -->
+            <div class="header">
+                <h1>로그인</h1>
+                <p>계정에 로그인하세요</p>
+            </div>
+            <div class="login-content">
+                <form class="login-form">
+                    <div class="form-group">
+                        <label for="email">이메일</label>
+                        <input type="email" id="email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">비밀번호</label>
+                        <input type="password" id="password" required>
+                    </div>
+                    <button type="submit" class="login-button">로그인</button>
+                </form>
+            </div>
+</body>
+</html>
