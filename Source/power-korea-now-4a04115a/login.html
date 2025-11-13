@@ -214,6 +214,15 @@ button {
     </form>
     <button class="signup-button" onclick="toggleForm()">← 로그인으로 돌아가기</button>
     </div>
+
+    <!-- 로그아웃 폼 -->
+    <div id="logoutForm" class="hidden">
+      <h1>로그아웃</h1>
+      <p id="logoutMessage"></p>
+      <button class="login-button" onclick="logout()">로그아웃</button>
+      <button class="signup-button" onclick="cancelLogout()">취소</button>
+    </div>
+
   </div>
 </div>
 
@@ -300,6 +309,33 @@ button {
             window.location.href = 'login.html';
         }
     });
+
+    // 페이지 로드 시 로그인 상태에 따라 폼 표시 결정
+    document.addEventListener('DOMContentLoaded', () => {
+      const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+      const nickName = localStorage.getItem('nickName');
+      
+      if (isLoggedIn) {
+        document.getElementById('loginForm').classList.add('hidden');
+        document.getElementById('signupForm').classList.add('hidden');
+        document.getElementById('logoutForm').classList.remove('hidden');
+        document.getElementById('logoutMessage').textContent = `${nickName || '사용자'}님, 로그인 상태입니다.`;
+      }
+    });
+
+    // 로그아웃 함수
+    function logout() {
+      localStorage.removeItem('isLoggedIn');
+      localStorage.removeItem('userId');
+      localStorage.removeItem('nickName');
+      alert('로그아웃되었습니다.');
+      window.location.href = 'index.html'; // 로그아웃 후 메인 페이지로 이동
+    }
+
+    // 로그아웃 취소 시
+    function cancelLogout() {
+      window.location.href = 'game.html';
+    }
 
 </script>
 

@@ -87,7 +87,7 @@ app.post('/update-score', async (req, res) => {
       UPDATE member
       SET score = COALESCE(score, 0) + $1
       WHERE user_id = $2
-      RETURNING score
+      SELECT score FROM member WHERE user_id = $2
     `;
     const values = [score, user_id];
     const result = await pool.query(query, values);
