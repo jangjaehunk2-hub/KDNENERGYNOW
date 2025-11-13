@@ -86,6 +86,7 @@ app.post('/update-score', async (req, res) => {
   }
 
   try {
+<<<<<<< HEAD
     const result = await pool.query(
       `UPDATE member
        SET score = COALESCE(score, 0) + $1
@@ -93,6 +94,16 @@ app.post('/update-score', async (req, res) => {
        RETURNING score`,
       [score, user_id]
     );
+=======
+    const query = `
+      UPDATE member
+      SET score = COALESCE(score, 0) + $1
+      WHERE user_id = $2
+      SELECT score FROM member WHERE user_id = $2
+    `;
+    const values = [score, user_id];
+    const result = await pool.query(query, values);
+>>>>>>> 6967566a1901abf77a07886f9b2de53c053989f7
 
     if (result.rows.length > 0) {
       res.json({ success: true, newScore: result.rows[0].score });
