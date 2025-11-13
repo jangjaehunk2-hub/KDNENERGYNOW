@@ -5,18 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>대한민국 발전소 현황 | 실시간 모니터링</title>
     <meta name="description" content="대한민국 전국 발전소의 실시간 발전량을 확인하세요. 태양광, 수력, 풍력, 원자력 발전소 현황을 한눈에 파악할 수 있습니다." />
-    <meta name="author" content="Korea Power Monitor" />
     <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet" />
-
-    <meta property="og:title" content="대한민국 발전소 현황 | 실시간 모니터링" />
-    <meta property="og:description" content="대한민국 전국 발전소의 실시간 발전량을 확인하세요. 태양광, 수력, 풍력, 원자력 발전소 현황을 한눈에 파악할 수 있습니다." />
-    <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
-
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@korea_power" />
-    <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
-    
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
     <style>
         body {
@@ -116,6 +105,7 @@
             border-radius: 12px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             min-width: 250px;
+            z-index: 1000;
         }
         .stats-title {
             font-size: 1.2rem;
@@ -133,10 +123,15 @@
         .stats-value {
             font-weight: bold;
         }
-        .power-type-solar { color: #ff9900; }
         .power-type-hydro { color: #00aaff; }
-        .power-type-wind { color: #00cc66; }
-        .power-type-nuclear { color: #ff3366; }
+        .loading-message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.2rem;
+            color: #666;
+        }
 
         @keyframes ping {
             75%, 100% {
@@ -144,13 +139,6 @@
                 opacity: 0;
             }
         }
-
-        /* ===== 메인 컨텐츠 영역 ===== */
-        .main-content {
-        flex: 1;
-        padding: 20px;
-        overflow-y: auto;
-        }        
     </style>
 </head>
 <body>
@@ -179,330 +167,190 @@
         </aside>
 
         <div class="main-content" id="mapContent">
-    <div class="header">
-        <h1>대한민국 발전소 현황</h1>
-        <p>실시간 발전량 모니터링 시스템</p>
-    </div>
-
-    <div class="filter-tabs">
-        <button class="filter-tab active" data-type="all">전체</button>
-        <button class="filter-tab" data-type="solar">태양광</button>
-        <button class="filter-tab" data-type="hydro">수력</button>
-        <button class="filter-tab" data-type="wind">풍력</button>
-        <button class="filter-tab" data-type="nuclear">원자력</button>
-    </div>
-
-    <!-- 🔥 여기에 바로 지도 컨테이너 넣기 -->
-    <div class="map-container" id="map">
-        <div class="stats-card">
-            <div class="stats-title">발전 현황 요약</div>
-            <div class="stats-row">
-                <span class="stats-label">활성 발전소:</span>
-                <span class="stats-value" id="activePlants">0개</span>
+            <div class="header">
+                <h1>대한민국 수력발전소 현황</h1>
+                <p>실시간 발전소 위치 모니터링 시스템</p>
             </div>
-            <div class="stats-row" style="border-top: 1px solid #eee; padding-top: 10px; margin-top: 10px;">
-                <span class="stats-label">총 발전량</span>
-                <span class="stats-value" id="totalGeneration">0</span>
+
+            <div class="filter-tabs">
+                <button class="filter-tab active" data-type="all">전체</button>
+                <button class="filter-tab" data-type="hydro">수력</button>
             </div>
-            <div style="text-align: right; color: #666; font-size: 0.9em;">kWh</div>
+
+            <div class="map-container" id="map">
+                <div class="loading-message" id="loadingMessage">데이터를 불러오는 중...</div>
+                <div class="stats-card">
+                    <div class="stats-title">발전소 현황</div>
+                    <div class="stats-row">
+                        <span class="stats-label">수력 발전소:</span>
+                        <span class="stats-value power-type-hydro" id="activePlants">0개</span>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-</div>
 
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-    <link rel="stylesheet" href="styles.css">
     <script>
-        // 탭 전환 기능
-        document.querySelectorAll('.sidebar-button').forEach(button => {
-            button.addEventListener('click', () => {
-                // 활성 버튼 변경
-                document.querySelector('.sidebar-button.active').classList.remove('active');
-                button.classList.add('active');
+        // ===== 전역 변수 =====
+        let map;
+        let currentMarkers = [];
+        let powerPlants = []; // DB에서 받아올 데이터
+        const colorMap = { hydro: "#00aaff" };
 
-                // 콘텐츠 변경
-                const tabId = button.dataset.tab;
-                document.querySelectorAll('.main-content').forEach(content => {
-                    content.style.display = 'none';
-                });
-
-                if (tabId === 'map') {
-                    document.getElementById('mapContent').style.display = 'block';
-                    // 지도 리사이즈 이벤트 트리거
-                    if (map) map.invalidateSize();
-                } else {
-                    document.getElementById(tabId + 'Content').style.display = 'block';
-                }
+        // ===== 지도 초기화 =====
+        function initMap() {
+            map = L.map('map', {
+                center: [36.5, 127.5],
+                zoom: 7,
+                minZoom: 6,
+                maxZoom: 12
             });
-        });
 
-        // 로그인 폼 제출 처리
-        document.querySelector('.login-form')?.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            
-            // TODO: 실제 로그인 처리
-            alert('로그인 기능은 준비 중입니다.');
-        });
-
-        // 발전소 데이터
-        const powerPlants = [
-            {
-                id: "1",
-                name: "서울 태양광 발전소",
-                type: "solar",
-                location: "서울시 강남구",
-                capacity: 15000,
-                generation: 12500,
-                position: { x: 52, y: 35 }
-            },
-            {
-                id: "2",
-                name: "부산 수력 발전소",
-                type: "hydro",
-                location: "부산시 해운대구",
-                capacity: 25000,
-                generation: 22000,
-                position: { x: 75, y: 75 }
-            },
-            {
-                id: "3",
-                name: "대전 원자력 발전소",
-                type: "nuclear",
-                location: "대전시 유성구",
-                capacity: 50000,
-                generation: 48000,
-                position: { x: 45, y: 50 }
-            },
-            {
-                id: "4",
-                name: "제주 풍력 발전소",
-                type: "wind",
-                location: "제주시 서귀포",
-                capacity: 18000,
-                generation: 15000,
-                position: { x: 25, y: 90 }
-            },
-            {
-                id: "5",
-                name: "인천 태양광 발전소",
-                type: "solar",
-                location: "인천시 연수구",
-                capacity: 12000,
-                generation: 10000,
-                position: { x: 48, y: 30 }
-            },
-            {
-                id: "6",
-                name: "경주 원자력 발전소",
-                type: "nuclear",
-                location: "경상북도 경주시",
-                capacity: 60000,
-                generation: 55000,
-                position: { x: 70, y: 55 }
-            },
-            {
-                id: "7",
-                name: "강릉 풍력 발전소",
-                type: "wind",
-                location: "강원도 강릉시",
-                capacity: 20000,
-                generation: 17000,
-                position: { x: 85, y: 25 }
-            },
-            {
-                id: "8",
-                name: "광주 수력 발전소",
-                type: "hydro",
-                location: "광주시 북구",
-                capacity: 22000,
-                generation: 19500,
-                position: { x: 30, y: 70 }
-            }
-        ];
-
-        // 색상 매핑
-        const colorMap = {
-            solar: "#ff9900",
-            hydro: "#00aaff",
-            wind: "#00cc66",
-            nuclear: "#ff3366"
-        };
-
-        const typeLabels = {
-            solar: "태양광",
-            hydro: "수력",
-            wind: "풍력",
-            nuclear: "원자력"
-        };
-
-        // 좌표 변환 함수
-        function getActualCoordinates(position) {
-            const lng = 124 + (position.x / 100) * 8;
-            const lat = 43 - (position.y / 100) * 10;
-            return { lat, lng };
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+            }).addTo(map);
         }
 
-        // 지도 초기화
-        const map = L.map('map', {
-            center: [36.5, 127.5],
-            zoom: 7,
-            minZoom: 6,
-            maxZoom: 10
+        // ===== DB에서 수력발전소 데이터 가져오기 =====
+        async function fetchHydroPlants() {
+            try {
+                const response = await fetch('http://localhost:3000/api/hydro');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                console.log('✅ DB에서 받은 데이터:', data);
+                
+                // DB 데이터를 앱에서 사용할 형식으로 변환
+                powerPlants = data.map((plant, index) => ({
+                    id: index + 1,
+                    name: plant.발전소명 || '이름 없음',
+                    type: 'hydro',
+                    operator: plant.운영기관 || '정보 없음',
+                    location: plant.위치_수계 || '위치 정보 없음',
+                    latitude: parseFloat(plant.latitude),
+                    longitude: parseFloat(plant.longitude)
+                }));
+
+                // 로딩 메시지 제거
+                document.getElementById('loadingMessage').style.display = 'none';
+                
+                // 마커 표시
+                updateMarkers();
+                
+            } catch (error) {
+                console.error('❌ 데이터 로드 실패:', error);
+                document.getElementById('loadingMessage').textContent = 
+                    '데이터를 불러오는데 실패했습니다. 서버가 실행중인지 확인하세요.';
+            }
+        }
+
+        // ===== 마커 업데이트 함수 =====
+        function updateMarkers() {
+            // 기존 마커 제거
+            currentMarkers.forEach(marker => marker.remove());
+            currentMarkers = [];
+
+            // 통계 업데이트
+            document.getElementById('activePlants').textContent = `${powerPlants.length}개`;
+
+            // 각 발전소에 대해 마커 생성
+            powerPlants.forEach(plant => {
+                // 위도/경도가 유효한지 확인
+                if (!plant.latitude || !plant.longitude || 
+                    isNaN(plant.latitude) || isNaN(plant.longitude)) {
+                    console.warn(`⚠️ ${plant.name}: 유효하지 않은 좌표`);
+                    return;
+                }
+
+                // 커스텀 아이콘 생성
+                const icon = L.divIcon({
+                    className: 'custom-marker',
+                    html: `
+                        <div style="position: relative; pointer-events: none;">
+                            <div style="
+                                width: 32px;
+                                height: 32px;
+                                background-color: ${colorMap.hydro};
+                                border: 4px solid white;
+                                border-radius: 50%;
+                                box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+                            "></div>
+                            <div style="
+                                position: absolute;
+                                inset: 0;
+                                background-color: ${colorMap.hydro};
+                                border-radius: 50%;
+                                animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+                                opacity: 0.3;
+                            "></div>
+                        </div>
+                    `,
+                    iconSize: [32, 32],
+                    iconAnchor: [16, 16]
+                });
+
+                // 마커 생성
+                const marker = L.marker([plant.latitude, plant.longitude], { icon }).addTo(map);
+
+                // 팝업 내용
+                const popupContent = `
+                    <div style="font-family: system-ui; min-width: 200px;">
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                            <div style="width: 12px; height: 12px; background-color: ${colorMap.hydro}; border-radius: 50%;"></div>
+                            <h3 style="font-weight: bold; font-size: 16px; margin: 0;">${plant.name}</h3>
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 8px; font-size: 14px;">
+                            <div style="display: flex; justify-content: space-between;">
+                                <span style="color: #666;">유형:</span>
+                                <span style="font-weight: 500;">수력</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between;">
+                                <span style="color: #666;">운영기관:</span>
+                                <span style="font-weight: 500;">${plant.operator}</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between;">
+                                <span style="color: #666;">위치:</span>
+                                <span style="font-weight: 500;">${plant.location}</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; padding-top: 8px; border-top: 1px solid #eee;">
+                                <span style="color: #666;">좌표:</span>
+                                <span style="font-size: 12px; color: #999;">
+                                    ${plant.latitude.toFixed(4)}, ${plant.longitude.toFixed(4)}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                // 툴팁 바인딩
+                marker.bindTooltip(popupContent, {
+                    sticky: true,
+                    className: 'custom-leaflet-tooltip'
+                });
+
+                currentMarkers.push(marker);
+            });
+
+            console.log(`✅ ${currentMarkers.length}개의 마커가 표시되었습니다.`);
+        }
+
+        // ===== 페이지 로드 시 실행 =====
+        window.addEventListener('DOMContentLoaded', () => {
+            initMap();
+            fetchHydroPlants();
         });
 
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-        }).addTo(map);
-
-        let currentMarkers = [];
-        let activeFilter = 'all';
-
-        // 마커 업데이트 함수
-function updateMarkers() {
-    // 기존 마커 제거
-    currentMarkers.forEach(marker => marker.remove());
-    currentMarkers = [];
-
-    // 필터링된 발전소
-    const filteredPlants = activeFilter === 'all'
-        ? powerPlants
-        : powerPlants.filter(plant => plant.type === activeFilter);
-
-    // 통계 업데이트
-    document.getElementById('activePlants').textContent = `${filteredPlants.length}개`;
-    const totalGeneration = filteredPlants.reduce((sum, plant) => sum + plant.generation, 0);
-    document.getElementById('totalGeneration').textContent = totalGeneration.toLocaleString();
-
-    // 새 마커 추가
-    filteredPlants.forEach(plant => {
-        const coords = getActualCoordinates(plant.position);
-
-        const icon = L.divIcon({
-            className: 'custom-marker',
-            html: `
-                <div style="position: relative; pointer-events: none;">
-                    <div style="
-                        width: 32px;
-                        height: 32px;
-                        background-color: ${colorMap[plant.type]};
-                        border: 4px solid white;
-                        border-radius: 50%;
-                        box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-                    "></div>
-                    <div style="
-                        position: absolute;
-                        inset: 0;
-                        background-color: ${colorMap[plant.type]};
-                        border-radius: 50%;
-                        animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
-                        opacity: 0.3;
-                    "></div>
-                </div>
-            `,
-            iconSize: [32, 32],
-            iconAnchor: [16, 16]
-        });
-
-        const marker = L.marker([coords.lat, coords.lng], { icon }).addTo(map);
-
-        const popupContent = `
-            <div style="font-family: system-ui; min-width: 200px;">
-                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
-                    <div style="width: 12px; height: 12px; background-color: ${colorMap[plant.type]}; border-radius: 50%;"></div>
-                    <h3 style="font-weight: bold; font-size: 16px; margin: 0;">${plant.name}</h3>
-                </div>
-                <div style="display: flex; flex-direction: column; gap: 8px; font-size: 14px;">
-                    <div style="display: flex; justify-content: space-between;">
-                        <span style="color: #666;">유형:</span>
-                        <span style="font-weight: 500;">${typeLabels[plant.type]}</span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between;">
-                        <span style="color: #666;">위치:</span>
-                        <span style="font-weight: 500;">${plant.location}</span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between;">
-                        <span style="color: #666;">용량:</span>
-                        <span style="font-weight: 500;">${plant.capacity.toLocaleString()} kWh</span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; padding-top: 8px; border-top: 1px solid #eee;">
-                        <span style="color: #666;">현재 발전량:</span>
-                        <span style="font-weight: bold; font-size: 16px; color: ${colorMap[plant.type]};">
-                            ${plant.generation.toLocaleString()} kWh
-                        </span>
-                    </div>
-                </div>
-            </div>
-        `;
-
-        // 마우스 호버 시 툴팁 표시 (bindTooltip)
-        marker.bindTooltip(popupContent, {
-            sticky: true,
-            className: 'custom-leaflet-tooltip' // 아래 CSS를 적용하기 위한 클래스
-        });
-
-        currentMarkers.push(marker);
-    });
-}
-
-        // 필터 버튼 이벤트 리스너
+        // ===== 필터 버튼 이벤트 (현재는 수력만 있으므로 단순화) =====
         document.querySelectorAll('.filter-tab').forEach(button => {
             button.addEventListener('click', () => {
                 document.querySelector('.filter-tab.active').classList.remove('active');
                 button.classList.add('active');
-                activeFilter = button.dataset.type;
-                updateMarkers();
             });
         });
-
-        // 초기 마커 표시
-        updateMarkers();
-    // 로그인 상태 변수 (초기: false)
-    let isLoggedIn = false;
-
-    // 로그인 처리 예시
-    document.querySelector('.login-form')?.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
-
-        fetch('/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password })
-        })
-        .then(res => res.json())
-        .then(data => {
-            if(data.success){
-                alert('로그인 성공!');
-                isLoggedIn = true;
-            } else {
-                alert(data.message);
-            }
-        })
-        .catch(err => {
-            console.error(err);
-            alert('로그인 중 오류 발생');
-        });
-    });
-
-    // 게임 버튼 클릭 시 로그인 체크
-    document.querySelector('.sidebar-button[data-tab="game"]').addEventListener('click', (e) => {
-        if(!isLoggedIn){
-            e.preventDefault();
-            alert('게임을 이용하려면 먼저 로그인해야 합니다.');
-            window.location.href = 'login.html';
-        }
-    });
-
-    // 교육 버튼 클릭 시 로그인 체크
-    document.querySelector('.sidebar-button[data-tab="education"]').addEventListener('click', (e) => {
-        if(!isLoggedIn){
-            e.preventDefault();
-            alert('교육 콘텐츠를 이용하려면 먼저 로그인해야 합니다.');
-            window.location.href = 'login.html';
-        }
-    });
     </script>
 </body>
 </html>
