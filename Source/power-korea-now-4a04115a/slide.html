@@ -1,108 +1,225 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>slide</title>
-    <!-- Boxicons (사이드바 아이콘용) -->
-    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
-    <style>
-    /* 전체 레이아웃 */
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>발전소 지도 시각화</title>
+
+  <!-- Boxicons (사이드바 아이콘용) -->
+  <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- 스타일 -->
+  <style>
     body {
-        font-family: 'Arial', sans-serif;
-        background: #f5f5f5;
-        margin: 0;
-        display: flex;
-        height: 100vh;
+      font-family: 'Arial', sans-serif;
+      background: #f5f5f5;
+      margin: 0;
+      display: flex;
+      height: 100vh;
     }
 
     /* ===== 사이드바 ===== */
     .sidebar {
-        width: 140px;
-        background-color: #1a1a1a;
-        color: white;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
+      width: 140px;
+      background-color: #1a1a1a;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
 
-    /* 사이드바 버튼 기본 스타일 */
     .sidebar-button {
-        width: 100%;
-        padding: 24px 0;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 8px;
-        border: none;
-        background: transparent;
-        color: white;
-        cursor: pointer;
-        transition: all 0.2s;
+      width: 100%;
+      padding: 24px 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      border: none;
+      background: transparent;
+      color: white;
+      cursor: pointer;
+      transition: all 0.2s;
     }
 
-    /* 마우스를 올렸을 때 효과 */
     .sidebar-button:hover {
-        background-color: rgba(255, 255, 255, 0.1);
+      background-color: rgba(255, 255, 255, 0.1);
     }
 
-    /* 현재 선택된 버튼 (왼쪽 파란색 선 표시) */
     .sidebar-button.active {
-        background-color: rgba(255, 255, 255, 0.1);
-        border-left: 4px solid #0066ff;
+      background-color: rgba(255, 255, 255, 0.1);
+      border-left: 4px solid #0066ff;
     }
 
-    /* 아이콘 크기 */
     .sidebar-button i {
-        font-size: 24px;
+      font-size: 24px;
     }
 
-    /* 버튼 아래 글자 스타일 */
     .sidebar-button span {
-        font-size: 14px;
+      font-size: 14px;
     }
-    /* ===== 메인 컨텐츠 영역 ===== */
+
+    /* ===== 메인 콘텐츠 ===== */
     .main-content {
-    flex: 1;
-    padding: 20px;
-    overflow-y: auto;
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
     }
-</style>
+
+    /* 지도 영역 및 컨트롤 스타일 */
+    .controls {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin-bottom: 15px;
+    }
+
+    select {
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+
+    #map {
+      width: 90%;
+      height: 550px;
+      margin: 0 auto;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    input[type="range"] {
+      width: 90%;
+      margin-top: 15px;
+      accent-color: purple;
+    }
+
+    .icon-bg {
+      background: white;
+      border-radius: 50%;
+      border: 2px solid black;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  </style>
 </head>
 <body>
-    <!-- ===== 사이드바 ===== -->
-    <aside class="sidebar">
-        <button class="sidebar-button" onclick="window.location.href='index.html'">
-            <i class='bx bx-map'></i>
-            <span>Map</span>
-        </button>
-        <button class="sidebar-button active" onclick="window.location.href='slide.html'">
-            <i class='bx bx-slideshow'></i>
-            <span>Slide</span>
-        </button>
-        <button class="sidebar-button" onclick="window.location.href='game.html'">
-            <i class='bx bx-game'></i>
-            <span>Game</span>
-        </button>
-        <button class="sidebar-button" onclick="window.location.href='education.html'">
-            <i class='bx bx-graduation'></i>
-            <span>Education</span>
-        </button>
-        <button class="sidebar-button" onclick="window.location.href='login.html'">
-            <i class='bx bx-log-in'></i>
-            <span>Login</span>
-        </button>
-    </aside>
-    <!-- 슬라이드 콘텐츠 -->
-        <div class="main-content" id="slideContent" style="display: none;">
-            <div class="header">
-                <h1>발전소 프레젠테이션</h1>
-                <p>대한민국 발전소 현황 및 통계</p>
-            </div>
-            <div class="slide-content">
-                <h2>준비 중입니다</h2>
-                <p>슬라이드 기능은 곧 제공될 예정입니다.</p>
-            </div>
-        </div>
+
+  <!-- ===== 사이드바 ===== -->
+  <aside class="sidebar">
+    <button class="sidebar-button active" onclick="window.location.href='slide.html'">
+      <i class='bx bx-map'></i>
+      <span>Map</span>
+    </button>
+    <button class="sidebar-button" onclick="window.location.href='game.html'">
+      <i class='bx bx-game'></i>
+      <span>Game</span>
+    </button>
+    <button class="sidebar-button" onclick="window.location.href='education.html'">
+      <i class='bx bx-graduation'></i>
+      <span>Education</span>
+    </button>
+    <button class="sidebar-button" onclick="window.location.href='login.html'">
+      <i class='bx bx-log-in'></i>
+      <span>Login</span>
+    </button>
+  </aside>
+
+  <!-- ===== 메인 콘텐츠 (지도) ===== -->
+  <div class="main-content">
+    <div class="controls">
+      <div>
+        <label>지역 선택</label><br>
+        <select id="regionSelect">
+          <option value="">전체</option>
+          <option value="목포">목포</option>
+          <option value="신안">신안</option>
+          <option value="여수">여수</option>
+          <option value="서울">서울</option>
+          <option value="부산">부산</option>
+        </select>
+      </div>
+      <div>
+        <label>발전소 유형 선택</label><br>
+        <select id="typeSelect">
+          <option value="">전체</option>
+          <option value="풍력">풍력</option>
+          <option value="태양광">태양광</option>
+          <option value="수력">수력</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="map"></div>
+    <input type="range" min="0" max="100" value="50" id="slider"/>
+  </div>
+
+  <!-- ===== 지도 스크립트 ===== -->
+  <script>
+    // 지도 초기화 (한반도 전체)
+    const map = L.map('map').setView([36.3, 127.8], 7);
+
+    // 배경 지도
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    // 발전소 더미 데이터
+    const plants = [
+      { name: "목포 풍력단지", lat: 34.811, lon: 126.392, region: "목포", type: "풍력" },
+      { name: "신안 풍력단지", lat: 34.83, lon: 126.22, region: "신안", type: "풍력" },
+      { name: "여수 태양광단지", lat: 34.74, lon: 127.74, region: "여수", type: "태양광" },
+      { name: "서울 수력발전소", lat: 37.5665, lon: 126.9780, region: "서울", type: "수력" },
+      { name: "부산 태양광단지", lat: 35.1796, lon: 129.0756, region: "부산", type: "태양광" }
+    ];
+
+    const markers = [];
+
+    // ⚡ 아이콘
+    const powerIcon = L.divIcon({
+      html: '<div class="icon-bg"><span style="color:gold;font-size:18px;">⚡</span></div>',
+      className: ''
+    });
+
+    // 마커 렌더링
+    function renderMarkers(regionFilter, typeFilter) {
+      markers.forEach(m => map.removeLayer(m));
+      markers.length = 0;
+
+      plants.forEach(p => {
+        if ((regionFilter === '' || p.region === regionFilter) &&
+            (typeFilter === '' || p.type === typeFilter)) {
+
+          const marker = L.marker([p.lat, p.lon], { icon: powerIcon })
+            .addTo(map)
+            .bindPopup(`<b>${p.name}</b><br>${p.type} 발전소`);
+          markers.push(marker);
+        }
+      });
+    }
+
+    renderMarkers('', '');
+
+    // 필터 이벤트
+    document.getElementById('regionSelect').addEventListener('change', e => {
+      renderMarkers(e.target.value, document.getElementById('typeSelect').value);
+    });
+    document.getElementById('typeSelect').addEventListener('change', e => {
+      renderMarkers(document.getElementById('regionSelect').value, e.target.value);
+    });
+
+    // 슬라이더
+    document.getElementById('slider').addEventListener('input', e => {
+      console.log("Slider value:", e.target.value);
+    });
+  </script>
+
 </body>
 </html>
