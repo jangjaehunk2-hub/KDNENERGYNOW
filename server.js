@@ -251,6 +251,55 @@ app.get('/api/nuclear', async (req, res) => {
   }
 });
 
+// ===== 원자력발전소 발전량 조회 API =====
+app.get('/api/nuclear/power', async (req, res) => {
+  try {
+    // 1️⃣ 발전소 위치 데이터 조회
+    const plants = await pool.query(`
+      SELECT "발전소명", "호기", latitude, longitude
+      FROM public."원자력발전소현황"
+      WHERE latitude IS NOT NULL AND longitude IS NOT NULL
+    `);
+
+    // 2️⃣ 발전량 테이블 조회
+    const powerData = await pool.query(`
+      SELECT "년도", "호기", "발전량mwh"
+      FROM public."원자력발전소_호기별발전량"
+      ORDER BY "호기", "년도" ASC
+    `);
+
+    // 3️⃣ Normalize 함수 정의
+    const normalize = str => str.replace(/[^가-힣0-9]/g, ''); // 한글+숫자만 남김
+
+    // 4️⃣ 발전소 키 생성
+    const plantMap = {};
+    plants.rows.forEach(p => {
+      const key = normalize(p.발전소명 + p.호기);
+      plantMap[key] = { latitude: p.latitude, longitude: p.longitude, name: p.발전소명, unit: p.호기 };
+    });
+
+    // 5️⃣ 발전량 데이터 매핑
+    const mapped = {};
+    powerData.rows.forEach(row => {
+      const key = normalize(row.호기);
+      if (!mapped[key]) mapped[key] = [];
+      mapped[key].push({ year: row.년도, value: row.발전량mwh });
+    });
+
+    // 6️⃣ 클라이언트용 통합 객체 생성
+    const result = Object.keys(plantMap).map(key => ({
+      ...plantMap[key],
+      powerData: mapped[key] || []  // 발전량 데이터가 없으면 빈 배열
+    }));
+
+    res.json(result);
+
+  } catch (err) {
+    console.error('❌ [원자력발전소_호기별발전량] 조회 오류:', err);
+    res.status(500).json({ success: false, message: 'DB 조회 실패', error: err.message });
+  }
+});
+
 // ===== 디버깅용 전체 발전소 현황 API =====
 app.get('/api/debug/all-plants', async (req, res) => {
   try {

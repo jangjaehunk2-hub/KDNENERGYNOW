@@ -207,6 +207,7 @@
         let currentMarkers = [];
         let allPowerPlants = []; // 모든 발전소 데이터
         let currentFilter = 'all'; // 현재 선택된 필터
+        let nuclearPowerData = {}; // 발전량 저장용 객체
         const colorMap = { 
             hydro: "#00aaff",
             nuclear: "#ff3366"
@@ -283,10 +284,25 @@
             }
         }
 
+        // ===== 원자력 발전량 데이터 가져오기 =====
+        async function fetchNuclearPowerData() {
+            try {
+                const res = await fetch('http://localhost:3000/api/nuclear/power');
+                const data = await res.json();
+                data.forEach(item => {
+                    const name = item["호기"];
+                    if (!nuclearPowerData[name]) nuclearPowerData[name] = [];
+                    nuclearPowerData[name].push({ year: item["년도"], value: item["발전량mwh"] });
+                });
+            } catch (err) { console.error(err); }
+        }
+
+
         // ===== 모든 발전소 데이터 로드 =====
         async function loadAllPlants() {
             console.log('\n🔄 ===== 발전소 데이터 로드 시작 =====');
-            
+
+            await fetchNuclearPowerData();
             const [hydroPlants, nuclearPlants] = await Promise.all([
                 fetchHydroPlants(),
                 fetchNuclearPlants()
@@ -307,6 +323,7 @@
             document.getElementById('loadingMessage').style.display = 'none';
             updateMarkers();
         }
+
 
         // ===== 마커 업데이트 함수 =====
         function updateMarkers() {
@@ -367,6 +384,35 @@
 
                 // 마커 생성
                 const marker = L.marker([plant.latitude, plant.longitude], { icon }).addTo(map);
+
+                // 마커 생성 후 팝업 내용 설정
+                let popupHTML = `<div style="font-family: system-ui; min-width: 230px;">`;
+                popupHTML += `<h3 style="margin-bottom: 8px;">${plant.name}</h3>`;
+
+                // 원자력 발전소이면 발전량 데이터만 팝업에 표시
+                if (plant.type === 'nuclear') {
+                    const normalizeName = str => str.replace(/호기/g, '').replace(/\s/g, '');
+                    const plantKey = normalizeName(plant.unit);        // ex: "고리 #1" → "고리1"
+                    const powerKey = Object.keys(nuclearPowerData).find(k => normalizeName(k) === plantKey);
+                    const powerData = nuclearPowerData[powerKey];
+                    if (powerData && powerData.length > 0) {
+                        popupHTML += `<table border="1" style="width:100%;border-collapse:collapse;text-align:center;">
+                                        <tr><th>년도</th><th>발전량 (MWh)</th></tr>`;
+                        powerData.forEach(row => {
+                            popupHTML += `<tr><td>${row.year}</td><td>${row.value}</td></tr>`;
+                        });
+                        popupHTML += `</table>`;
+                    } else {
+                        popupHTML += `<p style="color:#777;">발전량 데이터 없음</p>`;
+                    }
+                } else {
+                    popupHTML += `<p style="color:#777;">발전량 정보 없음</p>`;
+                }
+
+                popupHTML += `</div>`;
+
+                // 마커 팝업 바인딩
+                marker.bindPopup(popupHTML);
 
                 // 팝업 내용 (발전소 타입에 따라 다르게)
                 let popupContent = '';
