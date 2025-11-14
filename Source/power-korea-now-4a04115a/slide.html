@@ -15,7 +15,7 @@
   <!-- 스타일 -->
   <style>
     body {
-      font-family: 'Arial', sans-serif;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background: #f5f5f5;
       margin: 0;
       display: flex;
@@ -66,47 +66,221 @@
     /* ===== 메인 콘텐츠 ===== */
     .main-content {
       flex: 1;
-      padding: 20px;
+      padding: 40px;
       overflow-y: auto;
     }
 
-    /* 지도 영역 및 컨트롤 스타일 */
-    .controls {
-      display: flex;
-      justify-content: center;
-      gap: 20px;
-      margin-bottom: 15px;
+    .header {
+      margin-bottom: 30px;
     }
 
-    select {
-      padding: 8px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
+    .header h1 {
+      font-size: 2.5rem;
+      margin: 0 0 10px 0;
+      color: #333;
+    }
+
+    .header p {
+      font-size: 1.2rem;
+      color: #666;
+      margin: 0;
+    }
+
+    /* 지도 영역 및 컨트롤 스타일 */
+    .filter-tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      justify-content: center;
+    }
+
+    .filter-tab {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 20px;
+      background: white;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.3s;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .filter-tab:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+
+    .filter-tab.active {
+      background: #0066ff;
+      color: white;
+    }
+
+    .map-container {
+      width: 100%;
+      height: 550px;
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      position: relative;
     }
 
     #map {
-      width: 90%;
-      height: 550px;
-      margin: 0 auto;
-      border-radius: 10px;
-      overflow: hidden;
+      width: 100%;
+      height: 100%;
+    }
+
+    .stats-card {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      min-width: 200px;
+      z-index: 1000;
+    }
+
+    .stats-title {
+      font-size: 1.1rem;
+      font-weight: bold;
+      margin-bottom: 15px;
+      color: #333;
+    }
+
+    .stats-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      font-size: 14px;
+    }
+
+    .stats-label {
+      color: #666;
+    }
+
+    .stats-value {
+      font-weight: bold;
+    }
+
+    .power-type-hydro { color: #00aaff; }
+    .power-type-nuclear { color: #ff3366; }
+
+    .custom-leaflet-tooltip {
+      background-color: rgba(0, 0, 0, 0.8) !important;
+      border: none !important;
+      border-radius: 8px !important;
+      padding: 12px !important;
+      color: white !important;
+      font-size: 14px !important;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
+    }
+
+    .custom-leaflet-tooltip::before {
+      border-top-color: rgba(0, 0, 0, 0.8) !important;
+    }
+
+    .leaflet-popup-content-wrapper {
+      border-radius: 12px !important;
+      padding: 0 !important;
+    }
+
+    .leaflet-popup-content {
+      margin: 0 !important;
+      width: auto !important;
     }
 
     input[type="range"] {
-      width: 90%;
-      margin-top: 15px;
-      accent-color: purple;
+      width: 80%;
+      margin: 20px auto;
+      display: block;
+      accent-color: #0066ff;
     }
 
-    .icon-bg {
-      background: white;
-      border-radius: 50%;
-      border: 2px solid black;
-      width: 32px;
-      height: 32px;
+    .slider-controls {
       display: flex;
       align-items: center;
       justify-content: center;
+      gap: 20px;
+      margin-top: 20px;
+    }
+
+    .slider-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 80%;
+      position: relative;
+    }
+
+    .year-display {
+      font-size: 24px;
+      font-weight: bold;
+      color: #0066ff;
+      margin-bottom: 10px;
+    }
+
+    .year-markers {
+      width: 100%;
+      position: relative;
+      height: 30px;
+      margin-bottom: 5px;
+    }
+
+    .year-marker {
+      position: absolute;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transform: translateX(-50%);
+    }
+
+    .year-marker-line {
+      width: 2px;
+      height: 10px;
+      background-color: #999;
+    }
+
+    .year-marker-label {
+      font-size: 12px;
+      color: #666;
+      margin-top: 3px;
+    }
+
+    .year-range {
+      font-size: 14px;
+      color: #666;
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+      margin-top: 5px;
+    }
+
+    .play-button {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      border: none;
+      background: #0066ff;
+      color: white;
+      font-size: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s;
+      box-shadow: 0 2px 8px rgba(0,102,255,0.3);
+    }
+
+    .play-button:hover {
+      background: #0052cc;
+      transform: scale(1.05);
+      box-shadow: 0 4px 12px rgba(0,102,255,0.4);
+    }
+
+    .play-button:active {
+      transform: scale(0.95);
     }
   </style>
 </head>
@@ -138,90 +312,476 @@
 
   <!-- ===== 메인 콘텐츠 (지도) ===== -->
   <div class="main-content">
-    <div class="controls">
-      <div>
-        <label>지역 선택</label><br>
-        <select id="regionSelect">
-          <option value="">전체</option>
-          <option value="목포">목포</option>
-          <option value="신안">신안</option>
-          <option value="여수">여수</option>
-          <option value="서울">서울</option>
-          <option value="부산">부산</option>
-        </select>
-      </div>
-      <div>
-        <label>발전소 유형 선택</label><br>
-        <select id="typeSelect">
-          <option value="">전체</option>
-          <option value="풍력">풍력</option>
-          <option value="태양광">태양광</option>
-          <option value="수력">수력</option>
-        </select>
+    <div class="header">
+      <h1>대한민국 발전소 현황</h1>
+      <p>실시간 발전소 위치 모니터링 시스템</p>
+    </div>
+
+    <div class="filter-tabs">
+      <button class="filter-tab active" data-type="all">전체</button>
+      <button class="filter-tab" data-type="수력">수력</button>
+      <button class="filter-tab" data-type="원자력">원자력</button>
+    </div>
+
+    <div class="map-container">
+      <div id="map"></div>
+      <div class="stats-card">
+        <div class="stats-title">발전소 현황</div>
+        <div class="stats-row">
+          <span class="stats-label">수력 발전소:</span>
+          <span class="stats-value power-type-hydro" id="hydroPlants">0개</span>
+        </div>
+        <div class="stats-row">
+          <span class="stats-label">원자력 발전소:</span>
+          <span class="stats-value power-type-nuclear" id="nuclearPlants">0개</span>
+        </div>
+        <div class="stats-row" style="padding-top: 10px; border-top: 1px solid #eee;">
+          <span class="stats-label">총 발전소:</span>
+          <span class="stats-value" id="totalPlants">0개</span>
+        </div>
       </div>
     </div>
 
-    <div id="map"></div>
-    <input type="range" min="0" max="100" value="50" id="slider"/>
+    <div class="slider-controls">
+      <button class="play-button" id="playButton">
+        <i class='bx bx-play'></i>
+      </button>
+      <div class="slider-container">
+        <div class="year-display" id="yearDisplay">2014</div>
+        <div class="year-markers" id="yearMarkers"></div>
+        <input type="range" min="2014" max="2024" value="2014" step="1" id="slider"/>
+        <div class="year-range">
+          <span>2014년</span>
+          <span>2024년</span>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- ===== 지도 스크립트 ===== -->
   <script>
-    // 지도 초기화 (한반도 전체)
-    const map = L.map('map').setView([36.3, 127.8], 7);
-
-    // 배경 지도
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
-
-    // 발전소 더미 데이터
-    const plants = [
-      { name: "목포 풍력단지", lat: 34.811, lon: 126.392, region: "목포", type: "풍력" },
-      { name: "신안 풍력단지", lat: 34.83, lon: 126.22, region: "신안", type: "풍력" },
-      { name: "여수 태양광단지", lat: 34.74, lon: 127.74, region: "여수", type: "태양광" },
-      { name: "서울 수력발전소", lat: 37.5665, lon: 126.9780, region: "서울", type: "수력" },
-      { name: "부산 태양광단지", lat: 35.1796, lon: 129.0756, region: "부산", type: "태양광" }
-    ];
-
+    // ===== 전역 변수 =====
+    let map;
+    let allPowerPlants = [];
+    let powerGenerationData = {}; // 발전량 데이터 저장
     const markers = [];
+    let currentFilter = 'all';
+    let currentYear = 2014;
 
-    // ⚡ 아이콘
-    const powerIcon = L.divIcon({
-      html: '<div class="icon-bg"><span style="color:gold;font-size:18px;">⚡</span></div>',
-      className: ''
-    });
+    // ===== 도넛 그래프 생성 함수 =====
+    function createDonutChart(plant, year) {
+      const size = 50;
+      const strokeWidth = 6;
+      const radius = (size / 2) - (strokeWidth / 2);
+      const circumference = 2 * Math.PI * radius;
+      
+      // 발전소명 + 호기 조합으로 키 생성
+      const unitKey = plant.name + (plant.unit || '');
+      const yearlyData = powerGenerationData[unitKey];
+      
+      // 해당 연도의 발전량 가져오기
+      let powerValue = 0;
+      if (yearlyData) {
+        const yearData = yearlyData.find(d => d.year === year);
+        powerValue = yearData ? parseFloat(yearData.value) : 0;
+      }
+      
+      // 최대값 기준으로 정규화 (원자력 발전소 최대 발전량 약 10,000,000 MWh)
+      const maxPower = 10000000;
+      const percentage = Math.min(powerValue / maxPower, 1);
+      const dashOffset = circumference * (1 - percentage);
+      
+      const color = plant.type === '수력' ? '#00aaff' : '#ff3366';
+      
+      return `
+        <svg width="${size}" height="${size}" style="transform: rotate(-90deg);">
+          <!-- 배경 원 (회색) -->
+          <circle
+            cx="${size/2}"
+            cy="${size/2}"
+            r="${radius}"
+            fill="none"
+            stroke="#e0e0e0"
+            stroke-width="${strokeWidth}"
+          />
+          <!-- 데이터 원 (색상) -->
+          <circle
+            cx="${size/2}"
+            cy="${size/2}"
+            r="${radius}"
+            fill="none"
+            stroke="${color}"
+            stroke-width="${strokeWidth}"
+            stroke-dasharray="${circumference}"
+            stroke-dashoffset="${dashOffset}"
+            stroke-linecap="round"
+            style="transition: stroke-dashoffset 0.5s ease;"
+          />
+          <!-- 중앙 원 -->
+          <circle
+            cx="${size/2}"
+            cy="${size/2}"
+            r="${radius - strokeWidth}"
+            fill="${color}"
+          />
+        </svg>
+      `;
+    }
+
+    // ===== 지도 초기화 =====
+    function initMap() {
+      map = L.map('map', {
+        center: [36.3, 127.8],
+        zoom: 7,
+        minZoom: 6,
+        maxZoom: 12
+      });
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+      }).addTo(map);
+    }
+
+    // ===== DB에서 수력발전소 데이터 가져오기 =====
+    async function fetchHydroPlants() {
+      try {
+        const response = await fetch('http://localhost:3000/api/hydro');
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        
+        const data = await response.json();
+        console.log('✅ 수력발전소 데이터:', data.length + '개');
+        
+        return data.map((plant, index) => ({
+          id: 'hydro_' + index,
+          name: plant.발전소명 || '이름 없음',
+          type: '수력',
+          region: plant.위치_수계 || '위치 정보 없음',
+          operator: plant.운영기관 || '정보 없음',
+          latitude: parseFloat(plant.latitude),
+          longitude: parseFloat(plant.longitude)
+        }));
+      } catch (error) {
+        console.error('❌ 수력발전소 데이터 로드 실패:', error);
+        return [];
+      }
+    }
+
+    // ===== DB에서 원자력발전소 데이터 가져오기 =====
+    async function fetchNuclearPlants() {
+      try {
+        const response = await fetch('http://localhost:3000/api/nuclear');
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        
+        const data = await response.json();
+        console.log('✅ 원자력발전소 데이터:', data.length + '개');
+        
+        return data.map((plant, index) => ({
+          id: 'nuclear_' + index,
+          name: plant.발전소명 || '이름 없음',
+          type: '원자력',
+          region: '정보 없음',
+          unit: plant.호기 || '-',
+          reactorType: plant.노형 || '정보 없음',
+          capacity: plant.용량1mwe || plant.용량1MWe || '-',
+          operationDate: plant.상업운전개시일 || '정보 없음',
+          latitude: parseFloat(plant.latitude),
+          longitude: parseFloat(plant.longitude)
+        }));
+      } catch (error) {
+        console.error('❌ 원자력발전소 데이터 로드 실패:', error);
+        return [];
+      }
+    }
+
+    // ===== 발전량 데이터 가져오기 =====
+    async function fetchPowerGenerationData() {
+      try {
+        const response = await fetch('http://localhost:3000/api/nuclear/power');
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        
+        const data = await response.json();
+        powerGenerationData = data;
+        console.log('✅ 발전량 데이터 로드 완료:', Object.keys(data).length + '개 호기');
+      } catch (error) {
+        console.error('❌ 발전량 데이터 로드 실패:', error);
+      }
+    }
+
+    // ===== 모든 발전소 데이터 로드 =====
+    async function loadAllPlants() {
+      console.log('\n🔄 ===== 발전소 데이터 로드 시작 =====');
+
+      const [hydroPlants, nuclearPlants] = await Promise.all([
+        fetchHydroPlants(),
+        fetchNuclearPlants(),
+        fetchPowerGenerationData()
+      ]);
+
+      console.log('\n📊 ===== 로드 결과 =====');
+      console.log(`수력발전소: ${hydroPlants.length}개`);
+      console.log(`원자력발전소: ${nuclearPlants.length}개`);
+      console.log(`총합: ${hydroPlants.length + nuclearPlants.length}개`);
+
+      allPowerPlants = [...hydroPlants, ...nuclearPlants];
+      
+      renderMarkers('all', currentYear);
+    }
 
     // 마커 렌더링
-    function renderMarkers(regionFilter, typeFilter) {
+    function renderMarkers(typeFilter, year) {
+      // 기존 마커 제거
       markers.forEach(m => map.removeLayer(m));
       markers.length = 0;
 
-      plants.forEach(p => {
-        if ((regionFilter === '' || p.region === regionFilter) &&
-            (typeFilter === '' || p.type === typeFilter)) {
+      // 필터링
+      let filteredPlants = allPowerPlants;
+      if (typeFilter !== 'all') {
+        filteredPlants = allPowerPlants.filter(p => p.type === typeFilter);
+      }
 
-          const marker = L.marker([p.lat, p.lon], { icon: powerIcon })
-            .addTo(map)
-            .bindPopup(`<b>${p.name}</b><br>${p.type} 발전소`);
-          markers.push(marker);
+      // 통계 업데이트
+      const hydroCount = allPowerPlants.filter(p => p.type === '수력').length;
+      const nuclearCount = allPowerPlants.filter(p => p.type === '원자력').length;
+      
+      document.getElementById('hydroPlants').textContent = `${hydroCount}개`;
+      document.getElementById('nuclearPlants').textContent = `${nuclearCount}개`;
+      document.getElementById('totalPlants').textContent = `${allPowerPlants.length}개`;
+
+      // 마커 생성
+      filteredPlants.forEach(p => {
+        if (!p.latitude || !p.longitude || isNaN(p.latitude) || isNaN(p.longitude)) {
+          console.warn(`⚠️ ${p.name}: 유효하지 않은 좌표`);
+          return;
         }
+
+        const color = p.type === '수력' ? '#00aaff' : '#ff3366';
+
+        // 도넛 차트 아이콘 생성
+        const icon = L.divIcon({
+          className: 'custom-marker',
+          html: createDonutChart(p, year),
+          iconSize: [50, 50],
+          iconAnchor: [25, 25]
+        });
+
+        const marker = L.marker([p.latitude, p.longitude], { icon }).addTo(map);
+
+        // 툴팁
+        let tooltipContent = '';
+        
+        if (p.type === '수력') {
+          tooltipContent = `
+            <div style="min-width: 180px;">
+              <div style="font-weight: bold; margin-bottom: 8px; font-size: 15px;">${p.name}</div>
+              <div style="font-size: 13px; line-height: 1.6;">
+                <div style="color: ${color};">● ${p.type}발전</div>
+                <div style="opacity: 0.9;">운영: ${p.operator}</div>
+                <div style="opacity: 0.9;">위치: ${p.region}</div>
+              </div>
+            </div>
+          `;
+        } else if (p.type === '원자력') {
+          const unitKey = p.name + (p.unit || '');
+          const yearlyData = powerGenerationData[unitKey];
+          let powerValue = 0;
+          if (yearlyData) {
+            const yearData = yearlyData.find(d => d.year === year);
+            powerValue = yearData ? parseFloat(yearData.value).toLocaleString() : 0;
+          }
+          
+          tooltipContent = `
+            <div style="min-width: 180px;">
+              <div style="font-weight: bold; margin-bottom: 8px; font-size: 15px;">${p.name}</div>
+              <div style="font-size: 13px; line-height: 1.6;">
+                <div style="color: ${color};">● ${p.type}발전</div>
+                <div style="opacity: 0.9;">호기: ${p.unit}</div>
+                <div style="opacity: 0.9;">노형: ${p.reactorType}</div>
+                <div style="opacity: 0.9;">용량: ${p.capacity} MWe</div>
+                <div style="opacity: 0.9;">${year}년 발전량: ${powerValue} MWh</div>
+              </div>
+            </div>
+          `;
+        }
+
+        marker.bindTooltip(tooltipContent, {
+          direction: 'top',
+          offset: [0, -30],
+          className: 'custom-leaflet-tooltip'
+        });
+
+        // 팝업
+        let popupHTML = '';
+        
+        if (p.type === '수력') {
+          popupHTML = `
+            <div style="font-family: system-ui; min-width: 250px; padding: 20px;">
+              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                <div style="width: 12px; height: 12px; background-color: ${color}; border-radius: 50%;"></div>
+                <h3 style="font-weight: bold; font-size: 16px; margin: 0;">${p.name}</h3>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 8px; font-size: 14px;">
+                <div style="display: flex; justify-content: space-between;">
+                  <span style="color: #666;">유형:</span>
+                  <span style="font-weight: 500;">${p.type}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                  <span style="color: #666;">운영기관:</span>
+                  <span style="font-weight: 500;">${p.operator}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                  <span style="color: #666;">위치:</span>
+                  <span style="font-weight: 500;">${p.region}</span>
+                </div>
+              </div>
+            </div>
+          `;
+        } else if (p.type === '원자력') {
+          popupHTML = `
+            <div style="font-family: system-ui; min-width: 250px; padding: 20px;">
+              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                <div style="width: 12px; height: 12px; background-color: ${color}; border-radius: 50%;"></div>
+                <h3 style="font-weight: bold; font-size: 16px; margin: 0;">${p.name} ${p.unit}</h3>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 8px; font-size: 14px;">
+                <div style="display: flex; justify-content: space-between;">
+                  <span style="color: #666;">유형:</span>
+                  <span style="font-weight: 500;">${p.type}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                  <span style="color: #666;">호기:</span>
+                  <span style="font-weight: 500;">${p.unit}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                  <span style="color: #666;">노형:</span>
+                  <span style="font-weight: 500;">${p.reactorType}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                  <span style="color: #666;">용량:</span>
+                  <span style="font-weight: 500;">${p.capacity} MWe</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                  <span style="color: #666;">상업운전:</span>
+                  <span style="font-weight: 500;">${p.operationDate}</span>
+                </div>
+              </div>
+            </div>
+          `;
+        }
+
+        marker.bindPopup(popupHTML, {
+          maxWidth: 300,
+          className: 'custom-popup'
+        });
+
+        markers.push(marker);
       });
+
+      console.log(`✅ ${markers.length}개의 마커가 표시되었습니다.`);
     }
 
-    renderMarkers('', '');
-
-    // 필터 이벤트
-    document.getElementById('regionSelect').addEventListener('change', e => {
-      renderMarkers(e.target.value, document.getElementById('typeSelect').value);
+    // ===== 필터 버튼 이벤트 =====
+    document.querySelectorAll('.filter-tab').forEach(button => {
+      button.addEventListener('click', () => {
+        document.querySelector('.filter-tab.active').classList.remove('active');
+        button.classList.add('active');
+        
+        currentFilter = button.dataset.type;
+        renderMarkers(currentFilter, currentYear);
+      });
     });
-    document.getElementById('typeSelect').addEventListener('change', e => {
-      renderMarkers(document.getElementById('regionSelect').value, e.target.value);
+
+    // 슬라이더 및 연도 관리
+    const slider = document.getElementById('slider');
+    const playButton = document.getElementById('playButton');
+    const yearDisplay = document.getElementById('yearDisplay');
+    const yearMarkers = document.getElementById('yearMarkers');
+    let isPlaying = false;
+    let playInterval = null;
+
+    const MIN_YEAR = 2014;
+    const MAX_YEAR = 2024;
+
+    // 연도 마커 생성
+    function createYearMarkers() {
+      const totalYears = MAX_YEAR - MIN_YEAR;
+      for (let i = 0; i <= totalYears; i++) {
+        const year = MIN_YEAR + i;
+        const percentage = 10 + (i * 80 / totalYears);
+        
+        const marker = document.createElement('div');
+        marker.className = 'year-marker';
+        marker.style.left = percentage + '%';
+        
+        marker.innerHTML = `
+          <div class="year-marker-line"></div>
+          <div class="year-marker-label">${year}</div>
+        `;
+        
+        yearMarkers.appendChild(marker);
+      }
+    }
+
+    // 연도 표시 업데이트
+    function updateYearDisplay(value) {
+      currentYear = parseInt(value);
+      yearDisplay.textContent = currentYear + '년';
+      renderMarkers(currentFilter, currentYear);
+    }
+
+    // 슬라이더 입력 이벤트
+    slider.addEventListener('input', e => {
+      updateYearDisplay(e.target.value);
+      if (isPlaying) {
+        stopAnimation();
+      }
     });
 
-    // 슬라이더
-    document.getElementById('slider').addEventListener('input', e => {
-      console.log("Slider value:", e.target.value);
+    // 애니메이션 정지
+    function stopAnimation() {
+      isPlaying = false;
+      if (playInterval) {
+        clearInterval(playInterval);
+        playInterval = null;
+      }
+      playButton.innerHTML = '<i class="bx bx-play"></i>';
+    }
+
+    // 재생 버튼 클릭
+    playButton.addEventListener('click', () => {
+      if (isPlaying) {
+        stopAnimation();
+      } else {
+        const currentValue = parseInt(slider.value);
+        if (currentValue >= MAX_YEAR) {
+          slider.value = MIN_YEAR;
+          updateYearDisplay(MIN_YEAR);
+        }
+        
+        isPlaying = true;
+        playButton.innerHTML = '<i class="bx bx-pause"></i>';
+        
+        playInterval = setInterval(() => {
+          const newValue = parseInt(slider.value) + 1;
+          if (newValue > MAX_YEAR) {
+            stopAnimation();
+            slider.value = MAX_YEAR;
+            updateYearDisplay(MAX_YEAR);
+          } else {
+            slider.value = newValue;
+            updateYearDisplay(newValue);
+          }
+        }, 1500);
+      }
+    });
+
+    // 초기 연도 표시
+    updateYearDisplay(slider.value);
+    createYearMarkers();
+
+    // ===== 페이지 로드 시 실행 =====
+    window.addEventListener('DOMContentLoaded', () => {
+      initMap();
+      loadAllPlants();
     });
   </script>
 
