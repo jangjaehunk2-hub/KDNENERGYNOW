@@ -1,0 +1,260 @@
+const express = require('express');
+const bodyParser = require('body-parser');
+const cors = require('cors');
+const { Pool } = require('pg');
+const path = require('path');
+
+const app = express();
+// Middleware 설정
+app.use(bodyParser.json());
+app.use(cors());
+
+// 정적 파일 제공 설정
+app.use(express.static('.')); 
+
+// PostgreSQL 연결 설정
+const pool = new Pool({
+  user: 'postgres',
+  host: "116.122.157.223",
+  database: 'postgres',
+  password: '1',
+  port: 5432
+});
+
+// DB 연결 테스트
+pool.query('SELECT NOW()', (err, res) => {
+    if (err) {
+        console.error('⚠️ PostgreSQL 연결 실패:', err.stack);
+    } else {
+        console.log('✅ PostgreSQL DB 연결 성공!');
+    }
+});
+
+// ===== 회원가입 API =====
+app.post('/signup', async (req, res) => {
+  const { user_id, nick_name, email, password } = req.body;
+  try {
+    const result = await pool.query(
+      `INSERT INTO member (user_id, nick_name, pass, email, score, admin_flag)
+       VALUES ($1, $2, $3, $4, 0, false)
+       RETURNING user_id`,
+      [user_id, nick_name, password, email]
+    );
+    res.json({ success: true, message: '회원가입 완료!', user: result.rows[0] });
+  } catch (err) {
+    if (err.code === '23505') { 
+        res.status(409).json({ success: false, message: '회원가입 실패: 이미 존재하는 사용자 ID 또는 이메일입니다.' });
+    } else {
+        console.error('회원가입 서버 오류:', err);
+        res.status(500).json({ success: false, message: '회원가입 실패: 서버 오류' });
+    }
+  }
+});
+
+// ===== 로그인 API =====
+app.post('/login', async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    const result = await pool.query(
+      `SELECT user_id, nick_name, email, score, admin_flag
+       FROM member
+       WHERE email=$1 AND pass=$2`,
+      [email, password]
+    );
+    if (result.rows.length > 0) {
+      res.json({ success: true, message: '로그인 성공!', user: result.rows[0] });
+    } else {
+      res.status(401).json({ success: false, message: '이메일 또는 비밀번호가 틀렸습니다.' });
+    }
+  } catch (err) {
+    console.error('로그인 서버 오류:', err);
+    res.status(500).json({ success: false, message: '서버 오류' });
+  }
+});
+
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+// ===== 점수 업데이트 API =====
+app.post('/update-score', async (req, res) => {
+  const { user_id, score } = req.body;
+  if (!user_id || score === undefined) {
+    return res.status(400).json({ success: false, message: 'user_id 또는 score 누락' });
+  }
+
+  try {
+    const query = `
+      UPDATE member
+      SET score = COALESCE(score, 0) + $1
+      WHERE user_id = $2
+      RETURNING score
+    `;
+    const values = [score, user_id];
+    const result = await pool.query(query, values);
+
+    if (result.rows.length > 0) {
+      res.json({ success: true, newScore: result.rows[0].score });
+    } else {
+      res.status(404).json({ success: false, message: '해당 유저를 찾을 수 없습니다.' });
+    }
+  } catch (err) {
+    console.error('점수 업데이트 서버 오류:', err);
+    res.status(500).json({ success: false, message: '서버 오류' });
+  }
+});
+
+// ===== 점수 조회 API =====
+app.get('/get-score', async (req, res) => {
+  const user_id = req.query.user_id;
+  if (!user_id)
+    return res.status(400).json({ success: false, message: 'user_id 누락' });
+
+  try {
+    const result = await pool.query('SELECT score FROM member WHERE user_id=$1', [user_id]);
+    if (result.rows.length > 0) {
+      res.json({ success: true, score: result.rows[0].score });
+    } else {
+      res.status(404).json({ success: false, message: '해당 유저 없음' });
+    }
+  } catch (err) {
+    console.error('점수 조회 서버 오류:', err);
+    res.status(500).json({ success: false, message: '서버 오류' });
+  }
+});
+
+// ===== 모든 발전소 조회 =====
+app.get('/api/plants', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT plant_id, plant_name, plant_type, capacity, latitude, longitude, adress, business, remark
+      FROM public.power_plant
+      WHERE latitude IS NOT NULL 
+      AND longitude IS NOT NULL
+    `);
+
+    console.log('\n🔍 [/api/plants] 조회 결과:');
+    console.log(`총 ${result.rows.length}개 발전소`);
+    console.log('📋 샘플 데이터 (첫 5개):');
+    result.rows.slice(0, 5).forEach((row, idx) => {
+      console.log(`${idx + 1}. 이름: ${row.plant_name} | 유형: ${row.plant_type} | 좌표: (${row.latitude}, ${row.longitude})`);
+    });
+    console.log('🔑 필드명:', Object.keys(result.rows[0] || {}));
+
+    res.json(result.rows);
+  } catch (err) {
+    console.error('❌ [전체 발전소] 데이터 조회 오류:', err);
+    res.status(500).json({ success: false, message: 'DB 조회 실패', error: err.message });
+  }
+});
+
+// ===== 원자력발전소 발전량 조회 API =====
+app.get('/api/nuclear/power', async (req, res) => {
+  try {
+    // 1️⃣ 발전량 데이터 가져오기
+    const powerData = await pool.query(`
+      SELECT "발전소명", "호기명", "년도", "발전량mwh"
+      FROM public."원자력발전소_호기별발전량"
+      ORDER BY "발전소명", "호기명", "년도"
+      LIMIT 5
+    `);
+
+    console.log('\n🔍 ===== 발전량 테이블 샘플 데이터 =====');
+    powerData.rows.forEach((row, idx) => {
+      console.log(`${idx + 1}. 발전소명: "${row.발전소명}" | 호기명: "${row.호기명}" | 년도: ${row.년도}`);
+      console.log(`   합친 키: "${row.발전소명}${row.호기명}"`);
+    });
+
+    // 2️⃣ 전체 데이터 가져오기
+    const allPowerData = await pool.query(`
+      SELECT "발전소명", "호기명", "년도", "발전량mwh"
+      FROM public."원자력발전소_호기별발전량"
+      ORDER BY "발전소명", "호기명", "년도"
+    `);
+
+    // 3️⃣ 발전소명+호기명을 키로 사용하여 발전량 묶기
+    const groupedPower = {};
+    const plantUnits = {}; // 발전소별 호기 정보 저장
+    
+    allPowerData.rows.forEach(row => {
+      // "고리" + "#1" = "고리#1" 형태로 키 생성
+      const unitKey = row.발전소명 + row.호기명;
+      
+      if (!groupedPower[unitKey]) {
+        groupedPower[unitKey] = [];
+      }
+
+      groupedPower[unitKey].push({
+        year: row.년도,
+        value: row.발전량mwh
+      });
+
+      // 발전소별 호기 정보 수집
+      if (!plantUnits[row.발전소명]) {
+        plantUnits[row.발전소명] = [];
+      }
+      if (!plantUnits[row.발전소명].includes(row.호기명)) {
+        plantUnits[row.발전소명].push(row.호기명);
+      }
+    });
+
+    // 호기 정렬 (숫자 순서대로)
+    Object.keys(plantUnits).forEach(plantName => {
+      plantUnits[plantName].sort((a, b) => {
+        const numA = parseInt(a.match(/\d+/)?.[0] || 0);
+        const numB = parseInt(b.match(/\d+/)?.[0] || 0);
+        return numA - numB;
+      });
+    });
+
+    console.log('\n✅ 발전량 데이터 그룹화 완료:', Object.keys(groupedPower).length + '개 호기');
+    console.log('📋 생성된 키 샘플:', Object.keys(groupedPower).slice(0, 10));
+    console.log('\n🔌 발전소별 호기 정보:');
+    Object.entries(plantUnits).forEach(([plantName, units]) => {
+      console.log(`   ${plantName}: ${units.join(', ')}`);
+    });
+
+    // 4️⃣ 발전소명+호기명을 키로 하는 객체와 호기 정보 함께 반환
+    res.json({
+      powerData: groupedPower,
+      plantUnits: plantUnits
+    });
+
+  } catch (err) {
+    console.error('❌ [원자력발전소 발전량 조회 오류]:', err);
+    res.status(500).json({
+      success: false,
+      message: 'DB 조회 실패',
+      error: err.message
+    });
+  }
+});
+
+// ===== 디버깅용 전체 발전소 현황 API =====
+app.get('/api/debug/all-plants', async (req, res) => {
+  try {
+    const hydro = await pool.query('SELECT COUNT(*) FROM public."수력발전소"');
+    const nuclear = await pool.query('SELECT COUNT(*) FROM public."원자력발전소현황"');
+    
+    res.json({
+      수력발전소: hydro.rows[0].count,
+      원자력발전소: nuclear.rows[0].count,
+      message: '디버깅 정보'
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ===== 서버 실행 =====
+const serverPort = 3000;
+app.listen(serverPort, () => {
+  console.log(`\n✅ ========================================`);
+  console.log(`✅ Server running on http://localhost:${serverPort}`);
+  console.log(`✅ ========================================\n`);
+  console.log(`📍 API 엔드포인트:`);
+  console.log(`   - GET  /api/hydro         (수력발전소)`);
+  console.log(`   - GET  /api/nuclear       (원자력발전소)`);
+  console.log(`   - GET  /api/debug/all-plants (디버깅용)`);
+  console.log(`\n`);
+});
