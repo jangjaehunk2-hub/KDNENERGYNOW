@@ -276,7 +276,7 @@ app.get('/api/nuclear/full', async (req, res) => {
     // 1️⃣ 발전소 위치 정보 가져오기
     const plantsResult = await pool.query(`
       SELECT * 
-      FROM public."power_plant"
+      FROM public.power_plant
       WHERE plant_type = '원자력'
       AND latitude IS NOT NULL 
       AND longitude IS NOT NULL
@@ -291,42 +291,87 @@ app.get('/api/nuclear/full', async (req, res) => {
 
     // 3️⃣ 발전소별 호기 정보 그룹화
     const groupedPower = {};
-    const plantUnits = {};
+    const plantUnits = {}; // 발전소별 호기 목록
 
     powerResult.rows.forEach(row => {
-      const key = row.발전소명; // 발전소명 기준
+      const plantName = row.발전소명;
+      const unitName = row.호기명;
 
-      if (!groupedPower[key]) groupedPower[key] = [];
-      groupedPower[key].push({
+      // 발전량 데이터 그룹화
+      if (!groupedPower[plantName]) {
+        groupedPower[plantName] = [];
+      }
+      groupedPower[plantName].push({
         year: row.년도,
-        unit: row.호기명,
+        unit: unitName,
         value: row.발전량mwh
       });
+
+      // ✅ 호기 목록 추출 (중복 제거)
+      if (!plantUnits[plantName]) {
+        plantUnits[plantName] = [];
+      }
+      if (!plantUnits[plantName].includes(unitName)) {
+        plantUnits[plantName].push(unitName);
+      }
+    });
+
+    // ✅ 호기 정렬 (숫자 순서대로)
+    Object.keys(plantUnits).forEach(plantName => {
+      plantUnits[plantName].sort((a, b) => {
+        const numA = parseInt(a.match(/\d+/)?.[0] || 0);
+        const numB = parseInt(b.match(/\d+/)?.[0] || 0);
+        return numA - numB;
+      });
+    });
+
+    console.log('\n✅ 발전소별 호기 정보:');
+    Object.entries(plantUnits).forEach(([plant, units]) => {
+      console.log(`   ${plant}: ${units.join(', ')}`);
     });
 
     // 4️⃣ 발전소 위치 + 호기정보 합치기
     const result = plantsResult.rows.map(plant => {
-      const key = plant.plant_name;
+      const plantName = plant.plant_name;
 
       // 호기별 발전량 객체로 변환
       const powerByUnit = {};
-      (groupedPower[key] || []).forEach(item => {
-        if (!powerByUnit[item.unit]) powerByUnit[item.unit] = [];
-        powerByUnit[item.unit].push({ year: item.year, value: item.value });
+      (groupedPower[plantName] || []).forEach(item => {
+        if (!powerByUnit[item.unit]) {
+          powerByUnit[item.unit] = [];
+        }
+        powerByUnit[item.unit].push({ 
+          year: item.year, 
+          value: item.value 
+        });
+      });
+
+      // 각 호기별 데이터를 년도순으로 정렬
+      Object.keys(powerByUnit).forEach(unit => {
+        powerByUnit[unit].sort((a, b) => a.year - b.year);
       });
 
       return {
         ...plant,
-        units: plantUnits[key] || [],
+        units: plantUnits[plantName] || [],
         powerData: powerByUnit
       };
+    });
+
+    console.log(`\n✅ 최종 반환 데이터: ${result.length}개 발전소`);
+    result.forEach(plant => {
+      console.log(`   ${plant.plant_name}: ${plant.units.length}개 호기`);
     });
 
     res.json(result);
 
   } catch (err) {
     console.error('❌ 발전소/호기 통합 조회 오류:', err);
-    res.status(500).json({ success: false, message: 'DB 조회 실패', error: err.message });
+    res.status(500).json({ 
+      success: false, 
+      message: 'DB 조회 실패', 
+      error: err.message 
+    });
   }
 });
 
