@@ -403,17 +403,19 @@ app.get('/api/thermal/power', async (req, res) => {
 
     const data = {};
 
-    // 변환: 호기 → 일자 → 시간대
+    // 변환: 객체 → 배열 형태
     result.rows.forEach(row => {
       const unit = row.호기;
       const date = row.일자;
       const hour = row.발전시간;
       const amount = row.발전량_mwh;
 
-      if (!data[unit]) data[unit] = {};
-      if (!data[unit][date]) data[unit][date] = {};
-
-      data[unit][date][hour] = amount;
+      if (!data[unit]) data[unit] = [];
+      // 배열에 year/value 형태로 push
+      data[unit].push({
+        year: `${date} ${hour}h`,
+        value: Number(amount)
+      });
     });
 
     res.json({
@@ -430,7 +432,6 @@ app.get('/api/thermal/power', async (req, res) => {
     });
   }
 });
-
 
 // ===== 디버깅용 전체 발전소 현황 API =====
 app.get('/api/debug/all-plants', async (req, res) => {

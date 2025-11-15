@@ -357,6 +357,7 @@
                     }
                 });
             }
+            
 
         // ===== 지도 초기화 =====
         function initMap() {
@@ -830,10 +831,8 @@
                             });
                         });
                     }, 50);
-                } else if (plant.type === 'thermal') {
-                    // thermalUnits = ["CG1","CG2","CG3",...]
+                }else if (plant.type === 'thermal') {
                     const units = thermalUnits;
-
                     const tabsId = `tabs-${plant.id}`;
                     const chartId = `chart-${plant.id}`;
 
@@ -875,7 +874,7 @@
                                 btn.addEventListener("click", function() {
 
                                     const unit = this.dataset.unit;
-                                    const dataObj = thermalPowerData[unit]; // 객체 형태
+                                    const powerData = thermalPowerData[unit];
 
                                     // UI 변경
                                     document.querySelectorAll(`#${tabsId} .unit-tab`).forEach(b => {
@@ -887,28 +886,44 @@
                                     this.style.background = "#ff6347";
                                     this.style.color = "#fff";
 
-                                    if (!dataObj) {
-                                        document.getElementById(`chart-container-${plant.id}`).style.display = "none";
-                                        console.warn("🔥 데이터 없음:", unit);
+                                    // 데이터 유효성 체크
+                                    if (!Array.isArray(powerData) || powerData.length === 0) {
+                                        console.warn("🔥 화력 발전량 데이터 없음 또는 배열 아님", unit, powerData);
+                                        const tableContainer = document.getElementById(`data-table-${plant.id}`);
+                                        if (tableContainer) tableContainer.style.display = "none";
                                         return;
                                     }
 
-                                    // 객체 → 배열 변환
-                                    const timeLabels = [];
-                                    const powerValues = [];
+                                    // 테이블 영역 가져오기
+                                    const tableContainer = document.getElementById(`data-table-${plant.id}`);
+                                    const tbody = document.getElementById(`data-tbody-${plant.id}`);
 
-                                    Object.entries(dataObj).forEach(([dateStr, hourDict]) => {
-                                        Object.entries(hourDict).forEach(([hour, amount]) => {
-                                            timeLabels.push(`${dateStr} ${hour}h`);
-                                            powerValues.push(Number(amount));
-                                        });
+                                    // 기존 테이블 초기화
+                                    tbody.innerHTML = "";
+
+                                    // 데이터 채우기 (year, value)
+                                    powerData.forEach(item => {
+                                        const tr = document.createElement("tr");
+
+                                        const tdYear = document.createElement("td");
+                                        tdYear.style.textAlign = "center";
+                                        tdYear.textContent = item.year;
+
+                                        const tdValue = document.createElement("td");
+                                        tdValue.style.textAlign = "right";
+                                        tdValue.textContent = Number(item.value).toLocaleString();
+
+                                        tr.appendChild(tdYear);
+                                        tr.appendChild(tdValue);
+                                        tbody.appendChild(tr);
                                     });
 
-                                    // 차트 표시
-                                    const chartContainer = document.getElementById(`chart-container-${plant.id}`);
-                                    chartContainer.style.display = "block";
+                                    // 테이블 표시
+                                    tableContainer.style.display = "block";
 
-                                    createPowerChart(chartId, { labels: timeLabels, values: powerValues }, unit);
+                                    // 그래프는 이후에 createPowerChart 호출 가능
+                                    const chartContainer = document.getElementById(`chart-container-${plant.id}`);
+                                    chartContainer.style.display = "none"; // 현재는 숨김
                                 });
                             });
 
