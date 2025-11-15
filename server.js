@@ -179,7 +179,7 @@ app.get('/api/plants', async (req, res) => {
   }
 });
 
-// ===== 발전 데이터 조회 API =====
+// ===== 발전 데이터 조회 API (NEW) =====
 app.get('/api/power-data', async (req, res) => {
   const { plant, year, hour } = req.query;
   
@@ -276,7 +276,7 @@ app.get('/api/nuclear/full', async (req, res) => {
     // 1️⃣ 발전소 위치 정보 가져오기
     const plantsResult = await pool.query(`
       SELECT * 
-      FROM public.power_plant
+      FROM public."power_plant"
       WHERE plant_type = '원자력'
       AND latitude IS NOT NULL 
       AND longitude IS NOT NULL
@@ -302,9 +302,6 @@ app.get('/api/nuclear/full', async (req, res) => {
         unit: row.호기명,
         value: row.발전량mwh
       });
-
-      if (!plantUnits[key]) plantUnits[key] = [];
-      if (!plantUnits[key].includes(row.호기명)) plantUnits[key].push(row.호기명);
     });
 
     // 4️⃣ 발전소 위치 + 호기정보 합치기
@@ -358,7 +355,7 @@ app.listen(serverPort, () => {
   console.log(`📍 API 엔드포인트:`);
   console.log(`   - GET  /api/plants            (모든 발전소)`);
   console.log(`   - GET  /api/power-data        (발전 데이터 조회)`);
-  console.log(`   - GET  /api/nuclear/full      (원자력 발전량)`);
+  console.log(`   - GET  /api/nuclear/power     (원자력 발전량)`);
   console.log(`   - GET  /api/debug/all-plants  (디버깅용)`);
   console.log(`   - POST /signup                (회원가입)`);
   console.log(`   - POST /login                 (로그인)`);
