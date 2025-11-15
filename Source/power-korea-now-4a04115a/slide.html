@@ -391,10 +391,43 @@
             border-radius: 12px;
             padding: 20px;
             min-height: 400px;
+            position: relative;
         }
         .chart-wrapper {
             position: relative;
             height: 350px;
+        }
+        .unit-selector-container {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .unit-selector-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+            display: block;
+        }
+        .unit-selector {
+            width: 100%;
+            padding: 10px 15px;
+            font-size: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            outline: none;
+        }
+        .unit-selector:hover {
+            border-color: #0066ff;
+        }
+        .unit-selector:focus {
+            border-color: #0066ff;
+            box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.1);
         }
         .data-detail-section {
             margin-top: 30px;
@@ -776,7 +809,7 @@
             return { min: yAxisMin, max: yAxisMax };
         }
 
-        function createPowerBarChart(canvasId, powerData, year, plantName) {
+        function createPowerLineChart(canvasId, powerData, selectedUnit, plantName, maxYearIndex) {
             if (currentChart) {
                 currentChart.destroy();
                 currentChart = null;
@@ -787,24 +820,36 @@
 
             const ctx = canvas.getContext('2d');
             
-            const units = Object.keys(powerData);
-            const values = units.map(unit => {
-                const yearData = powerData[unit].find(d => d.year === year);
-                return yearData ? yearData.value : 0;
-            });
+            // 선택된 호기의 연도별 데이터 가져오기
+            const unitData = powerData[selectedUnit] || [];
+            const sortedData = unitData.sort((a, b) => a.year - b.year);
+            
+            // maxYearIndex까지만 데이터 표시
+            const filteredData = sortedData.slice(0, maxYearIndex + 1);
+            
+            const years = filteredData.map(d => d.year + '년');
+            const values = filteredData.map(d => d.value);
 
             currentChart = new Chart(ctx, {
-                type: 'bar',
+                type: 'line',
                 data: {
-                    labels: units,
+                    labels: years,
                     datasets: [{
-                        label: `${year}년 발전량 (MWh)`,
+                        label: `${formatUnitName(selectedUnit)} 발전량 (MWh)`,
                         data: values,
-                        backgroundColor: 'rgba(255, 51, 102, 0.8)',
+                        backgroundColor: 'rgba(255, 51, 102, 0.1)',
                         borderColor: '#ff3366',
-                        borderWidth: 2,
-                        borderRadius: 8,
-                        hoverBackgroundColor: 'rgba(255, 51, 102, 1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 5,
+                        pointHoverRadius: 7,
+                        pointBackgroundColor: '#ff3366',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: '#ff3366',
+                        pointHoverBorderWidth: 3,
                     }]
                 },
                 options: {
@@ -821,7 +866,7 @@
                         },
                         title: {
                             display: true,
-                            text: `${plantName} - ${year}년 호기별 발전량`,
+                            text: `${plantName} - ${formatUnitName(selectedUnit)} 연도별 발전량`,
                             font: { size: 18, weight: 'bold' },
                             padding: { top: 10, bottom: 20 }
                         },
@@ -881,6 +926,27 @@
                 `;
                 container.appendChild(marker);
             }
+        }
+
+        function createUnitSelector(powerData) {
+            const units = Object.keys(powerData).sort((a, b) => {
+                const numA = parseInt(a.match(/\d+/)?.[0] || 0);
+                const numB = parseInt(b.match(/\d+/)?.[0] || 0);
+                return numA - numB;
+            });
+            
+            const options = units.map(unit => 
+                `<option value="${unit}">${formatUnitName(unit)}</option>`
+            ).join('');
+            
+            return `
+                <div class="unit-selector-container">
+                    <label class="unit-selector-label">호기 선택</label>
+                    <select class="unit-selector" id="unitSelector">
+                        ${options}
+                    </select>
+                </div>
+            `;
         }
 
         async function displayPowerData(plant) {
@@ -983,18 +1049,24 @@
                         
                         const minYear = Math.min(...availableYears);
                         const maxYear = Math.max(...availableYears);
-                        const defaultYear = maxYear;
+                        const defaultYear = minYear;
+                        const firstUnit = Object.keys(currentPlantData).sort((a, b) => {
+                            const numA = parseInt(a.match(/\d+/)?.[0] || 0);
+                            const numB = parseInt(b.match(/\d+/)?.[0] || 0);
+                            return numA - numB;
+                        })[0];
                         
                         let html = mapHTML + `
+                            ${createUnitSelector(currentPlantData)}
                             <div class="slider-controls">
                                 <div class="slider-container" style="width: 90%;">
-                                    <div class="year-display" id="yearDisplay">${defaultYear}년</div>
+                                    <div class="year-display" id="yearDisplay">${minYear}년</div>
                                     <div class="year-markers" id="yearMarkers"></div>
                                     <input type="range" 
-                                        id="powerSlider" 
+                                        id="yearSlider" 
                                         min="0" 
                                         max="${availableYears.length - 1}" 
-                                        value="${availableYears.length - 1}" 
+                                        value="0" 
                                         step="1" />
                                     <div class="year-range">
                                         <span>${minYear}년</span>
@@ -1005,6 +1077,10 @@
                             <div class="chart-container">
                                 <div class="chart-wrapper">
                                     <canvas id="powerChart"></canvas>
+                                </div>
+                                <div id="emptyChartMessage" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; color: #999; font-size: 18px; font-weight: 500;">
+                                    <i class='bx bx-line-chart' style="font-size: 48px; margin-bottom: 10px; display: block;"></i>
+                                    슬라이더를 오른쪽으로 움직여 연도별 발전량을 확인하세요
                                 </div>
                             </div>
                             <div class="data-detail-section">
@@ -1044,27 +1120,77 @@
                         
                         createYearMarkers(minYear, maxYear);
                         
-                        const powerSlider = document.getElementById('powerSlider');
+                        const unitSelector = document.getElementById('unitSelector');
+                        const yearSlider = document.getElementById('yearSlider');
                         const yearDisplay = document.getElementById('yearDisplay');
                         const dataDetailHeader = document.getElementById('dataDetailHeader');
                         const dataDetailContent = document.getElementById('dataDetailContent');
                         const dataDetailToggle = document.getElementById('dataDetailToggle');
+                        
+                        let currentUnit = firstUnit;
+                        let currentYearIndex = 0;
                         
                         dataDetailHeader.addEventListener('click', () => {
                             dataDetailContent.classList.toggle('open');
                             dataDetailToggle.classList.toggle('open');
                         });
                         
-                        powerSlider.addEventListener('input', function() {
-                            const yearIndex = parseInt(this.value);
-                            const selectedYear = availableYears[yearIndex];
-                            yearDisplay.textContent = selectedYear + '년';
-                            createPowerBarChart('powerChart', currentPlantData, selectedYear, plant.name);
-                            updateDataTable(currentPlantData, selectedYear);
+                        // 호기 선택 이벤트
+                        unitSelector.addEventListener('change', function() {
+                            currentUnit = this.value;
+                            currentYearIndex = parseInt(yearSlider.value);
+                            
+                            if (currentYearIndex === 0) {
+                                // 슬라이더가 맨 왼쪽이면 빈 차트
+                                const emptyMessage = document.getElementById('emptyChartMessage');
+                                if (emptyMessage) {
+                                    emptyMessage.style.display = 'block';
+                                }
+                                if (currentChart) {
+                                    currentChart.destroy();
+                                    currentChart = null;
+                                }
+                            } else {
+                                // 슬라이더 위치에 따라 그래프 업데이트
+                                const emptyMessage = document.getElementById('emptyChartMessage');
+                                if (emptyMessage) {
+                                    emptyMessage.style.display = 'none';
+                                }
+                                createPowerLineChart('powerChart', currentPlantData, currentUnit, plant.name, currentYearIndex);
+                            }
+                            
+                            updateDataTableForUnit(currentPlantData, currentUnit);
                         });
                         
-                        createPowerBarChart('powerChart', currentPlantData, defaultYear, plant.name);
-                        updateDataTable(currentPlantData, defaultYear);
+                        // 연도 슬라이더 이벤트
+                        yearSlider.addEventListener('input', function() {
+                            const yearIndex = parseInt(this.value);
+                            currentYearIndex = yearIndex;
+                            const selectedYear = availableYears[yearIndex];
+                            yearDisplay.textContent = selectedYear + '년';
+                            
+                            const emptyMessage = document.getElementById('emptyChartMessage');
+                            
+                            if (yearIndex === 0) {
+                                // 맨 왼쪽: 빈 차트 표시
+                                if (emptyMessage) {
+                                    emptyMessage.style.display = 'block';
+                                }
+                                if (currentChart) {
+                                    currentChart.destroy();
+                                    currentChart = null;
+                                }
+                            } else {
+                                // 오른쪽으로 이동: 해당 연도까지의 그래프 표시
+                                if (emptyMessage) {
+                                    emptyMessage.style.display = 'none';
+                                }
+                                createPowerLineChart('powerChart', currentPlantData, currentUnit, plant.name, yearIndex);
+                            }
+                        });
+                        
+                        // 초기에는 차트를 그리지 않음 (빈 메시지만 표시)
+                        updateDataTableForUnit(currentPlantData, firstUnit);
                     } else {
                         const loadingDiv = powerDataContent.querySelector('.loading-power');
                         if (loadingDiv) {
@@ -1140,32 +1266,25 @@
             }, 100);
         }
 
-        function updateDataTable(powerData, year) {
-            const units = Object.keys(powerData).sort((a, b) => {
-                const numA = parseInt(a.match(/\d+/)?.[0] || 0);
-                const numB = parseInt(b.match(/\d+/)?.[0] || 0);
-                return numA - numB;
-            });
+        function updateDataTableForUnit(powerData, selectedUnit) {
+            const unitData = powerData[selectedUnit] || [];
+            const sortedData = unitData.sort((a, b) => a.year - b.year);
             
             const tableHtml = `
                 <table class="power-data-table">
                     <thead>
                         <tr>
-                            <th>호기</th>
+                            <th>연도</th>
                             <th>발전량 (MWh)</th>
                         </tr>
                     </thead>
                     <tbody>
-                        ${units.map(unit => {
-                            const yearData = powerData[unit].find(d => d.year === year);
-                            const value = yearData ? yearData.value : 0;
-                            return `
-                                <tr>
-                                    <td style="font-weight: 600;">${formatUnitName(unit)}</td>
-                                    <td class="power-value">${value ? value.toLocaleString() : '-'}</td>
-                                </tr>
-                            `;
-                        }).join('')}
+                        ${sortedData.map(data => `
+                            <tr>
+                                <td style="font-weight: 600;">${data.year}년</td>
+                                <td class="power-value">${data.value ? data.value.toLocaleString() : '-'}</td>
+                            </tr>
+                        `).join('')}
                     </tbody>
                 </table>
             `;
