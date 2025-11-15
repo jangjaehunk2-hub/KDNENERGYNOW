@@ -180,6 +180,7 @@ app.get('/api/plants', async (req, res) => {
 });
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 // ===== 발전 데이터 조회 API (NEW) =====
 app.get('/api/power-data', async (req, res) => {
   const { plant, year, hour } = req.query;
@@ -252,9 +253,43 @@ app.get('/api/power-data', async (req, res) => {
         source: 'database',
         year: parseInt(year),
         plant: plant
+=======
+// ===== 원자력 발전소 호기별 발전량 통합 조회 =====
+app.get('/api/nuclear/full', async (req, res) => {
+  try {
+    // 1️⃣ 발전소 위치 정보 가져오기
+    const plantsResult = await pool.query(`
+      SELECT * 
+      FROM public."power_plant"
+      WHERE plant_type = '원자력'
+      AND latitude IS NOT NULL 
+      AND longitude IS NOT NULL
+    `);
+
+    // 2️⃣ 호기별 발전량 가져오기
+    const powerResult = await pool.query(`
+      SELECT "발전소명", "호기명", "년도", "발전량mwh"
+      FROM public."원자력발전소_호기별발전량"
+      ORDER BY "발전소명", "호기명", "년도"
+    `);
+
+    // 3️⃣ 발전소별 호기 정보 그룹화
+    const groupedPower = {};
+    const plantUnits = {};
+
+    powerResult.rows.forEach(row => {
+      const key = row.발전소명; // 발전소명 기준
+
+      if (!groupedPower[key]) groupedPower[key] = [];
+      groupedPower[key].push({
+        year: row.년도,
+        unit: row.호기명,
+        value: row.발전량mwh
+>>>>>>> Stashed changes
       });
     }
 
+<<<<<<< Updated upstream
     // 다른 발전소 유형은 데이터 없음 처리
     return res.status(404).json({ 
       success: false, 
@@ -268,6 +303,35 @@ app.get('/api/power-data', async (req, res) => {
       message: 'DB 조회 실패', 
       error: err.message 
     });
+=======
+      if (!plantUnits[key]) plantUnits[key] = [];
+      if (!plantUnits[key].includes(row.호기명)) plantUnits[key].push(row.호기명);
+    });
+
+    // 4️⃣ 발전소 위치 + 호기정보 합치기
+    const result = plantsResult.rows.map(plant => {
+      const key = plant.plant_name;
+
+      // 호기별 발전량 객체로 변환
+      const powerByUnit = {};
+      (groupedPower[key] || []).forEach(item => {
+        if (!powerByUnit[item.unit]) powerByUnit[item.unit] = [];
+        powerByUnit[item.unit].push({ year: item.year, value: item.value });
+      });
+
+      return {
+        ...plant,
+        units: plantUnits[key] || [],
+        powerData: powerByUnit
+      };
+    });
+
+    res.json(result);
+
+  } catch (err) {
+    console.error('❌ 발전소/호기 통합 조회 오류:', err);
+    res.status(500).json({ success: false, message: 'DB 조회 실패', error: err.message });
+>>>>>>> Stashed changes
   }
 });
 
