@@ -1,13 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>education</title>
-    <!-- Boxicons (사이드바 아이콘용) -->
+    <title>Education</title>
     <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
     <style>
-    /* 전체 레이아웃 */
     body {
         font-family: 'Arial', sans-serif;
         background: #f5f5f5;
@@ -16,7 +14,6 @@
         height: 100vh;
     }
 
-    /* ===== 사이드바 ===== */
     .sidebar {
         position: fixed;
         left: 0;
@@ -32,7 +29,6 @@
         z-index: 1000;
     }
 
-    /* 사이드바 버튼 기본 스타일 */
     .sidebar-button {
         width: 100%;
         padding: 24px 0;
@@ -47,37 +43,201 @@
         transition: all 0.2s;
     }
 
-    /* 마우스를 올렸을 때 효과 */
     .sidebar-button:hover {
         background-color: rgba(255, 255, 255, 0.1);
     }
 
-    /* 현재 선택된 버튼 (왼쪽 파란색 선 표시) */
     .sidebar-button.active {
         background-color: rgba(255, 255, 255, 0.1);
         border-left: 4px solid #0066ff;
     }
 
-    /* 아이콘 크기 */
     .sidebar-button i {
         font-size: 24px;
     }
 
-    /* 버튼 아래 글자 스타일 */
     .sidebar-button span {
         font-size: 14px;
     }
-    /* ===== 메인 컨텐츠 영역 ===== */
+
     .main-content {
-    flex: 1;
-    padding: 20px;
-    overflow-y: auto;
-    margin-left: 140px;
+        flex: 1;
+        padding: 40px 60px;
+        overflow-y: auto;
+        margin-left: 140px;
+        max-width: 1600px;
     }
-</style>
+
+    /* 검색 영역 */
+    .search-section {
+        margin-bottom: 50px;
+    }
+
+    .search-container {
+        position: relative;
+        max-width: 900px;
+        margin: 0 auto;
+    }
+
+    .menu-icon {
+        position: absolute;
+        left: 20px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 24px;
+        color: #666;
+        cursor: pointer;
+    }
+
+    .search-box {
+        width: 100%;
+        padding: 18px 60px 18px 60px;
+        font-size: 16px;
+        border: none;
+        border-radius: 30px;
+        background: #e8e8f0;
+        outline: none;
+        transition: all 0.3s;
+    }
+
+    .search-box:focus {
+        background: #dcdce8;
+    }
+
+    .search-icon {
+        position: absolute;
+        right: 20px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 24px;
+        color: #666;
+        cursor: pointer;
+    }
+
+    /* 콘텐츠 그리드 */
+    .content-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 30px;
+        margin-bottom: 40px;
+    }
+
+    .content-item {
+        background: white;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s;
+        cursor: pointer;
+    }
+
+    .content-item:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+    }
+
+    /* 썸네일 영역 */
+    .thumbnail-container {
+        position: relative;
+        width: 100%;
+        padding-top: 56.25%;
+        overflow: hidden;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .thumbnail-placeholder {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: white;
+        font-size: 48px;
+    }
+
+    /* 콘텐츠 정보 */
+    .content-info {
+        padding: 20px;
+    }
+
+    .content-description {
+        font-size: 15px;
+        color: #333;
+        margin-bottom: 15px;
+        min-height: 60px;
+        line-height: 1.5;
+    }
+
+    .content-link {
+        display: block;
+        font-size: 13px;
+        color: #0066ff;
+        text-decoration: none;
+        margin-bottom: 15px;
+        word-break: break-all;
+        padding: 8px;
+        background: #f0f7ff;
+        border-radius: 8px;
+    }
+
+    .content-link:hover {
+        background: #e0efff;
+    }
+
+    /* 태그 */
+    .tag-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .tag {
+        padding: 6px 12px;
+        background: #f0f0f0;
+        border-radius: 12px;
+        font-size: 13px;
+        color: #666;
+    }
+
+    /* 검색 결과 없음 */
+    .no-results {
+        text-align: center;
+        padding: 80px 20px;
+        color: #666;
+        grid-column: 1/-1;
+    }
+
+    .no-results i {
+        font-size: 64px;
+        margin-bottom: 20px;
+        color: #ddd;
+    }
+
+    .no-results p {
+        font-size: 18px;
+    }
+
+    /* 반응형 */
+    @media (max-width: 1200px) {
+        .content-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (max-width: 768px) {
+        .content-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .main-content {
+            padding: 20px;
+        }
+    }
+    </style>
 </head>
 <body>
-    <!-- ===== 사이드바 ===== -->
     <aside class="sidebar">
         <button class="sidebar-button" onclick="window.location.href='index.html'">
             <i class='bx bx-map'></i>
@@ -100,9 +260,136 @@
             <span>Login</span>
         </button>
     </aside>
-    <!-- 교육 콘텐츠 -->
-        <div>
-            <h1>Education 창</h1>
+
+    <div class="main-content">
+        <div class="search-section">
+            <div class="search-container">
+                <i class='bx bx-menu menu-icon'></i>
+                <input 
+                    type="text" 
+                    class="search-box" 
+                    id="searchInput"
+                    placeholder="전기 발전에 대해 더 알고 싶은 정보를 검색해 보세요!"
+                >
+                <i class='bx bx-search search-icon' onclick="performSearch()"></i>
+            </div>
         </div>
+
+        <div id="contentGrid" class="content-grid"></div>
+    </div>
+
+    <script>
+        let educationData = [];
+
+        // DB에서 데이터 가져오기
+        async function loadEducationData() {
+            try {
+                const response = await fetch('http://localhost:3000/api/education');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                // DB 컬럼: id, content_url, tag, explain
+                educationData = data.map(item => {
+                    let tags = [];
+                    
+                    if (item.tag) {
+                        // 태그를 쉼표나 공백으로 분리
+                        tags = item.tag.split(/[,\s]+/).filter(t => t.trim());
+                    }
+                    
+                    return {
+                        id: item.id,
+                        url: item.content_url,
+                        description: item.explain || '',
+                        tags: tags
+                    };
+                });
+                
+                console.log(`✅ ${educationData.length}개의 교육 자료를 불러왔습니다`);
+                displayContent(educationData);
+            } catch (error) {
+                console.error('❌ 데이터 로딩 실패:', error);
+                document.getElementById('contentGrid').innerHTML = `
+                    <div class="no-results">
+                        <i class='bx bx-error'></i>
+                        <p>데이터를 불러오는데 실패했습니다</p>
+                        <p style="font-size: 14px; color: #999;">${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // 콘텐츠 카드 생성
+        function createContentCard(item) {
+            return `
+                <div class="content-item" onclick="window.open('${item.url}', '_blank')">
+                    <div class="thumbnail-container">
+                        <i class='bx bx-video thumbnail-placeholder'></i>
+                    </div>
+                    <div class="content-info">
+                        <div class="content-description">
+                            ${item.description || '교육 자료'}
+                        </div>
+                        <a href="${item.url}" target="_blank" class="content-link" onclick="event.stopPropagation()">
+                            <i class='bx bx-link-external'></i> 자료 보기
+                        </a>
+                        <div class="tag-container">
+                            ${item.tags.map(tag => `<span class="tag">#${tag}</span>`).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 콘텐츠 표시
+        function displayContent(data) {
+            const grid = document.getElementById('contentGrid');
+            if (data.length > 0) {
+                grid.innerHTML = data.map(item => createContentCard(item)).join('');
+            } else {
+                grid.innerHTML = `
+                    <div class="no-results">
+                        <i class='bx bx-search-alt'></i>
+                        <p>검색 결과가 없습니다</p>
+                    </div>
+                `;
+            }
+        }
+
+        // 검색 수행
+        function performSearch() {
+            const searchInput = document.getElementById('searchInput').value.trim();
+            
+            if (!searchInput) {
+                displayContent(educationData);
+                return;
+            }
+
+            // # 제거하고 태그 추출
+            const searchTag = searchInput.replace(/^#/, '').toLowerCase();
+            
+            // 태그로 필터링
+            const results = educationData.filter(item => 
+                item.tags.some(tag => tag.toLowerCase().includes(searchTag)) ||
+                (item.description && item.description.toLowerCase().includes(searchTag))
+            );
+
+            displayContent(results);
+        }
+
+        // 엔터키로 검색
+        document.getElementById('searchInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                performSearch();
+            }
+        });
+
+        // 페이지 로드 시 데이터 표시
+        loadEducationData();
+    </script>
 </body>
 </html>

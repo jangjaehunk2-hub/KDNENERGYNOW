@@ -76,6 +76,20 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
+// ===== Education 데이터 조회 API =====
+app.get('/api/education', async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT id, content_url, tag, explain FROM education ORDER BY id DESC`
+    );
+
+    res.json(result.rows);
+  } catch (error) {
+    console.error("❌ education 데이터 조회 실패:", error);
+    res.status(500).json({ error: 'Database error' });
+  }
+});
+
 // ===== 점수 업데이트 API =====
 app.post('/update-score', async (req, res) => {
   const { user_id, score } = req.body;
@@ -388,6 +402,21 @@ app.get('/api/debug/all-plants', async (req, res) => {
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+// ===== 교육 자료 조회 API =====
+app.get('/api/education', async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT id, content_url, tag, explain
+       FROM education
+       ORDER BY id DESC`
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error("❌ education 데이터 조회 실패:", err);
+    res.status(500).json({ error: 'Database error' });
   }
 });
 
