@@ -9,12 +9,139 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
+        .main-content {
+            flex: 1;
+            padding: 0;
+            margin-left: 140px;
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+        .header {
+            position: absolute;
+            top: 9px;  /* 상하 위치 조절 */
+            left: 55px;  /* 좌우 위치 조절 */
+            z-index: 1001;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px 25px;
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .header h1 {
+            font-size: 1.8rem;
+            margin: 0 0 5px 0;
+        }
+        .header p {
+            font-size: 0.95rem;
+            color: #666;
+            margin: 0;
+        }
+        .map-container {
+            width: 100%;
+            height: 100vh;
+            background: white;
+            border-radius: 0;
+            overflow: hidden;
+            box-shadow: none;
+            position: relative;
+        }
+        .filter-tabs {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 8px;
+            z-index: 1001;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 10px 15px;
+            border-radius: 25px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .filter-tab {
+            padding: 6px 14px;
+            border: 2px solid transparent;
+            border-radius: 20px;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 13px;
+            transition: all 0.3s;
+            color: #333;
+        }
+        .filter-tab:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .filter-tab.active {
+            color: white;
+            border-color: transparent;
+        }
+        /* 각 필터 타입별 색상 */
+        .filter-tab[data-type="all"].active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .filter-tab[data-type="hydro"].active {
+            background: #00aaff;
+        }
+
+        .filter-tab[data-type="nuclear"].active {
+            background: #ff3366;
+        }
+
+        .filter-tab[data-type="wind"].active {
+            background: #90ee90;
+            color: #2d5016;  /* 밝은 배경이므로 어두운 텍스트 */
+        }
+
+        .filter-tab[data-type="solar"].active {
+            background: #ffd700;
+            color: #8B6914;  /* 밝은 배경이므로 어두운 텍스트 */
+        }
+
+        .filter-tab[data-type="thermal"].active {
+            background: #ff6347;
+        }
+
+        /* 호버 시 각 타입별 색상 미리보기 */
+        .filter-tab[data-type="all"]:hover {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+        }
+
+        .filter-tab[data-type="hydro"]:hover {
+            background: rgba(0, 170, 255, 0.1);
+            border-color: #00aaff;
+        }
+
+        .filter-tab[data-type="nuclear"]:hover {
+            background: rgba(255, 51, 102, 0.1);
+            border-color: #ff3366;
+        }
+
+        .filter-tab[data-type="wind"]:hover {
+            background: rgba(144, 238, 144, 0.2);
+            border-color: #90ee90;
+        }
+
+        .filter-tab[data-type="solar"]:hover {
+            background: rgba(255, 215, 0, 0.2);
+            border-color: #ffd700;
+        }
+
+        .filter-tab[data-type="thermal"]:hover {
+            background: rgba(255, 99, 71, 0.1);
+            border-color: #ff6347;
+        }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
             padding: 0;
             line-height: 1.6;
             background-color: #f5f5f5;
+            overflow: hidden
         }
         .app-container {
             display: flex;
@@ -60,70 +187,27 @@
         .sidebar-button span {
             font-size: 14px;
         }
-        .main-content {
-            flex: 1;
-            padding: 40px;
-            margin-left: 140px;
-        }
-        .header {
-            margin-bottom: 40px;
-        }
-        .header h1 {
-            font-size: 2.5rem;
-            margin: 0 0 10px 0;
-        }
-        .header p {
-            font-size: 1.2rem;
-            color: #666;
-            margin: 0;
-        }
-        .map-container {
-            width: 100%;
-            height: 600px;
-            background: white;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            position: relative;
-        }
-        .filter-tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-        .filter-tab {
-            padding: 8px 16px;
-            border: none;
-            border-radius: 20px;
-            background: white;
-            cursor: pointer;
-            font-weight: 500;
-            transition: all 0.3s;
-        }
-        .filter-tab.active {
-            background: #0066ff;
-            color: white;
-        }
         .stats-card {
             position: absolute;
-            bottom: 20px;
-            right: 20px;
+            bottom: 15px;
+            right: 15px;
             background: white;
-            padding: 20px;
+            padding: 15px;
             border-radius: 12px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            min-width: 250px;
+            min-width: 200px;
             z-index: 1000;
         }
         .stats-title {
-            font-size: 1.2rem;
+            font-size: 1rem;
             font-weight: bold;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
         }
         .stats-row {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
+            font-size: 13px;
         }
         .stats-label {
             color: #666;
@@ -182,16 +266,16 @@
                 <span>Map</span>
             </button>
             <button class="sidebar-button" data-tab="slide" onclick="window.location.href='slide.html'">
-                <i class='bx bx-slideshow'></i>
+                <i class='bx bx-slider'></i>
                 <span>Slide</span>
             </button>
             <!-- 수정된 코드 -->
-<button class="sidebar-button" data-tab="game" onclick="window.location.href='game_platform.html'">
-    <i class='bx bx-game'></i>
-    <span>Game</span>
-</button>
+            <button class="sidebar-button" data-tab="game" onclick="window.location.href='gameplatform.html'">
+                <i class='bx bx-game'></i>
+                <span>Game</span>
+            </button>
             <button class="sidebar-button" data-tab="education" onclick="window.location.href='education.html'">
-                <i class='bx bx-graduation'></i>
+                <i class='bx bx-book-reader'></i>
                 <span>Education</span>
             </button>
             <button class="sidebar-button" data-tab="login" onclick="window.location.href='login.html'">
@@ -201,47 +285,51 @@
         </aside>
 
         <div class="main-content" id="mapContent">
-            <div class="header">
-                <h1>대한민국 발전소 현황</h1>
-                <p>실시간 발전소 위치 모니터링 시스템</p>
-            </div>
-
-            <div class="filter-tabs">
-                <button class="filter-tab active" data-type="all">전체</button>
-                <button class="filter-tab" data-type="hydro">수력</button>
-                <button class="filter-tab" data-type="nuclear">원자력</button>
-                <button class="filter-tab" data-type="wind">풍력</button>
-                <button class="filter-tab" data-type="solar">태양광</button>
-                <button class="filter-tab" data-type="thermal">화력</button>
-            </div>
-
             <div class="map-container" id="map">
                 <div class="loading-message" id="loadingMessage">데이터를 불러오는 중...</div>
-                <div class="stats-card">
-                    <div class="stats-title">발전소 현황</div>
-                    <div class="stats-row">
-                        <span class="stats-label">수력:</span>
-                        <span class="stats-value power-type-hydro" id="hydroPlants">0개</span>
+                    <div class="header">
+                        <h1>대한민국 발전소 현황</h1>
+                        <p>실시간 발전소 위치 모니터링 시스템</p>
                     </div>
-                    <div class="stats-row">
-                        <span class="stats-label">원자력:</span>
-                        <span class="stats-value power-type-nuclear" id="nuclearPlants">0개</span>
+
+                    <div class="filter-tabs">
+                        <button class="filter-tab active" data-type="all">전체</button>
+                        <button class="filter-tab" data-type="hydro">수력</button>
+                        <button class="filter-tab" data-type="nuclear">원자력</button>
+                        <button class="filter-tab" data-type="wind">풍력</button>
+                        <button class="filter-tab" data-type="solar">태양광</button>
+                        <button class="filter-tab" data-type="thermal">화력</button>
                     </div>
-                    <div class="stats-row">
-                        <span class="stats-label">풍력:</span>
-                        <span class="stats-value" id="windPlants" style="color: #90ee90;">0개</span>
-                    </div>
-                    <div class="stats-row">
-                        <span class="stats-label">태양광:</span>
-                        <span class="stats-value" id="solarPlants" style="color: #ffd700;">0개</span>
-                    </div>
-                    <div class="stats-row">
-                        <span class="stats-label">화력:</span>
-                        <span class="stats-value" id="thermalPlants" style="color: #ff6347;">0개</span>
-                    </div>
-                    <div class="stats-row" style="padding-top: 10px; border-top: 1px solid #eee;">
-                        <span class="stats-label">총계:</span>
-                        <span class="stats-value" id="totalPlants">0개</span>
+
+                    <div class="map-container" id="map">
+                        <div class="loading-message" id="loadingMessage">데이터를 불러오는 중...</div>
+                        <div class="stats-card">
+                            <div class="stats-title">발전소 현황</div>
+                            <div class="stats-row">
+                                <span class="stats-label">수력:</span>
+                                <span class="stats-value power-type-hydro" id="hydroPlants">0개</span>
+                            </div>
+                            <div class="stats-row">
+                                <span class="stats-label">원자력:</span>
+                                <span class="stats-value power-type-nuclear" id="nuclearPlants">0개</span>
+                            </div>
+                            <div class="stats-row">
+                                <span class="stats-label">풍력:</span>
+                                <span class="stats-value" id="windPlants" style="color: #90ee90;">0개</span>
+                            </div>
+                            <div class="stats-row">
+                                <span class="stats-label">태양광:</span>
+                                <span class="stats-value" id="solarPlants" style="color: #ffd700;">0개</span>
+                            </div>
+                            <div class="stats-row">
+                                <span class="stats-label">화력:</span>
+                                <span class="stats-value" id="thermalPlants" style="color: #ff6347;">0개</span>
+                            </div>
+                            <div class="stats-row" style="padding-top: 10px; border-top: 1px solid #eee;">
+                                <span class="stats-label">총계:</span>
+                                <span class="stats-value" id="totalPlants">0개</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -259,6 +347,10 @@
         let plantUnits = {}; // 발전소별 호기 정보 {발전소명: [호기1, 호기2, ...]}
         let thermalPowerData = {};   // { "당진#1": [{year, value}, ...], ... }
         let thermalUnits = {};       // { "당진화력": ["#1", "#2", ...] }
+        let solarPowerData = {}; // 태양광 발전량 데이터
+        let windPowerData = {}; // 풍력 발전량 데이터
+        let hydroPowerData = {}; // 수력 발전량 데이터
+        let hydroKHNPData = {}; // 한국수력원자력 수력 발전량 데이터
 
 
         let chartInstances = {}; // 차트 인스턴스 저장용
@@ -375,7 +467,7 @@
         }
 
         // ===== 모든 발전소 데이터 가져오기 =====
-        async function fetchHydroPlants() {
+        async function fetchAllPlant() {
             try {
                 const response = await fetch('http://localhost:3000/api/plants');
                 if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
@@ -499,50 +591,49 @@
             }
         }
 
-        async function fetchThermalPowerData() {
-            try {
-                const res = await fetch("http://localhost:3000/api/thermal/power");
-                if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-
-                const response = await res.json();   // { success: true, data: {...} }
-                const data = response.data;          // data는 객체
-
-                thermalPowerData = {};
-                thermalUnits = [];
-
-                // data = { CG1: {...}, CG2: {...}, ... }
-                Object.entries(data).forEach(([unitName, dateDict]) => {
-
-                    // unit 목록 저장
-                    thermalUnits.push(unitName);
-
-                    // dateDict = { "Fri Oct 17...": {...}, "Fri Oct 24...": {...} }
-                    thermalPowerData[unitName] = {};
-
-                    Object.entries(dateDict).forEach(([dateStr, hourDict]) => {
-
-                        // 날짜 문자열을 Date 객체로 변환 (필요하면)
-                        const date = new Date(dateStr);
-
-                        thermalPowerData[unitName][dateStr] = hourDict;
-                    });
-
-                });
-
-                console.log("🔥 발전량 데이터:", thermalPowerData);
-                console.log("🔥 호기 목록:", thermalUnits);
-
-            } catch (err) {
-                console.error("❌ 화력 발전량 로드 실패:", err);
-            }
+        async function loadThermalPowerData() {
+            const response = await fetch('http://localhost:3000/api/thermal/power');
+            const json = await response.json();
+            thermalPowerData = json.data;   // 이미 { 호기: { 날짜: { 시간: 발전량 } } } 구조
+            
+            // 호기 목록 추출
+            thermalUnits = Object.keys(thermalPowerData);
+            console.log("🔥 화력 호기 목록:", thermalUnits);
         }
+
+        async function loadSolarPowerData() {
+            const response = await fetch('http://localhost:3000/api/solar/power');
+            const json = await response.json();
+            solarPowerData = json.data;   // { 발전소명: { 날짜: { 시간: 발전량 } } } 구조
+            console.log("☀️ 태양광 발전소 목록:", Object.keys(solarPowerData));
+        }
+
+        async function loadWindPowerData() {
+            const response = await fetch('http://localhost:3000/api/wind/power');
+            const json = await response.json();
+            windPowerData = json.data;   // { 발전소명: { 날짜: { 시간: 발전량 } } } 구조
+            console.log("💨 풍력 발전소 목록:", Object.keys(windPowerData));
+        }
+
+        async function loadHydroPowerData() {
+            const response = await fetch('http://localhost:3000/api/hydro/daily-power');
+            const json = await response.json();
+            hydroPowerData = json.data;   // { 댐이름: { 날짜: 발전량 } } 구조
+            console.log("💧 수력 발전소 목록:", Object.keys(hydroPowerData));
+
+            const khnpResponse = await fetch('http://localhost:3000/api/hydro/khnp-yearly');
+            const khnpJson = await khnpResponse.json();
+            hydroKHNPData = khnpJson.data;   // { 발전소명: [{year, value}, ...] } 구조
+            console.log("💧 수력 발전소 목록 (한수원):", Object.keys(hydroKHNPData));
+        }
+
         // ===== 모든 발전소 데이터 로드 =====
         async function loadAllPlants() {
             console.log('\n🔄 ===== 발전소 데이터 로드 시작 =====');
 
             try {
                 // 1️⃣ 발전소 데이터 로드
-                allPowerPlants = await fetchHydroPlants();
+                allPowerPlants = await fetchAllPlant();
                 
                 // 2️⃣ 원자력 발전량 데이터 로드 (먼저 로드해야 팝업에 호기 정보가 있음)
                 console.log('\n⏳ 원자력 발전량 데이터 로드 중...');
@@ -550,8 +641,20 @@
                 console.log('✅ 원자력 발전량 데이터 로드 완료');
 
                 console.log("⏳ 화력 발전량 데이터 로드 중...");
-                await fetchThermalPowerData();
+                await loadThermalPowerData();
                 console.log("🔥 화력 발전량 데이터 로드 완료");
+
+                console.log("⏳ 태양광 발전량 데이터 로드 중...");
+                await loadSolarPowerData();
+                console.log("☀️ 태양광 발전량 데이터 로드 완료");
+
+                console.log("⏳ 풍력 발전량 데이터 로드 중...");
+                await loadWindPowerData();
+                console.log("💨 풍력 발전량 데이터 로드 완료");
+
+                console.log("⏳ 수력 발전량 데이터 로드 중...");
+                await loadHydroPowerData();
+                console.log("💧 수력 발전량 데이터 로드 완료");
 
                 console.log('\n📊 ===== 로드 결과 =====');;
                 const hydroCount = allPowerPlants.filter(p => p.type === 'hydro').length;
@@ -664,6 +767,7 @@
                                 <span style="font-size: 16px;">${emoji}</span>
                                 <span style="font-weight: 600; color: #fff;">${typeMap[plant.type] || plant.type}</span>
                             </div>
+                            <div style="margin-top: 4px;"><strong>🏢 운영기관:</strong> ${plant.operator}</div>
                             ${plant.location && plant.location !== '위치 정보 없음' ? `<div style="margin-top: 6px;"><strong>📍 위치:</strong> ${plant.location}</div>` : ''}
                         </div>
                     </div>
@@ -680,29 +784,211 @@
                 let popupHTML = '';
 
                 if (plant.type === 'hydro') {
-                    // 수력발전소는 클릭 시에도 기본 정보만 표시
-                    popupHTML = `
-                        <div style="font-family: system-ui; min-width: 250px;">
-                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
-                                <div style="width: 12px; height: 12px; background-color: ${color}; border-radius: 50%;"></div>
-                                <h3 style="font-weight: bold; font-size: 16px; margin: 0;">${plant.name}</h3>
+                    const isKwater = plant.operator && (plant.operator.includes('한국수자원공사') || plant.operator.includes('K-water'));
+                    const isKHNP = plant.operator && (plant.operator.includes('한국수력원자력') || plant.operator.includes('한수원'));
+                    const chartId = `chart-${plant.id}`;
+                    
+                    if (isKwater && hydroPowerData[plant.name]) {
+                        // K-water 발전소 - 발전량 그래프 표시
+                        popupHTML = `
+                            <div style="font-family: system-ui; min-width: 280px;">
+                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px; padding: 12px; border-bottom: 2px solid ${color};">
+                                    <div style="width: 12px; height: 12px; background-color: ${color}; border-radius: 50%;"></div>
+                                    <h3 style="font-weight: bold; font-size: 16px; margin: 0;">${plant.name}</h3>
+                                </div>
+                                <div style="padding: 0 12px 12px 12px;">
+                                    <div style="display: flex; flex-direction: column; gap: 8px; font-size: 13px; margin-bottom: 12px;">
+                                        <div style="display: flex; justify-content: space-between;">
+                                            <span style="color: #666;">유형:</span>
+                                            <span style="font-weight: 500;">수력</span>
+                                        </div>
+                                        <div style="display: flex; justify-content: space-between;">
+                                            <span style="color: #666;">운영기관:</span>
+                                            <span style="font-weight: 500;">${plant.operator}</span>
+                                        </div>
+                                        <div style="display: flex; justify-content: space-between;">
+                                            <span style="color: #666;">위치:</span>
+                                            <span style="font-weight: 500;">${plant.location}</span>
+                                        </div>
+                                    </div>
+                                    <div style="height: 200px; background: #f9f9f9; border-radius: 6px; padding: 10px;">
+                                        <canvas id="${chartId}"></canvas>
+                                    </div>
+                                </div>
                             </div>
-                            <div style="display: flex; flex-direction: column; gap: 8px; font-size: 14px;">
-                                <div style="display: flex; justify-content: space-between;">
-                                    <span style="color: #666;">유형:</span>
-                                    <span style="font-weight: 500;">수력</span>
+                        `;
+                        
+                        setTimeout(() => {
+                            marker.on('popupopen', function() {
+                                const damData = hydroPowerData[plant.name];
+                                
+                                // 날짜별 데이터를 배열로 변환
+                                const chartData = Object.entries(damData)
+                                    .sort(([a], [b]) => new Date(a) - new Date(b))
+                                    .map(([date, value]) => ({
+                                        date: new Date(date).toLocaleDateString('ko-KR', {month: '2-digit', day: '2-digit'}),
+                                        value: Number(value)
+                                    }));
+                                
+                                // 차트 생성
+                                const canvas = document.getElementById(chartId);
+                                if (!canvas) return;
+                                
+                                if (chartInstances[chartId]) {
+                                    chartInstances[chartId].destroy();
+                                }
+                                
+                                const ctx = canvas.getContext('2d');
+                                chartInstances[chartId] = new Chart(ctx, {
+                                    type: 'line',
+                                    data: {
+                                        labels: chartData.map(d => d.date),
+                                        datasets: [{
+                                            label: '발전량 (MWh)',
+                                            data: chartData.map(d => d.value),
+                                            borderColor: '#00aaff',
+                                            backgroundColor: 'rgba(0, 170, 255, 0.1)',
+                                            borderWidth: 2,
+                                            fill: true,
+                                            tension: 0.4
+                                        }]
+                                    },
+                                    options: {
+                                        responsive: true,
+                                        maintainAspectRatio: false,
+                                        plugins: {
+                                            legend: { display: false },
+                                            title: {
+                                                display: true,
+                                                text: `${plant.name} 일별 발전량`,
+                                                font: { size: 12, weight: 'bold' }
+                                            }
+                                        },
+                                        scales: {
+                                            y: {
+                                                beginAtZero: true,
+                                                ticks: {
+                                                    callback: function(value) {
+                                                        return value.toLocaleString();
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                });
+                            });
+                        }, 50);
+                    } else if (isKHNP && hydroKHNPData[plant.name] && hydroKHNPData[plant.name].length > 0) {
+                        // 한수원 발전소 - 연도별 발전량 그래프
+                        popupHTML = `
+                            <div style="font-family: system-ui; min-width: 280px;">
+                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px; padding: 12px; border-bottom: 2px solid ${color};">
+                                    <div style="width: 12px; height: 12px; background-color: ${color}; border-radius: 50%;"></div>
+                                    <h3 style="font-weight: bold; font-size: 16px; margin: 0;">${plant.name}</h3>
                                 </div>
-                                <div style="display: flex; justify-content: space-between;">
-                                    <span style="color: #666;">운영기관:</span>
-                                    <span style="font-weight: 500;">${plant.operator}</span>
-                                </div>
-                                <div style="display: flex; justify-content: space-between;">
-                                    <span style="color: #666;">위치:</span>
-                                    <span style="font-weight: 500;">${plant.location}</span>
+                                <div style="padding: 0 12px 12px 12px;">
+                                    <div style="display: flex; flex-direction: column; gap: 8px; font-size: 13px; margin-bottom: 12px;">
+                                        <div style="display: flex; justify-content: space-between;">
+                                            <span style="color: #666;">유형:</span>
+                                            <span style="font-weight: 500;">수력</span>
+                                        </div>
+                                        <div style="display: flex; justify-content: space-between;">
+                                            <span style="color: #666;">운영기관:</span>
+                                            <span style="font-weight: 500;">${plant.operator}</span>
+                                        </div>
+                                        <div style="display: flex; justify-content: space-between;">
+                                            <span style="color: #666;">위치:</span>
+                                            <span style="font-weight: 500;">${plant.location}</span>
+                                        </div>
+                                    </div>
+                                    <div style="height: 200px; background: #f9f9f9; border-radius: 6px; padding: 10px;">
+                                        <canvas id="${chartId}"></canvas>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    `;
+                        `;
+                        
+                        setTimeout(() => {
+                            marker.on('popupopen', function() {
+                                const yearlyData = hydroKHNPData[plant.name];
+                                
+                                const canvas = document.getElementById(chartId);
+                                if (!canvas) return;
+                                
+                                if (chartInstances[chartId]) {
+                                    chartInstances[chartId].destroy();
+                                }
+                                
+                                const ctx = canvas.getContext('2d');
+                                chartInstances[chartId] = new Chart(ctx, {
+                                    type: 'line',
+                                    data: {
+                                        labels: yearlyData.map(d => d.year),
+                                        datasets: [{
+                                            label: '발전량 (MW)',
+                                            data: yearlyData.map(d => d.value),
+                                            borderColor: '#00aaff',
+                                            backgroundColor: 'rgba(0, 170, 255, 0.1)',
+                                            borderWidth: 2,
+                                            fill: true,
+                                            tension: 0.4
+                                        }]
+                                    },
+                                    options: {
+                                        responsive: true,
+                                        maintainAspectRatio: false,
+                                        plugins: {
+                                            legend: { display: false },
+                                            title: {
+                                                display: true,
+                                                text: `${plant.name} 연도별 발전량`,
+                                                font: { size: 12, weight: 'bold' }
+                                            }
+                                        },
+                                        scales: {
+                                            y: {
+                                                beginAtZero: true,
+                                                ticks: {
+                                                    callback: function(value) {
+                                                        return value.toLocaleString();
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                });
+                            });
+                        }, 50);
+                    } else {
+                        // 한수원 발전소지만 발전량 데이터 없음
+                        popupHTML = `
+                            <div style="font-family: system-ui; min-width: 250px;">
+                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px; padding: 12px; border-bottom: 2px solid ${color};">
+                                    <div style="width: 12px; height: 12px; background-color: ${color}; border-radius: 50%;"></div>
+                                    <h3 style="font-weight: bold; font-size: 16px; margin: 0;">${plant.name}</h3>
+                                </div>
+                                <div style="padding: 0 12px 12px 12px;">
+                                    <div style="display: flex; flex-direction: column; gap: 8px; font-size: 13px; margin-bottom: 12px;">
+                                        <div style="display: flex; justify-content: space-between;">
+                                            <span style="color: #666;">유형:</span>
+                                            <span style="font-weight: 500;">수력</span>
+                                        </div>
+                                        <div style="display: flex; justify-content: space-between;">
+                                            <span style="color: #666;">운영기관:</span>
+                                            <span style="font-weight: 500;">${plant.operator}</span>
+                                        </div>
+                                        <div style="display: flex; justify-content: space-between;">
+                                            <span style="color: #666;">위치:</span>
+                                            <span style="font-weight: 500;">${plant.location}</span>
+                                        </div>
+                                    </div>
+                                    <div style="background: #fff3cd; border: 1px solid #ffc107; border-radius: 6px; padding: 12px; text-align: center;">
+                                        <span style="color: #856404; font-size: 14px;">⚠️ 발전량 데이터 없음</span>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }
                 } else if (plant.type === 'nuclear') {
                     // 원자력발전소는 클릭 시 호기별 발전량 데이터 표시
                     const powerName = plant.powerName;
@@ -832,14 +1118,14 @@
                             });
                         });
                     }, 50);
-                }else if (plant.type === 'thermal') {
-                    const units = thermalUnits;
+                } else if (plant.type === 'thermal') {
                     const tabsId = `tabs-${plant.id}`;
+                    const dateSelectId = `date-select-${plant.id}`;
                     const chartId = `chart-${plant.id}`;
 
                     // 호기 버튼 HTML
-                    let unitTabsHTML = units.map(u => `
-                        <button class="unit-tab" data-unit="${u}" style="
+                    let unitTabsHTML = thermalUnits.map(u => `
+                        <button class="thermal-unit-tab" data-unit="${u}" style="
                             padding:4px 7px;margin:4px 2px;
                             border:2px solid #ddd;background:#fff;
                             border-radius:6px;cursor:pointer;font-weight:600;font-size:12px;">
@@ -849,19 +1135,30 @@
 
                     // 팝업 HTML
                     popupHTML = `
-                        <div style="min-width:240px;">
+                        <div style="min-width:280px;">
                             <div style="padding:12px;border-bottom:2px solid #ff6347;">
                                 <h3 style="margin:0;font-size:16px;">${plant.name} 화력발전</h3>
                             </div>
 
                             <div style="padding:10px;">
-                                <div style="font-size:12px;margin-bottom:8px;color:#666;">🔥 호기 선택</div>
-                                <div id="${tabsId}" style="display:flex;flex-wrap:wrap; gap:4px;">
+                                <div style="font-size:12px;margin-bottom:8px;color:#666;font-weight:600;">🔥 호기 선택</div>
+                                <div id="${tabsId}" style="display:flex;flex-wrap:wrap;gap:4px;">
                                     ${unitTabsHTML}
                                 </div>
 
+                                <div id="date-selection-${plant.id}" style="margin-top:12px;display:none;">
+                                    <div style="font-size:12px;margin-bottom:8px;color:#666;font-weight:600;">📅 날짜 선택</div>
+                                    <select id="${dateSelectId}" size="5" style="
+                                        width:100%;padding:6px;
+                                        border:2px solid #ddd;border-radius:6px;
+                                        font-size:13px;background:#fff;
+                                        height:120px;overflow-y:auto;">
+                                        <option value="">날짜를 선택하세요</option>
+                                    </select>
+                                </div>
+
                                 <div id="chart-container-${plant.id}"
-                                    style="height:220px;background:#f9f9f9;border-radius:6px;padding:10px;display:none;">
+                                    style="height:180px;background:#f9f9f9;border-radius:6px;padding:10px;margin-top:12px;display:none;">
                                     <canvas id="${chartId}"></canvas>
                                 </div>
                             </div>
@@ -870,15 +1167,15 @@
 
                     setTimeout(() => {
                         marker.on("popupopen", function () {
-
-                            document.querySelectorAll(`#${tabsId} .unit-tab`).forEach(btn => {
+                            let selectedUnit = null;
+                            
+                            // 호기 선택 이벤트
+                            document.querySelectorAll(`#${tabsId} .thermal-unit-tab`).forEach(btn => {
                                 btn.addEventListener("click", function() {
-
-                                    const unit = this.dataset.unit;
-                                    const powerData = thermalPowerData[unit];
-
+                                    selectedUnit = this.dataset.unit;
+                                    
                                     // UI 변경
-                                    document.querySelectorAll(`#${tabsId} .unit-tab`).forEach(b => {
+                                    document.querySelectorAll(`#${tabsId} .thermal-unit-tab`).forEach(b => {
                                         b.style.border = "2px solid #ddd";
                                         b.style.background = "#fff";
                                         b.style.color = "#333";
@@ -887,58 +1184,371 @@
                                     this.style.background = "#ff6347";
                                     this.style.color = "#fff";
 
-                                    // 데이터 유효성 체크
-                                    if (!Array.isArray(powerData) || powerData.length === 0) {
-                                        console.warn("🔥 화력 발전량 데이터 없음 또는 배열 아님", unit, powerData);
-                                        const tableContainer = document.getElementById(`data-table-${plant.id}`);
-                                        if (tableContainer) tableContainer.style.display = "none";
-                                        return;
-                                    }
-
-                                    // 테이블 영역 가져오기
-                                    const tableContainer = document.getElementById(`data-table-${plant.id}`);
-                                    const tbody = document.getElementById(`data-tbody-${plant.id}`);
-
-                                    // 기존 테이블 초기화
-                                    tbody.innerHTML = "";
-
-                                    // 데이터 채우기 (year, value)
-                                    powerData.forEach(item => {
-                                        const tr = document.createElement("tr");
-
-                                        const tdYear = document.createElement("td");
-                                        tdYear.style.textAlign = "center";
-                                        tdYear.textContent = item.year;
-
-                                        const tdValue = document.createElement("td");
-                                        tdValue.style.textAlign = "right";
-                                        tdValue.textContent = Number(item.value).toLocaleString();
-
-                                        tr.appendChild(tdYear);
-                                        tr.appendChild(tdValue);
-                                        tbody.appendChild(tr);
-                                    });
-
-                                    // 테이블 표시
-                                    tableContainer.style.display = "block";
-
-                                    // 그래프는 이후에 createPowerChart 호출 가능
+                                    // 날짜 목록 표시
+                                    const dateSelection = document.getElementById(`date-selection-${plant.id}`);
+                                    const dateSelect = document.getElementById(dateSelectId);
                                     const chartContainer = document.getElementById(`chart-container-${plant.id}`);
-                                    chartContainer.style.display = "none"; // 현재는 숨김
+                                    
+                                    // 차트 숨기기
+                                    chartContainer.style.display = "none";
+                                    
+                                    // 날짜 옵션 생성
+                                    const unitData = thermalPowerData[selectedUnit];
+                                    if (unitData) {
+                                        const dates = Object.keys(unitData).sort();
+                                        dateSelect.innerHTML = '<option value="">날짜를 선택하세요</option>' +
+                                            dates.map(d => {
+                                                // 날짜를 읽기 쉬운 형식으로 변환
+                                                const dateObj = new Date(d);
+                                                const year = dateObj.getFullYear();
+                                                const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+                                                const day = String(dateObj.getDate()).padStart(2, '0');
+                                                const displayDate = `${year}-${month}-${day}`;
+                                                
+                                                return `<option value="${d}">${displayDate}</option>`;
+                                            }).join('');
+                                        dateSelection.style.display = "block";
+                                    }
                                 });
                             });
 
+                            // 날짜 선택 이벤트
+                            document.getElementById(dateSelectId)?.addEventListener("change", function() {
+                                const selectedDate = this.value;
+                                if (!selectedDate || !selectedUnit) return;
+
+                                const hourlyData = thermalPowerData[selectedUnit][selectedDate];
+                                if (!hourlyData) {
+                                    console.warn("⚠️ 해당 날짜 데이터 없음");
+                                    return;
+                                }
+
+                                // 시간대별 데이터를 배열로 변환
+                                const chartData = Object.entries(hourlyData)
+                                    .sort(([a], [b]) => Number(a) - Number(b))
+                                    .map(([hour, value]) => ({
+                                        hour: hour + '시',
+                                        value: Number(value)
+                                    }));
+
+                                // 차트 표시
+                                const chartContainer = document.getElementById(`chart-container-${plant.id}`);
+                                chartContainer.style.display = "block";
+
+                                // 기존 차트 삭제
+                                if (chartInstances[chartId]) {
+                                    chartInstances[chartId].destroy();
+                                }
+
+                                // 새 차트 생성
+                                const canvas = document.getElementById(chartId);
+                                const ctx = canvas.getContext('2d');
+                                
+                                chartInstances[chartId] = new Chart(ctx, {
+                                    type: 'line',
+                                    data: {
+                                        labels: chartData.map(d => d.hour),
+                                        datasets: [{
+                                            label: '발전량 (MWh)',
+                                            data: chartData.map(d => d.value),
+                                            borderColor: '#ff6347',
+                                            backgroundColor: 'rgba(255, 99, 71, 0.1)',
+                                            borderWidth: 2,
+                                            fill: true,
+                                            tension: 0.4
+                                        }]
+                                    },
+                                    options: {
+                                        responsive: true,
+                                        maintainAspectRatio: false,
+                                        plugins: {
+                                            legend: { display: false },
+                                            title: {
+                                                display: true,
+                                                text: `${selectedUnit} - ${new Date(selectedDate).toLocaleDateString('ko-KR', {year: 'numeric', month: '2-digit', day: '2-digit'}).replace(/\. /g, '-').replace('.', '')} 시간대별 발전량`,
+                                                font: { size: 12, weight: 'bold' }
+                                            }
+                                        },
+                                        scales: {
+                                            y: {
+                                                beginAtZero: true,
+                                                ticks: {
+                                                    callback: function(value) {
+                                                        return value.toLocaleString();
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                });
+                            });
                         });
                     }, 50);
-                }
+                } else if (plant.type === 'solar') {
+                const dateSelectId = `date-select-${plant.id}`;
+                const chartId = `chart-${plant.id}`;
 
+                // 팝업 HTML
+                popupHTML = `
+                    <div style="min-width:280px;">
+                        <div style="padding:12px;border-bottom:2px solid #ffd700;">
+                            <h3 style="margin:0;font-size:16px;">${plant.name} 태양광발전</h3>
+                        </div>
 
+                        <div style="padding:10px;">
+                            <div id="date-selection-${plant.id}" style="margin-top:8px;">
+                                <div style="font-size:12px;margin-bottom:8px;color:#666;font-weight:600;">📅 날짜 선택</div>
+                                <select id="${dateSelectId}" size="5" style="
+                                    width:100%;padding:6px;
+                                    border:2px solid #ddd;border-radius:6px;
+                                    font-size:13px;background:#fff;
+                                    height:120px;overflow-y:auto;">
+                                    <option value="">날짜를 선택하세요</option>
+                                </select>
+                            </div>
 
+                            <div id="chart-container-${plant.id}"
+                                style="height:180px;background:#f9f9f9;border-radius:6px;padding:10px;margin-top:12px;display:none;">
+                                <canvas id="${chartId}"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                setTimeout(() => {
+                    marker.on("popupopen", function () {
+                        const dateSelect = document.getElementById(dateSelectId);
+                        const chartContainer = document.getElementById(`chart-container-${plant.id}`);
+                        
+                        // 해당 발전소의 데이터 가져오기
+                        const plantData = solarPowerData[plant.name];
+                        
+                        if (!plantData) {
+                            console.warn(`⚠️ ${plant.name}의 발전량 데이터 없음`);
+                            dateSelect.innerHTML = '<option value="">데이터 없음</option>';
+                            return;
+                        }
+                        
+                        // 날짜 옵션 생성
+                        const dates = Object.keys(plantData).sort();
+                        dateSelect.innerHTML = '<option value="">날짜를 선택하세요</option>' +
+                            dates.map(d => {
+                                const dateObj = new Date(d);
+                                const year = dateObj.getFullYear();
+                                const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+                                const day = String(dateObj.getDate()).padStart(2, '0');
+                                const displayDate = `${year}-${month}-${day}`;
+                                
+                                return `<option value="${d}">${displayDate}</option>`;
+                            }).join('');
+
+                        // 날짜 선택 이벤트
+                        dateSelect.addEventListener("change", function() {
+                            const selectedDate = this.value;
+                            if (!selectedDate) return;
+
+                            const hourlyData = plantData[selectedDate];
+                            if (!hourlyData) {
+                                console.warn("⚠️ 해당 날짜 데이터 없음");
+                                return;
+                            }
+
+                            // 시간대별 데이터를 배열로 변환
+                            const chartData = Object.entries(hourlyData)
+                                .sort(([a], [b]) => Number(a) - Number(b))
+                                .map(([hour, value]) => ({
+                                    hour: hour + '시',
+                                    value: Number(value)
+                                }));
+
+                            // 차트 표시
+                            chartContainer.style.display = "block";
+
+                            // 기존 차트 삭제
+                            if (chartInstances[chartId]) {
+                                chartInstances[chartId].destroy();
+                            }
+
+                            // 새 차트 생성
+                            const canvas = document.getElementById(chartId);
+                            const ctx = canvas.getContext('2d');
+                            
+                            chartInstances[chartId] = new Chart(ctx, {
+                                type: 'line',
+                                data: {
+                                    labels: chartData.map(d => d.hour),
+                                    datasets: [{
+                                        label: '발전량 (kWh)',
+                                        data: chartData.map(d => d.value),
+                                        borderColor: '#ffd700',
+                                        backgroundColor: 'rgba(255, 215, 0, 0.1)',
+                                        borderWidth: 2,
+                                        fill: true,
+                                        tension: 0.4
+                                    }]
+                                },
+                                options: {
+                                    responsive: true,
+                                    maintainAspectRatio: false,
+                                    plugins: {
+                                        legend: { display: false },
+                                        title: {
+                                            display: true,
+                                            text: `${plant.name} - ${new Date(selectedDate).toLocaleDateString('ko-KR', {year: 'numeric', month: '2-digit', day: '2-digit'}).replace(/\. /g, '-').replace('.', '')} 시간대별 발전량`,
+                                            font: { size: 12, weight: 'bold' }
+                                        }
+                                    },
+                                    scales: {
+                                        y: {
+                                            beginAtZero: true,
+                                            ticks: {
+                                                callback: function(value) {
+                                                    return value.toLocaleString();
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            });
+                        });
+                    });
+                }, 50);
+            } else if (plant.type === 'wind') {
+                const dateSelectId = `date-select-${plant.id}`;
+                const chartId = `chart-${plant.id}`;
+
+                // 팝업 HTML
+                popupHTML = `
+                    <div style="min-width:280px;">
+                        <div style="padding:12px;border-bottom:2px solid #90ee90;">
+                            <h3 style="margin:0;font-size:16px;">${plant.name} 풍력발전</h3>
+                        </div>
+
+                        <div style="padding:10px;">
+                            <div id="date-selection-${plant.id}" style="margin-top:8px;">
+                                <div style="font-size:12px;margin-bottom:8px;color:#666;font-weight:600;">📅 날짜 선택</div>
+                                <select id="${dateSelectId}" size="5" style="
+                                    width:100%;padding:6px;
+                                    border:2px solid #ddd;border-radius:6px;
+                                    font-size:13px;background:#fff;
+                                    height:120px;overflow-y:auto;">
+                                    <option value="">날짜를 선택하세요</option>
+                                </select>
+                            </div>
+
+                            <div id="chart-container-${plant.id}"
+                                style="height:180px;background:#f9f9f9;border-radius:6px;padding:10px;margin-top:12px;display:none;">
+                                <canvas id="${chartId}"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                setTimeout(() => {
+                    marker.on("popupopen", function () {
+                        const dateSelect = document.getElementById(dateSelectId);
+                        const chartContainer = document.getElementById(`chart-container-${plant.id}`);
+                        
+                        // 해당 발전소의 데이터 가져오기
+                        const plantData = windPowerData[plant.name];
+                        
+                        if (!plantData) {
+                            console.warn(`⚠️ ${plant.name}의 발전량 데이터 없음`);
+                            dateSelect.innerHTML = '<option value="">데이터 없음</option>';
+                            return;
+                        }
+                        
+                        // 날짜 옵션 생성
+                        const dates = Object.keys(plantData).sort();
+                        dateSelect.innerHTML = '<option value="">날짜를 선택하세요</option>' +
+                            dates.map(d => {
+                                const dateObj = new Date(d);
+                                const year = dateObj.getFullYear();
+                                const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+                                const day = String(dateObj.getDate()).padStart(2, '0');
+                                const displayDate = `${year}-${month}-${day}`;
+                                
+                                return `<option value="${d}">${displayDate}</option>`;
+                            }).join('');
+
+                        // 날짜 선택 이벤트
+                        dateSelect.addEventListener("change", function() {
+                            const selectedDate = this.value;
+                            if (!selectedDate) return;
+
+                            const hourlyData = plantData[selectedDate];
+                            if (!hourlyData) {
+                                console.warn("⚠️ 해당 날짜 데이터 없음");
+                                return;
+                            }
+
+                            // 시간대별 데이터를 배열로 변환
+                            const chartData = Object.entries(hourlyData)
+                                .sort(([a], [b]) => Number(a) - Number(b))
+                                .map(([hour, value]) => ({
+                                    hour: hour + '시',
+                                    value: Number(value)
+                                }));
+
+                            // 차트 표시
+                            chartContainer.style.display = "block";
+
+                            // 기존 차트 삭제
+                            if (chartInstances[chartId]) {
+                                chartInstances[chartId].destroy();
+                            }
+
+                            // 새 차트 생성
+                            const canvas = document.getElementById(chartId);
+                            const ctx = canvas.getContext('2d');
+                            
+                            chartInstances[chartId] = new Chart(ctx, {
+                                type: 'line',
+                                data: {
+                                    labels: chartData.map(d => d.hour),
+                                    datasets: [{
+                                        label: '발전량 (MWh)',
+                                        data: chartData.map(d => d.value),
+                                        borderColor: '#90ee90',
+                                        backgroundColor: 'rgba(144, 238, 144, 0.1)',
+                                        borderWidth: 2,
+                                        fill: true,
+                                        tension: 0.4
+                                    }]
+                                },
+                                options: {
+                                    responsive: true,
+                                    maintainAspectRatio: false,
+                                    plugins: {
+                                        legend: { display: false },
+                                        title: {
+                                            display: true,
+                                            text: `${plant.name} - ${new Date(selectedDate).toLocaleDateString('ko-KR', {year: 'numeric', month: '2-digit', day: '2-digit'}).replace(/\. /g, '-').replace('.', '')} 시간대별 발전량`,
+                                            font: { size: 12, weight: 'bold' }
+                                        }
+                                    },
+                                    scales: {
+                                        y: {
+                                            beginAtZero: true,
+                                            ticks: {
+                                                callback: function(value) {
+                                                    return value.toLocaleString();
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            });
+                        });
+                    });
+                }, 50);
+            }
                 // 팝업 바인딩
                 if (plant.type === 'hydro') {
                     marker.bindPopup(popupHTML, {
                         maxWidth: 300,
-                        className: 'custom-popup'
+                        className: 'custom-popup',
+                        autoPan: false
                     });
                 } else if (plant.type === 'nuclear') {
                     marker.bindPopup(popupHTML, {
@@ -953,7 +1563,19 @@
                         className: 'custom-popup',
                         autoPan: false
                     });
-                }       
+                } else if (plant.type === 'solar') {
+                    marker.bindPopup(popupHTML, {
+                        maxWidth: 350,
+                        className: 'custom-popup',
+                        autoPan: false
+                    });
+                } else if (plant.type === 'wind') {
+                    marker.bindPopup(popupHTML, {
+                        maxWidth: 350,
+                        className: 'custom-popup',
+                        autoPan: false
+                    });
+                }    
 
                 currentMarkers.push(marker);
             });

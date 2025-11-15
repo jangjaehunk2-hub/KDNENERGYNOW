@@ -180,94 +180,6 @@
         .play-button:hover {
             background: #0052cc;
         }
-        
-        /* 게임 실행 모달 */
-        .game-modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            z-index: 2000;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .game-modal.active {
-            display: flex;
-        }
-        
-        .game-modal-content {
-            width: 90%;
-            height: 90%;
-            background: white;
-            border-radius: 16px;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-        }
-        
-        .game-modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px 20px;
-            background: #1a1a1a;
-            color: white;
-        }
-        
-        .game-modal-title {
-            font-size: 1.2rem;
-            font-weight: bold;
-        }
-        
-        .close-button {
-            background: transparent;
-            border: none;
-            color: white;
-            font-size: 28px;
-            cursor: pointer;
-            padding: 0;
-            width: 32px;
-            height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .close-button:hover {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 4px;
-        }
-        
-        .game-iframe-container {
-            flex: 1;
-            width: 100%;
-            overflow: hidden;
-        }
-        
-        .game-iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
-        }
-        
-        @media (max-width: 768px) {
-            .main-content {
-                padding: 20px;
-            }
-            
-            .game-platform {
-                grid-template-columns: 1fr;
-            }
-            
-            .game-modal-content {
-                width: 95%;
-                height: 95%;
-            }
-        }
     </style>
 </head>
 <body>
@@ -278,7 +190,7 @@
                 <span>Map</span>
             </button>
             <button class="sidebar-button" onclick="window.location.href='slide.html'">
-                <i class='bx bx-slideshow'></i>
+                <i class='bx bx-slider'></i>
                 <span>Slide</span>
             </button>
             <button class="sidebar-button active">
@@ -286,7 +198,7 @@
                 <span>Game</span>
             </button>
             <button class="sidebar-button" onclick="window.location.href='education.html'">
-                <i class='bx bx-graduation'></i>
+                <i class='bx bx-book-reader'></i>
                 <span>Education</span>
             </button>
             <button class="sidebar-button" onclick="window.location.href='login.html'">
@@ -303,9 +215,9 @@
 
             <div class="game-platform">
                 <!-- 게임 1: 발전량 예측 게임 -->
-                <div class="game-card" onclick="openGame('game1')">
+                <div class="game-card" onclick="window.location.href='game.html'">
                     <div class="game-thumbnail">
-                        <i class='bx bx-lightning game-icon'></i>
+                        <i class='bx bxs-zap game-icon'></i>
                     </div>
                     <div class="game-info">
                         <div class="game-title">⚡ 발전량 예측 게임</div>
@@ -329,7 +241,7 @@
                 </div>
 
                 <!-- 게임 2: 전력 상식 퀴즈 -->
-                <div class="game-card" onclick="openGame('game2')">
+                <div class="game-card" onclick="window.location.href='game_2.html'">
                     <div class="game-thumbnail">
                         <i class='bx bx-brain game-icon'></i>
                     </div>
@@ -355,7 +267,7 @@
                 </div>
 
                 <!-- 게임 3: 절전 챌린지 달력 -->
-                <div class="game-card" onclick="openGame('game3')">
+                <div class="game-card" onclick="window.location.href='calendar.html'">
                     <div class="game-thumbnail">
                         <i class='bx bx-leaf game-icon'></i>
                     </div>
@@ -383,19 +295,6 @@
         </div>
     </div>
 
-    <!-- 게임 실행 모달 -->
-    <div class="game-modal" id="gameModal">
-        <div class="game-modal-content">
-            <div class="game-modal-header">
-                <div class="game-modal-title" id="modalTitle">게임</div>
-                <button class="close-button" onclick="closeGame()">×</button>
-            </div>
-            <div class="game-iframe-container">
-                <iframe id="gameIframe" class="game-iframe" src=""></iframe>
-            </div>
-        </div>
-    </div>
-
     <script>
         const games = {
             game1: {
@@ -411,47 +310,6 @@
                 url: 'calendar.html'
             }
         };
-
-        function openGame(gameId) {
-            const game = games[gameId];
-            if (!game) return;
-
-            const modal = document.getElementById('gameModal');
-            const iframe = document.getElementById('gameIframe');
-            const title = document.getElementById('modalTitle');
-
-            title.textContent = game.title;
-            iframe.src = game.url;
-            modal.classList.add('active');
-
-            // body 스크롤 방지
-            document.body.style.overflow = 'hidden';
-        }
-
-        function closeGame() {
-            const modal = document.getElementById('gameModal');
-            const iframe = document.getElementById('gameIframe');
-
-            modal.classList.remove('active');
-            iframe.src = '';
-
-            // body 스크롤 복구
-            document.body.style.overflow = '';
-        }
-
-        // ESC 키로 모달 닫기
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                closeGame();
-            }
-        });
-
-        // 모달 배경 클릭 시 닫기
-        document.getElementById('gameModal').addEventListener('click', (e) => {
-            if (e.target.id === 'gameModal') {
-                closeGame();
-            }
-        });
     </script>
 </body>
 </html>
