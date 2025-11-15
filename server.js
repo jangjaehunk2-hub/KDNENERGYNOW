@@ -148,6 +148,97 @@ app.get('/api/plants', async (req, res) => {
   }
 });
 
+// ===== 발전 데이터 조회 API (NEW) =====
+app.get('/api/power-data', async (req, res) => {
+  const { plant, year, hour } = req.query;
+  
+  if (!plant || !year || !hour) {
+    return res.status(400).json({ 
+      success: false, 
+      message: 'plant, year, hour 파라미터가 필요합니다' 
+    });
+  }
+
+  try {
+    // 원자력 발전소의 경우 호기별 발전량 테이블에서 조회
+    if (plant.includes('원자력') || plant.includes('고리') || plant.includes('한빛') || 
+        plant.includes('한울') || plant.includes('월성')) {
+      
+      // 발전소명에서 호기 정보 추출 (예: "고리#1" -> 발전소: "고리", 호기: "#1")
+      const plantNameMatch = plant.match(/^([가-힣]+)/);
+      const unitMatch = plant.match(/#\d+/);
+      
+      if (!plantNameMatch) {
+        return res.status(404).json({ 
+          success: false, 
+          message: '발전소명을 찾을 수 없습니다' 
+        });
+      }
+
+      const plantName = plantNameMatch[0];
+      const unitName = unitMatch ? unitMatch[0] : null;
+
+      console.log(`\n🔍 원자력 발전소 조회: ${plantName} ${unitName} (${year}년)`);
+
+      // 연간 발전량 데이터 조회
+      const query = `
+        SELECT "발전소명", "호기명", "년도", "발전량mwh"
+        FROM public."원자력발전소_호기별발전량"
+        WHERE "발전소명" = $1 
+        ${unitName ? 'AND "호기명" = $2' : ''}
+        AND "년도" = ${unitName ? '$3' : '$2'}
+      `;
+      
+      const params = unitName ? [plantName, unitName, parseInt(year)] : [plantName, parseInt(year)];
+      const result = await pool.query(query, params);
+
+      if (result.rows.length === 0) {
+        console.log('⚠️ 데이터 없음');
+        return res.status(404).json({ 
+          success: false, 
+          message: '해당 연도의 발전 데이터가 없습니다' 
+        });
+      }
+
+      // 연간 발전량을 시간당 평균 발전량으로 변환
+      // 1년 = 8760시간
+      const yearlyGeneration = parseFloat(result.rows[0].발전량mwh);
+      const hourlyGeneration = yearlyGeneration / 8760;
+      
+      // 설비용량 대비 효율 계산 (임의로 설비용량을 1000MW로 가정)
+      const assumedCapacity = 1000; // MW
+      const efficiency = (hourlyGeneration / assumedCapacity) * 100;
+
+      console.log(`✅ 연간 발전량: ${yearlyGeneration} MWh`);
+      console.log(`✅ 시간당 평균: ${hourlyGeneration.toFixed(2)} MW`);
+      console.log(`✅ 효율: ${efficiency.toFixed(2)}%`);
+
+      return res.json({
+        success: true,
+        efficiency: Math.min(80, Math.max(20, efficiency)), // 20~80% 범위로 제한
+        power_output: hourlyGeneration,
+        source: 'database',
+        year: parseInt(year),
+        plant: plant
+      });
+    }
+
+    // 다른 발전소 유형은 데이터 없음 처리
+    return res.status(404).json({ 
+      success: false, 
+      message: '해당 발전소 유형의 데이터가 아직 준비되지 않았습니다' 
+    });
+
+  } catch (err) {
+    console.error('❌ [발전 데이터 조회 오류]:', err);
+    res.status(500).json({ 
+      success: false, 
+      message: 'DB 조회 실패', 
+      error: err.message 
+    });
+  }
+});
+
 // ===== 원자력발전소 발전량 조회 API =====
 app.get('/api/nuclear/power', async (req, res) => {
   try {
@@ -253,8 +344,11 @@ app.listen(serverPort, () => {
   console.log(`✅ Server running on http://localhost:${serverPort}`);
   console.log(`✅ ========================================\n`);
   console.log(`📍 API 엔드포인트:`);
-  console.log(`   - GET  /api/hydro         (수력발전소)`);
-  console.log(`   - GET  /api/nuclear       (원자력발전소)`);
-  console.log(`   - GET  /api/debug/all-plants (디버깅용)`);
+  console.log(`   - GET  /api/plants            (모든 발전소)`);
+  console.log(`   - GET  /api/power-data        (발전 데이터 조회)`);
+  console.log(`   - GET  /api/nuclear/power     (원자력 발전량)`);
+  console.log(`   - GET  /api/debug/all-plants  (디버깅용)`);
+  console.log(`   - POST /signup                (회원가입)`);
+  console.log(`   - POST /login                 (로그인)`);
   console.log(`\n`);
 });
