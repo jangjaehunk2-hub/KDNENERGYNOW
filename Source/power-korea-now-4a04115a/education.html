@@ -331,18 +331,21 @@
 
         // 콘텐츠 카드 생성
         function createContentCard(item) {
+            // 썸네일 이미지 우선순위: DB image > 기본 이미지
+            let thumbnailHtml = '';
+            if (item.image) {
+                // DB에 이미지 경로가 있으면 사용
+                thumbnailHtml = `<img src="${item.image}" alt="${item.description}" class="thumbnail-image" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">`;
+            } else {
+                // DB에 없으면 기본 이미지 사용
+                thumbnailHtml = `<img src="/Source/images/풍력발전의원리.png" alt="${item.description}" class="thumbnail-image" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">`;
+            }
+            
             return `
                 <div class="content-item" onclick="window.open('${item.url}', '_blank')">
                     <div class="thumbnail-container">
-<<<<<<< HEAD
-                        ${item.image 
-                            ? `<img src="${item.image}" alt="${item.description}" class="thumbnail-image" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">`
-                            : ''
-                        }
-                        <i class='bx bx-video thumbnail-placeholder' style="${item.image ? 'display:none;' : ''}"></i>
-=======
-                        <img src="/Source/images/풍력발전의원리.png">
->>>>>>> 59f39ee53a2caf61f4280db24f3346d73031cf35
+                        ${thumbnailHtml}
+                        <i class='bx bx-video thumbnail-placeholder' style="display:none;"></i>
                     </div>
                     <div class="content-info">
                         <div class="content-description">
