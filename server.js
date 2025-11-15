@@ -349,8 +349,6 @@ app.get('/api/nuclear/full', async (req, res) => {
   }
 });
 
-// ===== 원자력발전소 발전량 조회 API =====
-app.get('/api/nuclear/power', async (req, res) => {
 // ===== 원자력 발전소 호기별 발전량 통합 조회 =====
 app.get('/api/nuclear/full', async (req, res) => {
   try {
