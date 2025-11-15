@@ -426,14 +426,14 @@
                     let matchedPowerName = null;
                     let units = [];
                     if (type === 'nuclear') {
-                        // plantUnits의 키 중에서 plant_name에 포함된 것 찾기
-                        matchedPowerName = Object.keys(plantUnits).find(key => plantName.includes(key));
-                        if (matchedPowerName) {
-                            units = plantUnits[matchedPowerName] || [];
-                            plantNameMapping[plantName] = matchedPowerName;
-                            console.log(`🔗 매칭 성공: ${plantName} -> ${matchedPowerName}, 호기: ${units.join(', ')}`);
+                        // ✅ plant_name이 이미 짧은 형태 (예: "한울", "고리")이므로 직접 사용
+                        matchedPowerName = plantName;
+                        units = plantUnits[plantName] || [];
+                        
+                        if (units.length > 0) {
+                            console.log(`🔗 매칭 성공: ${plantName}, 호기: ${units.join(', ')}`);
                         } else {
-                            console.warn(`⚠️ 매칭 실패: ${plantName}`);
+                            console.warn(`⚠️ 호기 없음: ${plantName}`);
                         }
                     }
                     
@@ -745,7 +745,7 @@
                             document.querySelectorAll('.unit-tab').forEach(btn => {
                                 btn.addEventListener('click', async function() {
                                     const selectedUnit = this.dataset.unit;
-                                    const selectedPlant = this.dataset.plant;
+                                    const selectedPlant = this.dataset.plantName;
                                     
                                     console.log(`✅ 선택된 호기: ${selectedPlant}${selectedUnit}`);
                                     
@@ -796,6 +796,7 @@
                                     } else {
                                         console.log(`⚠️ 발전량 데이터 없음`);
                                         document.getElementById(`chart-container-${plant.id}`).style.display = 'none';
+
                                         tableContainer.style.display = 'none';
                                     }
                                 });
