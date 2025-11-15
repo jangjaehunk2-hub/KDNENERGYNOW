@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API Test</title>
+</head>
+<body>
+    <h1>API Response Test</h1>
+    <div id="output" style="white-space: pre; font-family: monospace; border: 1px solid #ccc; padding: 10px; margin: 10px 0; background: #f5f5f5; max-height: 600px; overflow-y: auto;"></div>
+    
+    <script>
+        async function testAPI() {
+            const output = document.getElementById('output');
+            
+            try {
+                const res = await fetch('http://localhost:3000/api/plants');
+                const data = await res.json();
+                
+                output.textContent = 'API Response:\n\n';
+                output.textContent += JSON.stringify(data, null, 2);
+                
+                if (data.plants) {
+                    output.textContent += '\n\n--- First Plant ---\n';
+                    output.textContent += JSON.stringify(data.plants[0], null, 2);
+                    
+                    output.textContent += '\n\n--- plantUnits ---\n';
+                    output.textContent += JSON.stringify(data.plantUnits, null, 2).substring(0, 500) + '...';
+                } else if (Array.isArray(data)) {
+                    output.textContent += '\n\n--- First Item (Array format) ---\n';
+                    output.textContent += JSON.stringify(data[0], null, 2);
+                }
+            } catch (error) {
+                output.textContent = 'Error: ' + error.message;
+            }
+        }
+        
+        testAPI();
+    </script>
+</body>
+</html>

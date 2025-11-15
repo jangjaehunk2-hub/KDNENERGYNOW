@@ -141,13 +141,45 @@ app.get('/api/plants', async (req, res) => {
     });
     console.log('🔑 필드명:', Object.keys(result.rows[0] || {}));
 
-    res.json(result.rows);
+    // 원자력 발전소 호기 정보 함께 반환
+    let plantUnits = {};
+    try {
+      const unitsResult = await pool.query(`
+        SELECT DISTINCT "발전소명", "호기명"
+        FROM public."원자력발전소_호기별발전량"
+        ORDER BY "발전소명", "호기명"
+      `);
+      unitsResult.rows.forEach(row => {
+        if (!plantUnits[row.발전소명]) {
+          plantUnits[row.발전소명] = [];
+        }
+        if (!plantUnits[row.발전소명].includes(row.호기명)) {
+          plantUnits[row.발전소명].push(row.호기명);
+        }
+      });
+      // 호기 정렬 (숫자 순서대로)
+      Object.keys(plantUnits).forEach(plantName => {
+        plantUnits[plantName].sort((a, b) => {
+          const numA = parseInt(a.match(/\d+/)?.[0] || 0);
+          const numB = parseInt(b.match(/\d+/)?.[0] || 0);
+          return numA - numB;
+        });
+      });
+    } catch (err) {
+      console.warn('⚠️ 호기 정보 조회 실패:', err.message);
+    }
+
+    res.json({
+      plants: result.rows,
+      plantUnits: plantUnits
+    });
   } catch (err) {
     console.error('❌ [전체 발전소] 데이터 조회 오류:', err);
     res.status(500).json({ success: false, message: 'DB 조회 실패', error: err.message });
   }
 });
 
+<<<<<<< Updated upstream
 // ===== 발전 데이터 조회 API (NEW) =====
 app.get('/api/power-data', async (req, res) => {
   const { plant, year, hour } = req.query;
@@ -241,83 +273,68 @@ app.get('/api/power-data', async (req, res) => {
 
 // ===== 원자력발전소 발전량 조회 API =====
 app.get('/api/nuclear/power', async (req, res) => {
+=======
+// ===== 원자력 발전소 호기별 발전량 통합 조회 =====
+app.get('/api/nuclear/full', async (req, res) => {
+>>>>>>> Stashed changes
   try {
-    // 1️⃣ 발전량 데이터 가져오기
-    const powerData = await pool.query(`
-      SELECT "발전소명", "호기명", "년도", "발전량mwh"
-      FROM public."원자력발전소_호기별발전량"
-      ORDER BY "발전소명", "호기명", "년도"
-      LIMIT 5
+    // 1️⃣ 발전소 위치 정보 가져오기
+    const plantsResult = await pool.query(`
+      SELECT * 
+      FROM public."power_plant"
+      WHERE plant_type = '원자력'
+      AND latitude IS NOT NULL 
+      AND longitude IS NOT NULL
     `);
 
-    console.log('\n🔍 ===== 발전량 테이블 샘플 데이터 =====');
-    powerData.rows.forEach((row, idx) => {
-      console.log(`${idx + 1}. 발전소명: "${row.발전소명}" | 호기명: "${row.호기명}" | 년도: ${row.년도}`);
-      console.log(`   합친 키: "${row.발전소명}${row.호기명}"`);
-    });
-
-    // 2️⃣ 전체 데이터 가져오기
-    const allPowerData = await pool.query(`
+    // 2️⃣ 호기별 발전량 가져오기
+    const powerResult = await pool.query(`
       SELECT "발전소명", "호기명", "년도", "발전량mwh"
       FROM public."원자력발전소_호기별발전량"
       ORDER BY "발전소명", "호기명", "년도"
     `);
 
-    // 3️⃣ 발전소명+호기명을 키로 사용하여 발전량 묶기
+    // 3️⃣ 발전소별 호기 정보 그룹화
     const groupedPower = {};
-    const plantUnits = {}; // 발전소별 호기 정보 저장
-    
-    allPowerData.rows.forEach(row => {
-      // "고리" + "#1" = "고리#1" 형태로 키 생성
-      const unitKey = row.발전소명 + row.호기명;
-      
-      if (!groupedPower[unitKey]) {
-        groupedPower[unitKey] = [];
-      }
+    const plantUnits = {};
 
-      groupedPower[unitKey].push({
+    powerResult.rows.forEach(row => {
+      const key = row.발전소명; // 발전소명 기준
+
+      if (!groupedPower[key]) groupedPower[key] = [];
+      groupedPower[key].push({
         year: row.년도,
+        unit: row.호기명,
         value: row.발전량mwh
       });
 
-      // 발전소별 호기 정보 수집
-      if (!plantUnits[row.발전소명]) {
-        plantUnits[row.발전소명] = [];
-      }
-      if (!plantUnits[row.발전소명].includes(row.호기명)) {
-        plantUnits[row.발전소명].push(row.호기명);
-      }
+      if (!plantUnits[key]) plantUnits[key] = [];
+      if (!plantUnits[key].includes(row.호기명)) plantUnits[key].push(row.호기명);
     });
 
-    // 호기 정렬 (숫자 순서대로)
-    Object.keys(plantUnits).forEach(plantName => {
-      plantUnits[plantName].sort((a, b) => {
-        const numA = parseInt(a.match(/\d+/)?.[0] || 0);
-        const numB = parseInt(b.match(/\d+/)?.[0] || 0);
-        return numA - numB;
+    // 4️⃣ 발전소 위치 + 호기정보 합치기
+    const result = plantsResult.rows.map(plant => {
+      const key = plant.plant_name;
+
+      // 호기별 발전량 객체로 변환
+      const powerByUnit = {};
+      (groupedPower[key] || []).forEach(item => {
+        if (!powerByUnit[item.unit]) powerByUnit[item.unit] = [];
+        powerByUnit[item.unit].push({ year: item.year, value: item.value });
       });
+
+      return {
+        ...plant,
+        units: plantUnits[key] || [],
+        powerData: powerByUnit
+      };
     });
 
-    console.log('\n✅ 발전량 데이터 그룹화 완료:', Object.keys(groupedPower).length + '개 호기');
-    console.log('📋 생성된 키 샘플:', Object.keys(groupedPower).slice(0, 10));
-    console.log('\n🔌 발전소별 호기 정보:');
-    Object.entries(plantUnits).forEach(([plantName, units]) => {
-      console.log(`   ${plantName}: ${units.join(', ')}`);
-    });
-
-    // 4️⃣ 발전소명+호기명을 키로 하는 객체와 호기 정보 함께 반환
-    res.json({
-      powerData: groupedPower,
-      plantUnits: plantUnits
-    });
+    res.json(result);
 
   } catch (err) {
-    console.error('❌ [원자력발전소 발전량 조회 오류]:', err);
-    res.status(500).json({
-      success: false,
-      message: 'DB 조회 실패',
-      error: err.message
-    });
+    console.error('❌ 발전소/호기 통합 조회 오류:', err);
+    res.status(500).json({ success: false, message: 'DB 조회 실패', error: err.message });
   }
 });
 
