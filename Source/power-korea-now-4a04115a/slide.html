@@ -349,7 +349,7 @@
       <div class="slider-container">
         <div class="year-display" id="yearDisplay">2014</div>
         <div class="year-markers" id="yearMarkers"></div>
-        <input type="range" min="2014" max="2024" value="2014" step="1" id="slider"/>
+        <input type="range" min="0" max="100" value="0" step="1" id="slider"/>
         <div class="year-range">
           <span>2014년</span>
           <span>2024년</span>
@@ -362,71 +362,9 @@
   <script>
     // ===== 전역 변수 =====
     let map;
-    let allPowerPlants = [];
-    let powerGenerationData = {}; // 발전량 데이터 저장
+    let allPowerPlants = []; // 모든 발전소 데이터
     const markers = [];
-    let currentFilter = 'all';
-    let currentYear = 2014;
-
-    // ===== 도넛 그래프 생성 함수 =====
-    function createDonutChart(plant, year) {
-      const size = 50;
-      const strokeWidth = 6;
-      const radius = (size / 2) - (strokeWidth / 2);
-      const circumference = 2 * Math.PI * radius;
-      
-      // 발전소명 + 호기 조합으로 키 생성
-      const unitKey = plant.name + (plant.unit || '');
-      const yearlyData = powerGenerationData[unitKey];
-      
-      // 해당 연도의 발전량 가져오기
-      let powerValue = 0;
-      if (yearlyData) {
-        const yearData = yearlyData.find(d => d.year === year);
-        powerValue = yearData ? parseFloat(yearData.value) : 0;
-      }
-      
-      // 최대값 기준으로 정규화 (원자력 발전소 최대 발전량 약 10,000,000 MWh)
-      const maxPower = 10000000;
-      const percentage = Math.min(powerValue / maxPower, 1);
-      const dashOffset = circumference * (1 - percentage);
-      
-      const color = plant.type === '수력' ? '#00aaff' : '#ff3366';
-      
-      return `
-        <svg width="${size}" height="${size}" style="transform: rotate(-90deg);">
-          <!-- 배경 원 (회색) -->
-          <circle
-            cx="${size/2}"
-            cy="${size/2}"
-            r="${radius}"
-            fill="none"
-            stroke="#e0e0e0"
-            stroke-width="${strokeWidth}"
-          />
-          <!-- 데이터 원 (색상) -->
-          <circle
-            cx="${size/2}"
-            cy="${size/2}"
-            r="${radius}"
-            fill="none"
-            stroke="${color}"
-            stroke-width="${strokeWidth}"
-            stroke-dasharray="${circumference}"
-            stroke-dashoffset="${dashOffset}"
-            stroke-linecap="round"
-            style="transition: stroke-dashoffset 0.5s ease;"
-          />
-          <!-- 중앙 원 -->
-          <circle
-            cx="${size/2}"
-            cy="${size/2}"
-            r="${radius - strokeWidth}"
-            fill="${color}"
-          />
-        </svg>
-      `;
-    }
+    let currentFilter = 'all'; // 현재 선택된 필터
 
     // ===== 지도 초기화 =====
     function initMap() {
@@ -479,7 +417,7 @@
           id: 'nuclear_' + index,
           name: plant.발전소명 || '이름 없음',
           type: '원자력',
-          region: '정보 없음',
+          region: '정보 없음', // 원자력발전소는 region 정보가 없을 수 있음
           unit: plant.호기 || '-',
           reactorType: plant.노형 || '정보 없음',
           capacity: plant.용량1mwe || plant.용량1MWe || '-',
@@ -493,28 +431,13 @@
       }
     }
 
-    // ===== 발전량 데이터 가져오기 =====
-    async function fetchPowerGenerationData() {
-      try {
-        const response = await fetch('http://localhost:3000/api/nuclear/power');
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        
-        const data = await response.json();
-        powerGenerationData = data;
-        console.log('✅ 발전량 데이터 로드 완료:', Object.keys(data).length + '개 호기');
-      } catch (error) {
-        console.error('❌ 발전량 데이터 로드 실패:', error);
-      }
-    }
-
     // ===== 모든 발전소 데이터 로드 =====
     async function loadAllPlants() {
       console.log('\n🔄 ===== 발전소 데이터 로드 시작 =====');
 
       const [hydroPlants, nuclearPlants] = await Promise.all([
         fetchHydroPlants(),
-        fetchNuclearPlants(),
-        fetchPowerGenerationData()
+        fetchNuclearPlants()
       ]);
 
       console.log('\n📊 ===== 로드 결과 =====');
@@ -524,11 +447,17 @@
 
       allPowerPlants = [...hydroPlants, ...nuclearPlants];
       
-      renderMarkers('all', currentYear);
+      renderMarkers('all');
     }
 
+    // 색상 매핑
+    const colorMap = {
+      "수력": "#00aaff",
+      "원자력": "#ff3366"
+    };
+
     // 마커 렌더링
-    function renderMarkers(typeFilter, year) {
+    function renderMarkers(typeFilter) {
       // 기존 마커 제거
       markers.forEach(m => map.removeLayer(m));
       markers.length = 0;
@@ -549,24 +478,35 @@
 
       // 마커 생성
       filteredPlants.forEach(p => {
+        // 좌표 검증
         if (!p.latitude || !p.longitude || isNaN(p.latitude) || isNaN(p.longitude)) {
           console.warn(`⚠️ ${p.name}: 유효하지 않은 좌표`);
           return;
         }
 
-        const color = p.type === '수력' ? '#00aaff' : '#ff3366';
+        const color = colorMap[p.type];
 
-        // 도넛 차트 아이콘 생성
+        // 커스텀 아이콘 생성
         const icon = L.divIcon({
           className: 'custom-marker',
-          html: createDonutChart(p, year),
-          iconSize: [50, 50],
-          iconAnchor: [25, 25]
+          html: `
+            <div style="position: relative; pointer-events: none;">
+              <div style="
+                width: 32px;
+                height: 32px;
+                background-color: ${color};
+                border: 4px solid white;
+                border-radius: 50%;
+              "></div>
+            </div>
+          `,
+          iconSize: [32, 32],
+          iconAnchor: [16, 16]
         });
 
         const marker = L.marker([p.latitude, p.longitude], { icon }).addTo(map);
 
-        // 툴팁
+        // 툴팁 (마우스 호버)
         let tooltipContent = '';
         
         if (p.type === '수력') {
@@ -581,14 +521,6 @@
             </div>
           `;
         } else if (p.type === '원자력') {
-          const unitKey = p.name + (p.unit || '');
-          const yearlyData = powerGenerationData[unitKey];
-          let powerValue = 0;
-          if (yearlyData) {
-            const yearData = yearlyData.find(d => d.year === year);
-            powerValue = yearData ? parseFloat(yearData.value).toLocaleString() : 0;
-          }
-          
           tooltipContent = `
             <div style="min-width: 180px;">
               <div style="font-weight: bold; margin-bottom: 8px; font-size: 15px;">${p.name}</div>
@@ -597,7 +529,17 @@
                 <div style="opacity: 0.9;">호기: ${p.unit}</div>
                 <div style="opacity: 0.9;">노형: ${p.reactorType}</div>
                 <div style="opacity: 0.9;">용량: ${p.capacity} MWe</div>
-                <div style="opacity: 0.9;">${year}년 발전량: ${powerValue} MWh</div>
+                <div style="opacity: 0.9;">상업운전: ${p.operationDate}</div>
+              </div>
+            </div>
+          `;
+        } else {
+          tooltipContent = `
+            <div style="min-width: 180px;">
+              <div style="font-weight: bold; margin-bottom: 8px; font-size: 15px;">${p.name}</div>
+              <div style="font-size: 13px; line-height: 1.6;">
+                <div style="color: ${color};">● ${p.type}발전</div>
+                <div style="opacity: 0.9;">지역: ${p.region}</div>
               </div>
             </div>
           `;
@@ -605,11 +547,11 @@
 
         marker.bindTooltip(tooltipContent, {
           direction: 'top',
-          offset: [0, -30],
+          offset: [0, -20],
           className: 'custom-leaflet-tooltip'
         });
 
-        // 팝업
+        // 팝업 (클릭)
         let popupHTML = '';
         
         if (p.type === '수력') {
@@ -666,6 +608,25 @@
               </div>
             </div>
           `;
+        } else {
+          popupHTML = `
+            <div style="font-family: system-ui; min-width: 250px; padding: 20px;">
+              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                <div style="width: 12px; height: 12px; background-color: ${color}; border-radius: 50%;"></div>
+                <h3 style="font-weight: bold; font-size: 16px; margin: 0;">${p.name}</h3>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 8px; font-size: 14px;">
+                <div style="display: flex; justify-content: space-between;">
+                  <span style="color: #666;">유형:</span>
+                  <span style="font-weight: 500;">${p.type}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                  <span style="color: #666;">지역:</span>
+                  <span style="font-weight: 500;">${p.region}</span>
+                </div>
+              </div>
+            </div>
+          `;
         }
 
         marker.bindPopup(popupHTML, {
@@ -682,11 +643,13 @@
     // ===== 필터 버튼 이벤트 =====
     document.querySelectorAll('.filter-tab').forEach(button => {
       button.addEventListener('click', () => {
+        // 활성 버튼 변경
         document.querySelector('.filter-tab.active').classList.remove('active');
         button.classList.add('active');
         
+        // 필터 적용
         currentFilter = button.dataset.type;
-        renderMarkers(currentFilter, currentYear);
+        renderMarkers(currentFilter);
       });
     });
 
@@ -696,16 +659,21 @@
     const yearDisplay = document.getElementById('yearDisplay');
     const yearMarkers = document.getElementById('yearMarkers');
     let isPlaying = false;
-    let playInterval = null;
+    let startTime = null;
+    let animationFrameId = null;
 
     const MIN_YEAR = 2014;
     const MAX_YEAR = 2024;
+    const ANIMATION_DURATION = 15000; // 15초
 
     // 연도 마커 생성
     function createYearMarkers() {
-      const totalYears = MAX_YEAR - MIN_YEAR;
+      // 2015~2023이 있던 위치에 2014~2024를 배치 (양 끝을 제외한 공간 활용)
+      const totalYears = MAX_YEAR - MIN_YEAR; // 10년
       for (let i = 0; i <= totalYears; i++) {
         const year = MIN_YEAR + i;
+        // 원본의 2015(1/10) ~ 2023(9/10) 위치를 사용
+        // 즉, 10% ~ 90% 구간에 11개 연도를 균등 배치
         const percentage = 10 + (i * 80 / totalYears);
         
         const marker = document.createElement('div');
@@ -723,14 +691,18 @@
 
     // 연도 표시 업데이트
     function updateYearDisplay(value) {
-      currentYear = parseInt(value);
-      yearDisplay.textContent = currentYear + '년';
-      renderMarkers(currentFilter, currentYear);
+      yearDisplay.textContent = value + '년';
+      console.log("Year:", value);
     }
 
     // 슬라이더 입력 이벤트
     slider.addEventListener('input', e => {
-      updateYearDisplay(e.target.value);
+      const sliderValue = parseFloat(e.target.value);
+      // 슬라이더 값(0~100)을 10~90 구간으로 매핑하여 연도 계산
+      const mappedValue = 10 + (sliderValue * 0.8);
+      const year = MIN_YEAR + Math.round((mappedValue - 10) / 8);
+      updateYearDisplay(year);
+      // 수동 조작 시 재생 중지
       if (isPlaying) {
         stopAnimation();
       }
@@ -739,11 +711,36 @@
     // 애니메이션 정지
     function stopAnimation() {
       isPlaying = false;
-      if (playInterval) {
-        clearInterval(playInterval);
-        playInterval = null;
+      startTime = null;
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+        animationFrameId = null;
       }
+      slider.setAttribute('step', '1');
       playButton.innerHTML = '<i class="bx bx-play"></i>';
+    }
+
+    // 애니메이션 프레임
+    function animateSlider(timestamp) {
+      if (!isPlaying) return;
+      
+      if (!startTime) startTime = timestamp;
+      const elapsed = timestamp - startTime;
+      const progress = Math.min(elapsed / ANIMATION_DURATION, 1);
+      
+      const currentYear = MIN_YEAR + (progress * (MAX_YEAR - MIN_YEAR));
+      
+      // 애니메이션 중에는 step 무시하고 부드럽게
+      slider.setAttribute('step', '0.01');
+      slider.value = currentYear;
+      updateYearDisplay(Math.round(currentYear));
+      
+      if (progress < 1) {
+        animationFrameId = requestAnimationFrame(animateSlider);
+      } else {
+        slider.setAttribute('step', '1');
+        stopAnimation();
+      }
     }
 
     // 재생 버튼 클릭
@@ -751,31 +748,24 @@
       if (isPlaying) {
         stopAnimation();
       } else {
-        const currentValue = parseInt(slider.value);
+        // 끝에 있으면 처음부터 시작
+        const currentValue = parseFloat(slider.value);
         if (currentValue >= MAX_YEAR) {
           slider.value = MIN_YEAR;
           updateYearDisplay(MIN_YEAR);
         }
         
         isPlaying = true;
+        startTime = null;
         playButton.innerHTML = '<i class="bx bx-pause"></i>';
-        
-        playInterval = setInterval(() => {
-          const newValue = parseInt(slider.value) + 1;
-          if (newValue > MAX_YEAR) {
-            stopAnimation();
-            slider.value = MAX_YEAR;
-            updateYearDisplay(MAX_YEAR);
-          } else {
-            slider.value = newValue;
-            updateYearDisplay(newValue);
-          }
-        }, 1500);
+        animationFrameId = requestAnimationFrame(animateSlider);
       }
     });
 
     // 초기 연도 표시
     updateYearDisplay(slider.value);
+
+    // 페이지 로드 시 연도 마커 생성
     createYearMarkers();
 
     // ===== 페이지 로드 시 실행 =====
