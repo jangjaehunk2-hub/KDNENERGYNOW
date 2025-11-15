@@ -24,18 +24,12 @@
 
     /* ===== 사이드바 ===== */
     .sidebar {
-      position: fixed;
-      left: 0;
-      top: 0;
       width: 140px;
-      height: 100vh;
       background-color: #1a1a1a;
       color: white;
       display: flex;
       flex-direction: column;
       align-items: center;
-      overflow-y: auto;
-      z-index: 1000;
     }
 
     .sidebar-button {
@@ -74,7 +68,6 @@
       flex: 1;
       padding: 40px;
       overflow-y: auto;
-      margin-left: 140px;
     }
 
     .header {
@@ -137,42 +130,96 @@
       height: 100%;
     }
 
-    .stats-card {
+    .side-panel {
       position: absolute;
-      bottom: 20px;
-      right: 20px;
+      top: 0;
+      right: -400px;
+      width: 400px;
+      height: 100%;
       background: white;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-      min-width: 200px;
+      box-shadow: -4px 0 12px rgba(0,0,0,0.15);
+      transition: right 0.3s ease;
       z-index: 1000;
+      overflow-y: auto;
     }
 
-    .stats-title {
-      font-size: 1.1rem;
+    .side-panel.active {
+      right: 0;
+    }
+
+    .side-panel-header {
+      padding: 20px;
+      border-bottom: 2px solid #f0f0f0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #f8f9fa;
+    }
+
+    .side-panel-title {
+      font-size: 1.3rem;
       font-weight: bold;
-      margin-bottom: 15px;
       color: #333;
     }
 
-    .stats-row {
+    .side-panel-close {
+      width: 32px;
+      height: 32px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      font-size: 24px;
+      color: #666;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      transition: all 0.2s;
+    }
+
+    .side-panel-close:hover {
+      background: rgba(0,0,0,0.1);
+      color: #333;
+    }
+
+    .side-panel-content {
+      padding: 20px;
+    }
+
+    .time-slider-container {
+      margin-bottom: 20px;
+      padding: 20px;
+      background: #f8f9fa;
+      border-radius: 8px;
+    }
+
+    .time-slider-title {
+      font-size: 0.9rem;
+      color: #666;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+
+    .time-display {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #0066ff;
+      text-align: center;
+      margin-bottom: 15px;
+    }
+
+    .time-slider {
+      width: 100%;
+      accent-color: #0066ff;
+    }
+
+    .time-range {
       display: flex;
       justify-content: space-between;
-      margin-bottom: 10px;
-      font-size: 14px;
+      font-size: 0.75rem;
+      color: #999;
+      margin-top: 5px;
     }
-
-    .stats-label {
-      color: #666;
-    }
-
-    .stats-value {
-      font-weight: bold;
-    }
-
-    .power-type-hydro { color: #00aaff; }
-    .power-type-nuclear { color: #ff3366; }
 
     .custom-leaflet-tooltip {
       background-color: rgba(0, 0, 0, 0.8) !important;
@@ -289,6 +336,36 @@
     .play-button:active {
       transform: scale(0.95);
     }
+
+    @keyframes ping {
+      75%, 100% {
+        transform: scale(2);
+        opacity: 0;
+      }
+    }
+
+    .donut-progress {
+      transition: stroke-dasharray 0.5s ease;
+    }
+
+    /* 호버 툴팁 스타일 */
+    .power-tooltip {
+      position: absolute;
+      background: rgba(0, 0, 0, 0.9);
+      color: white;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 14px;
+      pointer-events: none;
+      z-index: 1000;
+      white-space: nowrap;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .power-tooltip.visible {
+      opacity: 1;
+    }
   </style>
 </head>
 <body>
@@ -328,23 +405,22 @@
       <button class="filter-tab active" data-type="all">전체</button>
       <button class="filter-tab" data-type="수력">수력</button>
       <button class="filter-tab" data-type="원자력">원자력</button>
+      <button class="filter-tab" data-type="풍력">풍력</button>
+      <button class="filter-tab" data-type="태양광">태양광</button>
+      <button class="filter-tab" data-type="화력">화력</button>
     </div>
 
     <div class="map-container">
       <div id="map"></div>
-      <div class="stats-card">
-        <div class="stats-title">발전소 현황</div>
-        <div class="stats-row">
-          <span class="stats-label">수력 발전소:</span>
-          <span class="stats-value power-type-hydro" id="hydroPlants">0개</span>
+      <div class="side-panel" id="sidePanel">
+        <div class="side-panel-header">
+          <div class="side-panel-title">발전소 정보</div>
+          <button class="side-panel-close" id="closeSidePanel">
+            <i class='bx bx-x'></i>
+          </button>
         </div>
-        <div class="stats-row">
-          <span class="stats-label">원자력 발전소:</span>
-          <span class="stats-value power-type-nuclear" id="nuclearPlants">0개</span>
-        </div>
-        <div class="stats-row" style="padding-top: 10px; border-top: 1px solid #eee;">
-          <span class="stats-label">총 발전소:</span>
-          <span class="stats-value" id="totalPlants">0개</span>
+        <div class="side-panel-content" id="sidePanelContent">
+          <!-- 발전소 정보가 여기에 표시됩니다 -->
         </div>
       </div>
     </div>
@@ -354,7 +430,7 @@
         <i class='bx bx-play'></i>
       </button>
       <div class="slider-container">
-        <div class="year-display" id="yearDisplay">2014</div>
+        <div class="year-display" id="yearDisplay">2014년</div>
         <div class="year-markers" id="yearMarkers"></div>
         <input type="range" min="0" max="100" value="0" step="1" id="slider"/>
         <div class="year-range">
@@ -369,9 +445,30 @@
   <script>
     // ===== 전역 변수 =====
     let map;
-    let allPowerPlants = []; // 모든 발전소 데이터
+    let allPowerPlants = [];
     const markers = [];
-    let currentFilter = 'all'; // 현재 선택된 필터
+    let currentFilter = 'all';
+    let currentYear = 2014;
+    let currentHour = 0;
+    let currentPlant = null;
+
+    // 발전소 유형별 이모지
+    const iconEmoji = {
+      '수력': '💧',
+      '원자력': '☢️',
+      '풍력': '💨',
+      '태양광': '☀️',
+      '화력': '🔥'
+    };
+
+    // 색상 매핑
+    const colorMap = {
+      "수력": "#00aaff",
+      "원자력": "#ff3366",
+      "풍력": "#90ee90",
+      "태양광": "#ffd700",
+      "화력": "#ff6347"
+    };
 
     // ===== 지도 초기화 =====
     function initMap() {
@@ -387,258 +484,396 @@
       }).addTo(map);
     }
 
-    // ===== DB에서 수력발전소 데이터 가져오기 =====
-    async function fetchHydroPlants() {
+    // ===== DB에서 모든 발전소 데이터 가져오기 =====
+    async function fetchAllPlants() {
       try {
-        const response = await fetch('http://localhost:3000/api/hydro');
+        const response = await fetch('http://localhost:3000/api/plants');
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         
         const data = await response.json();
-        console.log('✅ 수력발전소 데이터:', data.length + '개');
+        console.log('✅ 발전소 데이터:', data.length + '개');
         
-        return data.map((plant, index) => ({
-          id: 'hydro_' + index,
-          name: plant.발전소명 || '이름 없음',
-          type: '수력',
-          region: plant.위치_수계 || '위치 정보 없음',
-          operator: plant.운영기관 || '정보 없음',
-          latitude: parseFloat(plant.latitude),
-          longitude: parseFloat(plant.longitude)
-        }));
+        return data.map((plant, index) => {
+          const plantType = plant.plant_type || '알 수 없음';
+          
+          let type = '화력';
+          const typeStr = String(plantType).toLowerCase();
+          
+          if (typeStr.includes('수력') || typeStr === 'hydro') {
+            type = '수력';
+          } else if (typeStr.includes('원자력') || typeStr === 'nuclear') {
+            type = '원자력';
+          } else if (typeStr.includes('풍력') || typeStr === 'wind') {
+            type = '풍력';
+          } else if (typeStr.includes('태양광') || typeStr === 'solar') {
+            type = '태양광';
+          } else if (typeStr.includes('화력') || typeStr === 'thermal') {
+            type = '화력';
+          }
+          
+          return {
+            id: `${type}_${index}`,
+            name: plant.plant_name || '이름 없음',
+            type: type,
+            operator: plant.business || '정보 없음',
+            unit: plant.remark || '',
+            location: plant.adress || '위치 정보 없음',
+            latitude: parseFloat(plant.latitude),
+            longitude: parseFloat(plant.longitude),
+            capacity: parseFloat(plant.capacity) || 100,
+            installYear: parseInt(plant.install_year) || 2014
+          };
+        });
       } catch (error) {
-        console.error('❌ 수력발전소 데이터 로드 실패:', error);
+        console.error('❌ 발전소 데이터 로드 실패:', error);
         return [];
       }
     }
 
-    // ===== DB에서 원자력발전소 데이터 가져오기 =====
-    async function fetchNuclearPlants() {
+    // ===== DB에서 발전 데이터 가져오기 =====
+    async function fetchPowerData(plantName, year, hour) {
       try {
-        const response = await fetch('http://localhost:3000/api/nuclear');
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        const response = await fetch(`http://localhost:3000/api/power-data?plant=${encodeURIComponent(plantName)}&year=${year}&hour=${hour}`);
+        
+        if (!response.ok) {
+          return null;
+        }
         
         const data = await response.json();
-        console.log('✅ 원자력발전소 데이터:', data.length + '개');
-        
-        return data.map((plant, index) => ({
-          id: 'nuclear_' + index,
-          name: plant.발전소명 || '이름 없음',
-          type: '원자력',
-          region: '정보 없음', // 원자력발전소는 region 정보가 없을 수 있음
-          unit: plant.호기 || '-',
-          reactorType: plant.노형 || '정보 없음',
-          capacity: plant.용량1mwe || plant.용량1MWe || '-',
-          operationDate: plant.상업운전개시일 || '정보 없음',
-          latitude: parseFloat(plant.latitude),
-          longitude: parseFloat(plant.longitude)
-        }));
+        return data;
       } catch (error) {
-        console.error('❌ 원자력발전소 데이터 로드 실패:', error);
-        return [];
+        return null;
       }
+    }
+
+    // ===== 발전 효율 계산 함수 =====
+    async function calculateEfficiency(plant, year, hour) {
+      const dbData = await fetchPowerData(plant.name, year, hour);
+      
+      if (dbData && dbData.efficiency !== null && dbData.efficiency !== undefined) {
+        return {
+          efficiency: parseFloat(dbData.efficiency),
+          source: 'database'
+        };
+      }
+      
+      return {
+        efficiency: null,
+        source: 'none'
+      };
+    }
+
+    // ===== 도넛 차트 생성 =====
+    async function createDonutChart(plant, year, hour) {
+      const result = await calculateEfficiency(plant, year, hour);
+      const color = colorMap[plant.type];
+      
+      if (result.efficiency === null) {
+        return `
+          <div style="display: flex; flex-direction: column; align-items: center; padding: 20px;">
+            <div style="margin-bottom: 15px; text-align: center;">
+              <div style="font-size: 18px; font-weight: bold; color: #333;">${plant.name}</div>
+              <div style="font-size: 14px; color: #666; margin-top: 5px;">설비용량: ${plant.capacity} MW</div>
+              <div style="font-size: 12px; color: #999; margin-top: 3px;">설치년도: ${plant.installYear}년</div>
+            </div>
+            <div style="position: relative; width: 200px; height: 200px; display: flex; align-items: center; justify-content: center; background: #f8f9fa; border-radius: 50%; border: 3px dashed #ddd;">
+              <div style="text-align: center;">
+                <div style="font-size: 48px; color: #ccc; margin-bottom: 10px;">📊</div>
+                <div style="font-size: 16px; font-weight: bold; color: #999;">데이터 없음</div>
+                <div style="font-size: 12px; color: #bbb; margin-top: 5px;">${year}년 ${hour}시</div>
+              </div>
+            </div>
+            <div style="
+              margin-top: 20px;
+              width: 100%;
+              padding: 15px;
+              background: #fff3cd;
+              border: 1px solid #ffc107;
+              border-radius: 8px;
+              text-align: center;
+            ">
+              <div style="font-size: 14px; color: #856404;">⚠️ 해당 시간대의 발전 데이터가 없습니다</div>
+            </div>
+          </div>
+        `;
+      }
+      
+      const percentage = result.efficiency;
+      const power = (percentage * plant.capacity / 100).toFixed(1);
+      
+      return `
+        <div style="display: flex; flex-direction: column; align-items: center; padding: 20px;">
+          <div style="margin-bottom: 15px; text-align: center;">
+            <div style="font-size: 18px; font-weight: bold; color: #333;">${plant.name}</div>
+            <div style="font-size: 14px; color: #666; margin-top: 5px;">설비용량: ${plant.capacity} MW</div>
+            <div style="font-size: 12px; color: #999; margin-top: 3px;">설치년도: ${plant.installYear}년</div>
+          </div>
+          <div id="donutContainer" style="position: relative; width: 200px; height: 200px; cursor: pointer;">
+            <svg viewBox="0 0 100 100" style="transform: rotate(-90deg);">
+              <circle cx="50" cy="50" r="40" fill="none" stroke="#f0f0f0" stroke-width="12"/>
+              <circle 
+                id="donutCircle"
+                cx="50" 
+                cy="50" 
+                r="40" 
+                fill="none" 
+                stroke="${color}" 
+                stroke-width="12"
+                stroke-dasharray="${percentage * 2.51} 251"
+                stroke-linecap="round"
+                class="donut-progress"
+              />
+            </svg>
+            <div style="
+              position: absolute;
+              top: 50%;
+              left: 50%;
+              transform: translate(-50%, -50%);
+              text-align: center;
+              pointer-events: none;
+            ">
+              <div id="percentageText" style="font-size: 32px; font-weight: bold; color: ${color};">${percentage.toFixed(1)}%</div>
+              <div style="font-size: 14px; color: #666; margin-top: 5px;">발전 효율</div>
+            </div>
+            <div id="powerTooltip" class="power-tooltip"></div>
+          </div>
+          <div style="
+            margin-top: 20px;
+            width: 100%;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            text-align: center;
+          ">
+            <div style="font-size: 12px; color: #999; margin-bottom: 5px;">현재 출력</div>
+            <div id="powerOutput" style="font-size: 20px; font-weight: bold; color: #333;">${power} MW</div>
+            <div style="font-size: 10px; color: #28a745; margin-top: 8px;">✓ DB 데이터</div>
+          </div>
+        </div>
+      `;
+    }
+
+    // ===== 도넛 차트 호버 이벤트 =====
+    function setupDonutHover() {
+      const donutContainer = document.getElementById('donutContainer');
+      const tooltip = document.getElementById('powerTooltip');
+      const circle = document.getElementById('donutCircle');
+      
+      if (!donutContainer || !tooltip || !circle) return;
+      
+      const strokeDasharray = circle.getAttribute('stroke-dasharray');
+      const percentage = parseFloat(strokeDasharray.split(' ')[0]) / 2.51;
+      const power = (percentage * currentPlant.capacity / 100).toFixed(1);
+      
+      donutContainer.addEventListener('mouseenter', (e) => {
+        tooltip.textContent = `${percentage.toFixed(1)}% (${power} MW)`;
+        tooltip.classList.add('visible');
+      });
+      
+      donutContainer.addEventListener('mousemove', (e) => {
+        const rect = donutContainer.getBoundingClientRect();
+        tooltip.style.left = (e.clientX - rect.left + 10) + 'px';
+        tooltip.style.top = (e.clientY - rect.top - 30) + 'px';
+      });
+      
+      donutContainer.addEventListener('mouseleave', () => {
+        tooltip.classList.remove('visible');
+      });
+    }
+
+    // ===== 도넛 차트 업데이트 =====
+    async function updateDonutChart(plant, year, hour) {
+      const result = await calculateEfficiency(plant, year, hour);
+      
+      if (result.efficiency === null) {
+        const sidePanelContent = document.getElementById('sidePanelContent');
+        const donutHTML = await createDonutChart(plant, year, hour);
+        
+        let timeSliderHTML = '';
+        if (plant.type !== '원자력') {
+          timeSliderHTML = `
+            <div class="time-slider-container">
+              <div class="time-slider-title">시간대 선택</div>
+              <div class="time-display" id="timeDisplay">${hour.toString().padStart(2, '0')}:00</div>
+              <input type="range" min="0" max="23" value="${hour}" step="1" class="time-slider" id="timeSlider"/>
+              <div class="time-range">
+                <span>00:00</span>
+                <span>23:00</span>
+              </div>
+            </div>
+          `;
+        }
+        
+        sidePanelContent.innerHTML = donutHTML + timeSliderHTML;
+        
+        if (plant.type !== '원자력') {
+          const timeSlider = document.getElementById('timeSlider');
+          const timeDisplay = document.getElementById('timeDisplay');
+          
+          timeSlider.addEventListener('input', async (e) => {
+            const h = parseInt(e.target.value);
+            currentHour = h;
+            timeDisplay.textContent = `${h.toString().padStart(2, '0')}:00`;
+            await updateDonutChart(currentPlant, currentYear, currentHour);
+          });
+        }
+        
+        return;
+      }
+      
+      const percentage = result.efficiency;
+      const power = (percentage * plant.capacity / 100).toFixed(1);
+      
+      const circle = document.getElementById('donutCircle');
+      const percentageText = document.getElementById('percentageText');
+      const powerOutput = document.getElementById('powerOutput');
+      
+      if (circle && percentageText && powerOutput) {
+        circle.setAttribute('stroke-dasharray', `${percentage * 2.51} 251`);
+        percentageText.textContent = `${percentage.toFixed(1)}%`;
+        powerOutput.textContent = `${power} MW`;
+      }
+    }
+
+    // ===== 사이드 패널 열기 =====
+    async function openSidePanel(plant) {
+      currentPlant = plant;
+      const sidePanel = document.getElementById('sidePanel');
+      const sidePanelContent = document.getElementById('sidePanelContent');
+      
+      let content = '';
+      content += await createDonutChart(plant, currentYear, currentHour);
+      
+      if (plant.type !== '원자력') {
+        content += `
+          <div class="time-slider-container">
+            <div class="time-slider-title">시간대 선택</div>
+            <div class="time-display" id="timeDisplay">${currentHour.toString().padStart(2, '0')}:00</div>
+            <input type="range" min="0" max="23" value="${currentHour}" step="1" class="time-slider" id="timeSlider"/>
+            <div class="time-range">
+              <span>00:00</span>
+              <span>23:00</span>
+            </div>
+          </div>
+        `;
+      }
+      
+      sidePanelContent.innerHTML = content;
+      
+      setTimeout(() => setupDonutHover(), 0);
+      
+      if (plant.type !== '원자력') {
+        const timeSlider = document.getElementById('timeSlider');
+        const timeDisplay = document.getElementById('timeDisplay');
+        
+        timeSlider.addEventListener('input', async (e) => {
+          const hour = parseInt(e.target.value);
+          currentHour = hour;
+          timeDisplay.textContent = `${hour.toString().padStart(2, '0')}:00`;
+          await updateDonutChart(currentPlant, currentYear, currentHour);
+        });
+      }
+      
+      sidePanel.classList.add('active');
     }
 
     // ===== 모든 발전소 데이터 로드 =====
     async function loadAllPlants() {
       console.log('\n🔄 ===== 발전소 데이터 로드 시작 =====');
 
-      const [hydroPlants, nuclearPlants] = await Promise.all([
-        fetchHydroPlants(),
-        fetchNuclearPlants()
-      ]);
+      allPowerPlants = await fetchAllPlants();
 
       console.log('\n📊 ===== 로드 결과 =====');
-      console.log(`수력발전소: ${hydroPlants.length}개`);
-      console.log(`원자력발전소: ${nuclearPlants.length}개`);
-      console.log(`총합: ${hydroPlants.length + nuclearPlants.length}개`);
-
-      allPowerPlants = [...hydroPlants, ...nuclearPlants];
+      const hydroCount = allPowerPlants.filter(p => p.type === '수력').length;
+      const nuclearCount = allPowerPlants.filter(p => p.type === '원자력').length;
+      const windCount = allPowerPlants.filter(p => p.type === '풍력').length;
+      const solarCount = allPowerPlants.filter(p => p.type === '태양광').length;
+      const thermalCount = allPowerPlants.filter(p => p.type === '화력').length;
+      
+      console.log(`수력발전소: ${hydroCount}개`);
+      console.log(`원자력발전소: ${nuclearCount}개`);
+      console.log(`풍력발전소: ${windCount}개`);
+      console.log(`태양광발전소: ${solarCount}개`);
+      console.log(`화력발전소: ${thermalCount}개`);
+      console.log(`총합: ${allPowerPlants.length}개`);
       
       renderMarkers('all');
     }
 
-    // 색상 매핑
-    const colorMap = {
-      "수력": "#00aaff",
-      "원자력": "#ff3366"
-    };
-
-    // 마커 렌더링
+    // ===== 마커 렌더링 =====
     function renderMarkers(typeFilter) {
-      // 기존 마커 제거
       markers.forEach(m => map.removeLayer(m));
       markers.length = 0;
 
-      // 필터링
       let filteredPlants = allPowerPlants;
       if (typeFilter !== 'all') {
         filteredPlants = allPowerPlants.filter(p => p.type === typeFilter);
       }
 
-      // 통계 업데이트
       const hydroCount = allPowerPlants.filter(p => p.type === '수력').length;
       const nuclearCount = allPowerPlants.filter(p => p.type === '원자력').length;
+      const windCount = allPowerPlants.filter(p => p.type === '풍력').length;
+      const solarCount = allPowerPlants.filter(p => p.type === '태양광').length;
+      const thermalCount = allPowerPlants.filter(p => p.type === '화력').length;
       
-      document.getElementById('hydroPlants').textContent = `${hydroCount}개`;
-      document.getElementById('nuclearPlants').textContent = `${nuclearCount}개`;
-      document.getElementById('totalPlants').textContent = `${allPowerPlants.length}개`;
+      console.log(`✅ 통계: 수력 ${hydroCount}, 원자력 ${nuclearCount}, 풍력 ${windCount}, 태양광 ${solarCount}, 화력 ${thermalCount}`);
 
-      // 마커 생성
       filteredPlants.forEach(p => {
-        // 좌표 검증
         if (!p.latitude || !p.longitude || isNaN(p.latitude) || isNaN(p.longitude)) {
           console.warn(`⚠️ ${p.name}: 유효하지 않은 좌표`);
           return;
         }
 
         const color = colorMap[p.type];
+        const emoji = iconEmoji[p.type];
 
-        // 커스텀 아이콘 생성
         const icon = L.divIcon({
           className: 'custom-marker',
           html: `
-            <div style="position: relative; pointer-events: none;">
+            <div style="position: relative; pointer-events: none; display: flex; align-items: center; justify-content: center;">
               <div style="
-                width: 32px;
-                height: 32px;
-                background-color: ${color};
-                border: 4px solid white;
+                width: 40px;
+                height: 40px;
+                background-color: white;
+                border: 3px solid ${color};
                 border-radius: 50%;
+                box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 24px;
+              ">${emoji}</div>
+              <div style="
+                position: absolute;
+                width: 40px;
+                height: 40px;
+                border: 3px solid ${color};
+                border-radius: 50%;
+                animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+                opacity: 0.3;
               "></div>
             </div>
           `,
-          iconSize: [32, 32],
-          iconAnchor: [16, 16]
+          iconSize: [40, 40],
+          iconAnchor: [20, 20]
         });
 
         const marker = L.marker([p.latitude, p.longitude], { icon }).addTo(map);
 
-        // 툴팁 (마우스 호버)
-        let tooltipContent = '';
-        
-        if (p.type === '수력') {
-          tooltipContent = `
-            <div style="min-width: 180px;">
-              <div style="font-weight: bold; margin-bottom: 8px; font-size: 15px;">${p.name}</div>
-              <div style="font-size: 13px; line-height: 1.6;">
-                <div style="color: ${color};">● ${p.type}발전</div>
-                <div style="opacity: 0.9;">운영: ${p.operator}</div>
-                <div style="opacity: 0.9;">위치: ${p.region}</div>
-              </div>
-            </div>
-          `;
-        } else if (p.type === '원자력') {
-          tooltipContent = `
-            <div style="min-width: 180px;">
-              <div style="font-weight: bold; margin-bottom: 8px; font-size: 15px;">${p.name}</div>
-              <div style="font-size: 13px; line-height: 1.6;">
-                <div style="color: ${color};">● ${p.type}발전</div>
-                <div style="opacity: 0.9;">호기: ${p.unit}</div>
-                <div style="opacity: 0.9;">노형: ${p.reactorType}</div>
-                <div style="opacity: 0.9;">용량: ${p.capacity} MWe</div>
-                <div style="opacity: 0.9;">상업운전: ${p.operationDate}</div>
-              </div>
-            </div>
-          `;
-        } else {
-          tooltipContent = `
-            <div style="min-width: 180px;">
-              <div style="font-weight: bold; margin-bottom: 8px; font-size: 15px;">${p.name}</div>
-              <div style="font-size: 13px; line-height: 1.6;">
-                <div style="color: ${color};">● ${p.type}발전</div>
-                <div style="opacity: 0.9;">지역: ${p.region}</div>
-              </div>
-            </div>
-          `;
-        }
+        marker.on('click', function() {
+          openSidePanel(p);
+        });
+
+        let tooltipContent = `
+          <div style="min-width: 150px; padding: 8px 0;">
+            <div style="font-weight: bold; font-size: 14px; color: #fff; text-align: center;">${p.name}</div>
+          </div>
+        `;
 
         marker.bindTooltip(tooltipContent, {
           direction: 'top',
           offset: [0, -20],
           className: 'custom-leaflet-tooltip'
-        });
-
-        // 팝업 (클릭)
-        let popupHTML = '';
-        
-        if (p.type === '수력') {
-          popupHTML = `
-            <div style="font-family: system-ui; min-width: 250px; padding: 20px;">
-              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
-                <div style="width: 12px; height: 12px; background-color: ${color}; border-radius: 50%;"></div>
-                <h3 style="font-weight: bold; font-size: 16px; margin: 0;">${p.name}</h3>
-              </div>
-              <div style="display: flex; flex-direction: column; gap: 8px; font-size: 14px;">
-                <div style="display: flex; justify-content: space-between;">
-                  <span style="color: #666;">유형:</span>
-                  <span style="font-weight: 500;">${p.type}</span>
-                </div>
-                <div style="display: flex; justify-content: space-between;">
-                  <span style="color: #666;">운영기관:</span>
-                  <span style="font-weight: 500;">${p.operator}</span>
-                </div>
-                <div style="display: flex; justify-content: space-between;">
-                  <span style="color: #666;">위치:</span>
-                  <span style="font-weight: 500;">${p.region}</span>
-                </div>
-              </div>
-            </div>
-          `;
-        } else if (p.type === '원자력') {
-          popupHTML = `
-            <div style="font-family: system-ui; min-width: 250px; padding: 20px;">
-              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
-                <div style="width: 12px; height: 12px; background-color: ${color}; border-radius: 50%;"></div>
-                <h3 style="font-weight: bold; font-size: 16px; margin: 0;">${p.name} ${p.unit}</h3>
-              </div>
-              <div style="display: flex; flex-direction: column; gap: 8px; font-size: 14px;">
-                <div style="display: flex; justify-content: space-between;">
-                  <span style="color: #666;">유형:</span>
-                  <span style="font-weight: 500;">${p.type}</span>
-                </div>
-                <div style="display: flex; justify-content: space-between;">
-                  <span style="color: #666;">호기:</span>
-                  <span style="font-weight: 500;">${p.unit}</span>
-                </div>
-                <div style="display: flex; justify-content: space-between;">
-                  <span style="color: #666;">노형:</span>
-                  <span style="font-weight: 500;">${p.reactorType}</span>
-                </div>
-                <div style="display: flex; justify-content: space-between;">
-                  <span style="color: #666;">용량:</span>
-                  <span style="font-weight: 500;">${p.capacity} MWe</span>
-                </div>
-                <div style="display: flex; justify-content: space-between;">
-                  <span style="color: #666;">상업운전:</span>
-                  <span style="font-weight: 500;">${p.operationDate}</span>
-                </div>
-              </div>
-            </div>
-          `;
-        } else {
-          popupHTML = `
-            <div style="font-family: system-ui; min-width: 250px; padding: 20px;">
-              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
-                <div style="width: 12px; height: 12px; background-color: ${color}; border-radius: 50%;"></div>
-                <h3 style="font-weight: bold; font-size: 16px; margin: 0;">${p.name}</h3>
-              </div>
-              <div style="display: flex; flex-direction: column; gap: 8px; font-size: 14px;">
-                <div style="display: flex; justify-content: space-between;">
-                  <span style="color: #666;">유형:</span>
-                  <span style="font-weight: 500;">${p.type}</span>
-                </div>
-                <div style="display: flex; justify-content: space-between;">
-                  <span style="color: #666;">지역:</span>
-                  <span style="font-weight: 500;">${p.region}</span>
-                </div>
-              </div>
-            </div>
-          `;
-        }
-
-        marker.bindPopup(popupHTML, {
-          maxWidth: 300,
-          className: 'custom-popup'
         });
 
         markers.push(marker);
@@ -647,20 +882,23 @@
       console.log(`✅ ${markers.length}개의 마커가 표시되었습니다.`);
     }
 
+    // ===== 사이드 패널 닫기 =====
+    document.getElementById('closeSidePanel').addEventListener('click', function() {
+      document.getElementById('sidePanel').classList.remove('active');
+    });
+
     // ===== 필터 버튼 이벤트 =====
     document.querySelectorAll('.filter-tab').forEach(button => {
       button.addEventListener('click', () => {
-        // 활성 버튼 변경
         document.querySelector('.filter-tab.active').classList.remove('active');
         button.classList.add('active');
         
-        // 필터 적용
         currentFilter = button.dataset.type;
         renderMarkers(currentFilter);
       });
     });
 
-    // 슬라이더 및 연도 관리
+    // ===== 슬라이더 및 연도 관리 =====
     const slider = document.getElementById('slider');
     const playButton = document.getElementById('playButton');
     const yearDisplay = document.getElementById('yearDisplay');
@@ -671,16 +909,13 @@
 
     const MIN_YEAR = 2014;
     const MAX_YEAR = 2024;
-    const ANIMATION_DURATION = 15000; // 15초
+    const ANIMATION_DURATION = 15000;
 
-    // 연도 마커 생성
+    // ===== 연도 마커 생성 =====
     function createYearMarkers() {
-      // 2015~2023이 있던 위치에 2014~2024를 배치 (양 끝을 제외한 공간 활용)
-      const totalYears = MAX_YEAR - MIN_YEAR; // 10년
+      const totalYears = MAX_YEAR - MIN_YEAR;
       for (let i = 0; i <= totalYears; i++) {
         const year = MIN_YEAR + i;
-        // 원본의 2015(1/10) ~ 2023(9/10) 위치를 사용
-        // 즉, 10% ~ 90% 구간에 11개 연도를 균등 배치
         const percentage = 10 + (i * 80 / totalYears);
         
         const marker = document.createElement('div');
@@ -696,29 +931,30 @@
       }
     }
 
-    // 연도 표시 업데이트
-    function updateYearDisplay(value) {
+    // ===== 연도 표시 업데이트 =====
+    async function updateYearDisplay(value) {
+      currentYear = value;
       yearDisplay.textContent = value + '년';
-      console.log("Year:", value);
+      
+      if (currentPlant) {
+        await updateDonutChart(currentPlant, currentYear, currentHour);
+      }
     }
 
-    // 슬라이더 입력 이벤트
-    slider.addEventListener('input', e => {
+    // ===== 슬라이더 입력 이벤트 =====
+    slider.addEventListener('input', async (e) => {
       const sliderValue = parseFloat(e.target.value);
-      // 슬라이더 값(0~100)을 10~90 구간으로 매핑하여 연도 계산
       const mappedValue = 10 + (sliderValue * 0.8);
       const year = MIN_YEAR + Math.round((mappedValue - 10) / 8);
-      updateYearDisplay(year);
-      // 수동 조작 시 재생 중지
+      await updateYearDisplay(year);
       if (isPlaying) {
         stopAnimation();
       }
     });
 
-    // 애니메이션 정지
+    // ===== 애니메이션 정지 =====
     function stopAnimation() {
       isPlaying = false;
-      startTime = null;
       if (animationFrameId) {
         cancelAnimationFrame(animationFrameId);
         animationFrameId = null;
@@ -727,7 +963,7 @@
       playButton.innerHTML = '<i class="bx bx-play"></i>';
     }
 
-    // 애니메이션 프레임
+    // ===== 애니메이션 프레임 =====
     function animateSlider(timestamp) {
       if (!isPlaying) return;
       
@@ -735,12 +971,13 @@
       const elapsed = timestamp - startTime;
       const progress = Math.min(elapsed / ANIMATION_DURATION, 1);
       
-      const currentYear = MIN_YEAR + (progress * (MAX_YEAR - MIN_YEAR));
+      const sliderValue = progress * 100;
+      const mappedValue = 10 + (progress * 80);
+      const currentYearCalc = MIN_YEAR + (progress * (MAX_YEAR - MIN_YEAR));
       
-      // 애니메이션 중에는 step 무시하고 부드럽게
       slider.setAttribute('step', '0.01');
-      slider.value = currentYear;
-      updateYearDisplay(Math.round(currentYear));
+      slider.value = sliderValue;
+      updateYearDisplay(Math.round(currentYearCalc));
       
       if (progress < 1) {
         animationFrameId = requestAnimationFrame(animateSlider);
@@ -750,29 +987,30 @@
       }
     }
 
-    // 재생 버튼 클릭
+    // ===== 재생 버튼 클릭 =====
     playButton.addEventListener('click', () => {
       if (isPlaying) {
         stopAnimation();
       } else {
-        // 끝에 있으면 처음부터 시작
         const currentValue = parseFloat(slider.value);
-        if (currentValue >= MAX_YEAR) {
-          slider.value = MIN_YEAR;
+        if (currentValue >= 100) {
+          slider.value = 0;
           updateYearDisplay(MIN_YEAR);
         }
         
         isPlaying = true;
-        startTime = null;
         playButton.innerHTML = '<i class="bx bx-pause"></i>';
+        
+        const currentProgress = parseFloat(slider.value) / 100;
+        const elapsedTime = currentProgress * ANIMATION_DURATION;
+        startTime = performance.now() - elapsedTime;
+        
         animationFrameId = requestAnimationFrame(animateSlider);
       }
     });
 
-    // 초기 연도 표시
-    updateYearDisplay(slider.value);
-
-    // 페이지 로드 시 연도 마커 생성
+    // ===== 초기화 =====
+    updateYearDisplay(MIN_YEAR);
     createYearMarkers();
 
     // ===== 페이지 로드 시 실행 =====
