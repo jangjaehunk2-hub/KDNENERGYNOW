@@ -80,12 +80,11 @@ app.get('/', (req, res) => {
 app.get('/api/education', async (req, res) => {
   try {
     const result = await pool.query(
-      `SELECT id, content_url, tag, explain FROM education ORDER BY id DESC`
+      `SELECT * FROM public.education ORDER BY id ASC`
     );
-
     res.json(result.rows);
-  } catch (error) {
-    console.error("❌ education 데이터 조회 실패:", error);
+  } catch (err) {
+    console.error("❌ education 데이터 조회 실패:", err);
     res.status(500).json({ error: 'Database error' });
   }
 });
@@ -446,21 +445,6 @@ app.get('/api/debug/all-plants', async (req, res) => {
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
-  }
-});
-
-// ===== 교육 자료 조회 API =====
-app.get('/api/education', async (req, res) => {
-  try {
-    const result = await pool.query(
-      `SELECT id, content_url, tag, explain
-       FROM education
-       ORDER BY id DESC`
-    );
-    res.json(result.rows);
-  } catch (err) {
-    console.error("❌ education 데이터 조회 실패:", err);
-    res.status(500).json({ error: 'Database error' });
   }
 });
 
