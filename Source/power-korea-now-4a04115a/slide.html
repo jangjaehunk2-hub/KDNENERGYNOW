@@ -1,1024 +1,1253 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>발전소 지도 시각화</title>
-
-  <!-- Boxicons (사이드바 아이콘용) -->
-  <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
-
-  <!-- Leaflet -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-  <!-- 스타일 -->
-  <style>
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #f5f5f5;
-      margin: 0;
-      display: flex;
-      height: 100vh;
-    }
-
-    /* ===== 사이드바 ===== */
-    .sidebar {
-      width: 140px;
-      background-color: #1a1a1a;
-      color: white;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-
-    .sidebar-button {
-      width: 100%;
-      padding: 24px 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 8px;
-      border: none;
-      background: transparent;
-      color: white;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .sidebar-button:hover {
-      background-color: rgba(255, 255, 255, 0.1);
-    }
-
-    .sidebar-button.active {
-      background-color: rgba(255, 255, 255, 0.1);
-      border-left: 4px solid #0066ff;
-    }
-
-    .sidebar-button i {
-      font-size: 24px;
-    }
-
-    .sidebar-button span {
-      font-size: 14px;
-    }
-
-    /* ===== 메인 콘텐츠 ===== */
-    .main-content {
-      flex: 1;
-      padding: 40px;
-      overflow-y: auto;
-    }
-
-    .header {
-      margin-bottom: 30px;
-    }
-
-    .header h1 {
-      font-size: 2.5rem;
-      margin: 0 0 10px 0;
-      color: #333;
-    }
-
-    .header p {
-      font-size: 1.2rem;
-      color: #666;
-      margin: 0;
-    }
-
-    /* 지도 영역 및 컨트롤 스타일 */
-    .filter-tabs {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 20px;
-      justify-content: center;
-    }
-
-    .filter-tab {
-      padding: 10px 20px;
-      border: none;
-      border-radius: 20px;
-      background: white;
-      cursor: pointer;
-      font-weight: 500;
-      transition: all 0.3s;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-
-    .filter-tab:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-    }
-
-    .filter-tab.active {
-      background: #0066ff;
-      color: white;
-    }
-
-    .map-container {
-      width: 100%;
-      height: 550px;
-      background: white;
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-      position: relative;
-    }
-
-    #map {
-      width: 100%;
-      height: 100%;
-    }
-
-    .side-panel {
-      position: absolute;
-      top: 0;
-      right: -400px;
-      width: 400px;
-      height: 100%;
-      background: white;
-      box-shadow: -4px 0 12px rgba(0,0,0,0.15);
-      transition: right 0.3s ease;
-      z-index: 1000;
-      overflow-y: auto;
-    }
-
-    .side-panel.active {
-      right: 0;
-    }
-
-    .side-panel-header {
-      padding: 20px;
-      border-bottom: 2px solid #f0f0f0;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: #f8f9fa;
-    }
-
-    .side-panel-title {
-      font-size: 1.3rem;
-      font-weight: bold;
-      color: #333;
-    }
-
-    .side-panel-close {
-      width: 32px;
-      height: 32px;
-      border: none;
-      background: transparent;
-      cursor: pointer;
-      font-size: 24px;
-      color: #666;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 50%;
-      transition: all 0.2s;
-    }
-
-    .side-panel-close:hover {
-      background: rgba(0,0,0,0.1);
-      color: #333;
-    }
-
-    .side-panel-content {
-      padding: 20px;
-    }
-
-    .time-slider-container {
-      margin-bottom: 20px;
-      padding: 20px;
-      background: #f8f9fa;
-      border-radius: 8px;
-    }
-
-    .time-slider-title {
-      font-size: 0.9rem;
-      color: #666;
-      margin-bottom: 10px;
-      text-align: center;
-    }
-
-    .time-display {
-      font-size: 1.5rem;
-      font-weight: bold;
-      color: #0066ff;
-      text-align: center;
-      margin-bottom: 15px;
-    }
-
-    .time-slider {
-      width: 100%;
-      accent-color: #0066ff;
-    }
-
-    .time-range {
-      display: flex;
-      justify-content: space-between;
-      font-size: 0.75rem;
-      color: #999;
-      margin-top: 5px;
-    }
-
-    .custom-leaflet-tooltip {
-      background-color: rgba(0, 0, 0, 0.8) !important;
-      border: none !important;
-      border-radius: 8px !important;
-      padding: 12px !important;
-      color: white !important;
-      font-size: 14px !important;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
-    }
-
-    .custom-leaflet-tooltip::before {
-      border-top-color: rgba(0, 0, 0, 0.8) !important;
-    }
-
-    .leaflet-popup-content-wrapper {
-      border-radius: 12px !important;
-      padding: 0 !important;
-    }
-
-    .leaflet-popup-content {
-      margin: 0 !important;
-      width: auto !important;
-    }
-
-    input[type="range"] {
-      width: 80%;
-      margin: 20px auto;
-      display: block;
-      accent-color: #0066ff;
-    }
-
-    .slider-controls {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 20px;
-      margin-top: 20px;
-    }
-
-    .slider-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      width: 80%;
-      position: relative;
-    }
-
-    .year-display {
-      font-size: 24px;
-      font-weight: bold;
-      color: #0066ff;
-      margin-bottom: 10px;
-    }
-
-    .year-markers {
-      width: 100%;
-      position: relative;
-      height: 30px;
-      margin-bottom: 5px;
-    }
-
-    .year-marker {
-      position: absolute;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      transform: translateX(-50%);
-    }
-
-    .year-marker-line {
-      width: 2px;
-      height: 10px;
-      background-color: #999;
-    }
-
-    .year-marker-label {
-      font-size: 12px;
-      color: #666;
-      margin-top: 3px;
-    }
-
-    .year-range {
-      font-size: 14px;
-      color: #666;
-      display: flex;
-      justify-content: space-between;
-      width: 100%;
-      margin-top: 5px;
-    }
-
-    .play-button {
-      width: 50px;
-      height: 50px;
-      border-radius: 50%;
-      border: none;
-      background: #0066ff;
-      color: white;
-      font-size: 20px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.3s;
-      box-shadow: 0 2px 8px rgba(0,102,255,0.3);
-    }
-
-    .play-button:hover {
-      background: #0052cc;
-      transform: scale(1.05);
-      box-shadow: 0 4px 12px rgba(0,102,255,0.4);
-    }
-
-    .play-button:active {
-      transform: scale(0.95);
-    }
-
-    @keyframes ping {
-      75%, 100% {
-        transform: scale(2);
-        opacity: 0;
-      }
-    }
-
-    .donut-progress {
-      transition: stroke-dasharray 0.5s ease;
-    }
-
-    /* 호버 툴팁 스타일 */
-    .power-tooltip {
-      position: absolute;
-      background: rgba(0, 0, 0, 0.9);
-      color: white;
-      padding: 8px 12px;
-      border-radius: 6px;
-      font-size: 14px;
-      pointer-events: none;
-      z-index: 1000;
-      white-space: nowrap;
-      opacity: 0;
-      transition: opacity 0.2s;
-    }
-
-    .power-tooltip.visible {
-      opacity: 1;
-    }
-  </style>
-</head>
-<body>
-
-<!-- ===== 사이드바 ===== -->
-<aside class="sidebar">
-    <button class="sidebar-button" onclick="window.location.href='index.html'">
-        <i class='bx bx-map'></i>
-        <span>Map</span>
-    </button>
-    <button class="sidebar-button active" onclick="window.location.href='slide.html'">
-        <i class='bx bx-slideshow'></i>
-        <span>Slide</span>
-    </button>
-    <button class="sidebar-button" onclick="window.location.href='game.html'">
-        <i class='bx bx-game'></i>
-        <span>Game</span>
-    </button>
-    <button class="sidebar-button" onclick="window.location.href='education.html'">
-        <i class='bx bx-graduation'></i>
-        <span>Education</span>
-    </button>
-    <button class="sidebar-button" onclick="window.location.href='login.html'">
-        <i class='bx bx-log-in'></i>
-        <span>Login</span>
-    </button>
-</aside>
-
-  <!-- ===== 메인 콘텐츠 (지도) ===== -->
-  <div class="main-content">
-    <div class="header">
-      <h1>대한민국 발전소 현황</h1>
-      <p>실시간 발전소 위치 모니터링 시스템</p>
-    </div>
-
-    <div class="filter-tabs">
-      <button class="filter-tab active" data-type="all">전체</button>
-      <button class="filter-tab" data-type="수력">수력</button>
-      <button class="filter-tab" data-type="원자력">원자력</button>
-      <button class="filter-tab" data-type="풍력">풍력</button>
-      <button class="filter-tab" data-type="태양광">태양광</button>
-      <button class="filter-tab" data-type="화력">화력</button>
-    </div>
-
-    <div class="map-container">
-      <div id="map"></div>
-      <div class="side-panel" id="sidePanel">
-        <div class="side-panel-header">
-          <div class="side-panel-title">발전소 정보</div>
-          <button class="side-panel-close" id="closeSidePanel">
-            <i class='bx bx-x'></i>
-          </button>
-        </div>
-        <div class="side-panel-content" id="sidePanelContent">
-          <!-- 발전소 정보가 여기에 표시됩니다 -->
-        </div>
-      </div>
-    </div>
-
-    <div class="slider-controls">
-      <button class="play-button" id="playButton">
-        <i class='bx bx-play'></i>
-      </button>
-      <div class="slider-container">
-        <div class="year-display" id="yearDisplay">2014년</div>
-        <div class="year-markers" id="yearMarkers"></div>
-        <input type="range" min="0" max="100" value="0" step="1" id="slider"/>
-        <div class="year-range">
-          <span>2014년</span>
-          <span>2024년</span>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ===== 지도 스크립트 ===== -->
-  <script>
-    // ===== 전역 변수 =====
-    let map;
-    let allPowerPlants = [];
-    const markers = [];
-    let currentFilter = 'all';
-    let currentYear = 2014;
-    let currentHour = 0;
-    let currentPlant = null;
-
-    // 발전소 유형별 이모지
-    const iconEmoji = {
-      '수력': '💧',
-      '원자력': '☢️',
-      '풍력': '💨',
-      '태양광': '☀️',
-      '화력': '🔥'
-    };
-
-    // 색상 매핑
-    const colorMap = {
-      "수력": "#00aaff",
-      "원자력": "#ff3366",
-      "풍력": "#90ee90",
-      "태양광": "#ffd700",
-      "화력": "#ff6347"
-    };
-
-    // ===== 지도 초기화 =====
-    function initMap() {
-      map = L.map('map', {
-        center: [36.3, 127.8],
-        zoom: 7,
-        minZoom: 6,
-        maxZoom: 12
-      });
-
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-      }).addTo(map);
-    }
-
-    // ===== DB에서 모든 발전소 데이터 가져오기 =====
-    async function fetchAllPlants() {
-      try {
-        const response = await fetch('http://localhost:3000/api/plants');
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        
-        const data = await response.json();
-        console.log('✅ 발전소 데이터:', data.length + '개');
-        
-        return data.map((plant, index) => {
-          const plantType = plant.plant_type || '알 수 없음';
-          
-          let type = '화력';
-          const typeStr = String(plantType).toLowerCase();
-          
-          if (typeStr.includes('수력') || typeStr === 'hydro') {
-            type = '수력';
-          } else if (typeStr.includes('원자력') || typeStr === 'nuclear') {
-            type = '원자력';
-          } else if (typeStr.includes('풍력') || typeStr === 'wind') {
-            type = '풍력';
-          } else if (typeStr.includes('태양광') || typeStr === 'solar') {
-            type = '태양광';
-          } else if (typeStr.includes('화력') || typeStr === 'thermal') {
-            type = '화력';
-          }
-          
-          return {
-            id: `${type}_${index}`,
-            name: plant.plant_name || '이름 없음',
-            type: type,
-            operator: plant.business || '정보 없음',
-            unit: plant.remark || '',
-            location: plant.adress || '위치 정보 없음',
-            latitude: parseFloat(plant.latitude),
-            longitude: parseFloat(plant.longitude),
-            capacity: parseFloat(plant.capacity) || 100,
-            installYear: parseInt(plant.install_year) || 2014
-          };
-        });
-      } catch (error) {
-        console.error('❌ 발전소 데이터 로드 실패:', error);
-        return [];
-      }
-    }
-
-    // ===== DB에서 발전 데이터 가져오기 =====
-    async function fetchPowerData(plantName, year, hour) {
-      try {
-        const response = await fetch(`http://localhost:3000/api/power-data?plant=${encodeURIComponent(plantName)}&year=${year}&hour=${hour}`);
-        
-        if (!response.ok) {
-          return null;
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>대한민국 발전소 슬라이드 | 시각화</title>
+    <meta name="description" content="대한민국 전국 발전소의 연도별 설치 현황을 시각화합니다." />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+            background-color: #f5f5f5;
         }
-        
-        const data = await response.json();
-        return data;
-      } catch (error) {
-        return null;
-      }
-    }
-
-    // ===== 발전 효율 계산 함수 =====
-    async function calculateEfficiency(plant, year, hour) {
-      const dbData = await fetchPowerData(plant.name, year, hour);
-      
-      if (dbData && dbData.efficiency !== null && dbData.efficiency !== undefined) {
-        return {
-          efficiency: parseFloat(dbData.efficiency),
-          source: 'database'
-        };
-      }
-      
-      return {
-        efficiency: null,
-        source: 'none'
-      };
-    }
-
-    // ===== 도넛 차트 생성 =====
-    async function createDonutChart(plant, year, hour) {
-      const result = await calculateEfficiency(plant, year, hour);
-      const color = colorMap[plant.type];
-      
-      if (result.efficiency === null) {
-        return `
-          <div style="display: flex; flex-direction: column; align-items: center; padding: 20px;">
-            <div style="margin-bottom: 15px; text-align: center;">
-              <div style="font-size: 18px; font-weight: bold; color: #333;">${plant.name}</div>
-              <div style="font-size: 14px; color: #666; margin-top: 5px;">설비용량: ${plant.capacity} MW</div>
-              <div style="font-size: 12px; color: #999; margin-top: 3px;">설치년도: ${plant.installYear}년</div>
-            </div>
-            <div style="position: relative; width: 200px; height: 200px; display: flex; align-items: center; justify-content: center; background: #f8f9fa; border-radius: 50%; border: 3px dashed #ddd;">
-              <div style="text-align: center;">
-                <div style="font-size: 48px; color: #ccc; margin-bottom: 10px;">📊</div>
-                <div style="font-size: 16px; font-weight: bold; color: #999;">데이터 없음</div>
-                <div style="font-size: 12px; color: #bbb; margin-top: 5px;">${year}년 ${hour}시</div>
-              </div>
-            </div>
-            <div style="
-              margin-top: 20px;
-              width: 100%;
-              padding: 15px;
-              background: #fff3cd;
-              border: 1px solid #ffc107;
-              border-radius: 8px;
-              text-align: center;
-            ">
-              <div style="font-size: 14px; color: #856404;">⚠️ 해당 시간대의 발전 데이터가 없습니다</div>
-            </div>
-          </div>
-        `;
-      }
-      
-      const percentage = result.efficiency;
-      const power = (percentage * plant.capacity / 100).toFixed(1);
-      
-      return `
-        <div style="display: flex; flex-direction: column; align-items: center; padding: 20px;">
-          <div style="margin-bottom: 15px; text-align: center;">
-            <div style="font-size: 18px; font-weight: bold; color: #333;">${plant.name}</div>
-            <div style="font-size: 14px; color: #666; margin-top: 5px;">설비용량: ${plant.capacity} MW</div>
-            <div style="font-size: 12px; color: #999; margin-top: 3px;">설치년도: ${plant.installYear}년</div>
-          </div>
-          <div id="donutContainer" style="position: relative; width: 200px; height: 200px; cursor: pointer;">
-            <svg viewBox="0 0 100 100" style="transform: rotate(-90deg);">
-              <circle cx="50" cy="50" r="40" fill="none" stroke="#f0f0f0" stroke-width="12"/>
-              <circle 
-                id="donutCircle"
-                cx="50" 
-                cy="50" 
-                r="40" 
-                fill="none" 
-                stroke="${color}" 
-                stroke-width="12"
-                stroke-dasharray="${percentage * 2.51} 251"
-                stroke-linecap="round"
-                class="donut-progress"
-              />
-            </svg>
-            <div style="
-              position: absolute;
-              top: 50%;
-              left: 50%;
-              transform: translate(-50%, -50%);
-              text-align: center;
-              pointer-events: none;
-            ">
-              <div id="percentageText" style="font-size: 32px; font-weight: bold; color: ${color};">${percentage.toFixed(1)}%</div>
-              <div style="font-size: 14px; color: #666; margin-top: 5px;">발전 효율</div>
-            </div>
-            <div id="powerTooltip" class="power-tooltip"></div>
-          </div>
-          <div style="
-            margin-top: 20px;
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+        }
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 140px;
+            height: 100vh;
+            background-color: #1a1a1a;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-y: auto;
+            z-index: 1000;
+        }
+        .sidebar-button {
             width: 100%;
+            padding: 24px 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            border: none;
+            background: transparent;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .sidebar-button:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        .sidebar-button.active {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-left: 4px solid #0066ff;
+        }
+        .sidebar-button i {
+            font-size: 24px;
+        }
+        .sidebar-button span {
+            font-size: 14px;
+        }
+        .main-content {
+            flex: 1;
+            padding: 40px;
+            margin-left: 140px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .header {
+            margin-bottom: 40px;
+            text-align: center;
+            width: 100%;
+        }
+        .header h1 {
+            font-size: 2.5rem;
+            margin: 0 0 10px 0;
+        }
+        .header p {
+            font-size: 1.2rem;
+            color: #666;
+            margin: 0;
+        }
+        .search-filter-container {
+            width: 100%;
+            max-width: 1000px;
+            margin: 30px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .search-box {
+            position: relative;
+            width: 100%;
+        }
+        .search-input {
+            width: 100%;
+            padding: 15px 50px 15px 20px;
+            font-size: 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            outline: none;
+            transition: all 0.3s;
+            box-sizing: border-box;
+        }
+        .search-input:focus {
+            border-color: #0066ff;
+            box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.1);
+        }
+        .search-icon {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 20px;
+            color: #999;
+        }
+        .filter-tabs {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .filter-tab {
+            padding: 10px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 20px;
+            background: white;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .filter-tab:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .filter-tab.active {
+            background: #0066ff;
+            color: white;
+            border-color: #0066ff;
+        }
+        .filter-tab-emoji {
+            font-size: 18px;
+        }
+        .search-results {
+            width: 100%;
+            max-width: 1000px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            max-height: 500px;
+            overflow-y: auto;
+            display: none;
+        }
+        .search-results.active {
+            display: block;
+        }
+        .search-result-item {
+            padding: 20px 25px;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .search-result-item:hover {
+            background: #f8f9fa;
+        }
+        .search-result-item:last-child {
+            border-bottom: none;
+        }
+        .result-left {
+            flex: 1;
+        }
+        .result-name {
+            font-weight: 600;
+            color: #333;
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+        .result-info {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            font-size: 14px;
+            color: #666;
+            flex-wrap: wrap;
+        }
+        .result-type {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 12px;
+            background: #f0f7ff;
+            border-radius: 15px;
+            font-weight: 500;
+        }
+        .result-capacity {
+            color: #0066ff;
+            font-weight: 600;
+        }
+        .result-detail {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .no-results {
+            padding: 40px 20px;
+            text-align: center;
+            color: #999;
+        }
+        .power-data-container {
+            display: none;
+            width: 100%;
+            max-width: 1000px;
+            margin-top: 40px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            padding: 30px;
+        }
+        .power-data-container.active {
+            display: block;
+        }
+        .power-data-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        .power-data-header h3 {
+            font-size: 1.5rem;
+            margin: 0;
+            color: #333;
+        }
+        .reset-button {
+            padding: 10px 20px;
+            border: 2px solid #0066ff;
+            border-radius: 8px;
+            background: white;
+            color: #0066ff;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+        }
+        .reset-button:hover {
+            background: #0066ff;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,102,255,0.3);
+        }
+        .reset-button i {
+            font-size: 18px;
+        }
+        .power-data-content {
+            min-height: 200px;
+        }
+        .loading-power {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-size: 16px;
+        }
+        .no-power-data {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+            font-size: 16px;
+        }
+        .power-data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .power-data-table th,
+        .power-data-table td {
+            padding: 12px;
+            text-align: center;
+            border: 1px solid #e0e0e0;
+        }
+        .power-data-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+        }
+        .power-data-table tr:hover {
+            background: #f8f9fa;
+        }
+        .power-value {
+            font-weight: 600;
+            color: #0066ff;
+        }
+        .slider-controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 30px;
+            width: 100%;
+        }
+        .slider-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 80%;
+            position: relative;
+            padding: 30px;
+            background: #f8f9fa;
+            border-radius: 12px;
+        }
+        .year-display {
+            font-size: 24px;
+            font-weight: bold;
+            color: #ff3366;
+            margin-bottom: 10px;
+        }
+        .year-markers {
+            width: 100%;
+            position: relative;
+            height: 30px;
+            margin-bottom: 5px;
+        }
+        .year-marker {
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transform: translateX(-50%);
+        }
+        .year-marker-line {
+            width: 2px;
+            height: 10px;
+            background-color: #999;
+        }
+        .year-marker-label {
+            font-size: 12px;
+            color: #666;
+            margin-top: 3px;
+        }
+        .year-range {
+            font-size: 14px;
+            color: #666;
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            margin-top: 5px;
+        }
+        input[type="range"] {
+            width: 100%;
+            accent-color: #ff3366;
+        }
+        .play-button {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: none;
+            background: #ff3366;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            box-shadow: 0 2px 8px rgba(255, 51, 102, 0.3);
+        }
+        .play-button:hover {
+            background: #e62e5c;
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(255, 51, 102, 0.4);
+        }
+        .play-button:active {
+            transform: scale(0.95);
+        }
+        .chart-container {
+            margin-top: 20px;
+            background: #f9f9f9;
+            border-radius: 12px;
+            padding: 20px;
+            min-height: 400px;
+        }
+        .chart-wrapper {
+            position: relative;
+            height: 350px;
+        }
+        .data-detail-section {
+            margin-top: 30px;
+            border-top: 2px solid #f0f0f0;
+            padding-top: 20px;
+        }
+        .data-detail-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
             padding: 15px;
             background: #f8f9fa;
             border-radius: 8px;
-            text-align: center;
-          ">
-            <div style="font-size: 12px; color: #999; margin-bottom: 5px;">현재 출력</div>
-            <div id="powerOutput" style="font-size: 20px; font-weight: bold; color: #333;">${power} MW</div>
-            <div style="font-size: 10px; color: #28a745; margin-top: 8px;">✓ DB 데이터</div>
-          </div>
+            transition: all 0.3s;
+        }
+        .data-detail-header:hover {
+            background: #e9ecef;
+        }
+        .data-detail-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 18px;
+            font-weight: 600;
+            color: #0066ff;
+        }
+        .data-detail-toggle {
+            font-size: 24px;
+            color: #666;
+            transition: transform 0.3s;
+        }
+        .data-detail-toggle.open {
+            transform: rotate(180deg);
+        }
+        .data-detail-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        .data-detail-content.open {
+            max-height: 1000px;
+            transition: max-height 0.5s ease-in;
+        }
+        .data-detail-inner {
+            padding: 20px 0;
+        }
+        .map-detail-section {
+            margin-bottom: 30px;
+            border: 2px solid #f0f0f0;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .map-detail-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            padding: 15px 20px;
+            background: #f8f9fa;
+            transition: all 0.3s;
+        }
+        .map-detail-header:hover {
+            background: #e9ecef;
+        }
+        .map-detail-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 18px;
+            font-weight: 600;
+            color: #0066ff;
+        }
+        .map-detail-toggle {
+            font-size: 24px;
+            color: #666;
+            transition: transform 0.3s;
+        }
+        .map-detail-toggle.open {
+            transform: rotate(180deg);
+        }
+        .map-detail-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        .map-detail-content.open {
+            max-height: 600px;
+            transition: max-height 0.5s ease-in;
+        }
+        .map-detail-inner {
+            padding: 20px;
+        }
+        @keyframes ping {
+            75%, 100% {
+                transform: scale(2);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <button class="sidebar-button" data-tab="map" onclick="window.location.href='index.html'">
+                <i class='bx bx-map'></i>
+                <span>Map</span>
+            </button>
+            <button class="sidebar-button active" data-tab="slide">
+                <i class='bx bx-slideshow'></i>
+                <span>Slide</span>
+            </button>
+            <button class="sidebar-button" data-tab="game" onclick="window.location.href='game.html'">
+                <i class='bx bx-game'></i>
+                <span>Game</span>
+            </button>
+            <button class="sidebar-button" data-tab="education" onclick="window.location.href='education.html'">
+                <i class='bx bx-graduation'></i>
+                <span>Education</span>
+            </button>
+            <button class="sidebar-button" data-tab="login" onclick="window.location.href='login.html'">
+                <i class='bx bx-log-in'></i>
+                <span>Login</span>
+            </button>
+        </aside>
+
+        <div class="main-content">
+            <div class="header">
+                <h1>대한민국 발전소 현황</h1>
+                <p>연도별 발전소 설치 시각화 시스템</p>
+            </div>
+
+            <div class="search-filter-container">
+                <div class="search-box">
+                    <input 
+                        type="text" 
+                        class="search-input" 
+                        id="searchInput" 
+                        placeholder="발전소 이름을 검색하세요..."
+                    />
+                    <i class='bx bx-search search-icon'></i>
+                </div>
+
+                <div class="filter-tabs">
+                    <button class="filter-tab active" data-type="all">
+                        <span class="filter-tab-emoji">🔍</span>
+                        <span>전체</span>
+                    </button>
+                    <button class="filter-tab" data-type="수력">
+                        <span class="filter-tab-emoji">💧</span>
+                        <span>수력</span>
+                    </button>
+                    <button class="filter-tab" data-type="원자력">
+                        <span class="filter-tab-emoji">☢️</span>
+                        <span>원자력</span>
+                    </button>
+                    <button class="filter-tab" data-type="풍력">
+                        <span class="filter-tab-emoji">💨</span>
+                        <span>풍력</span>
+                    </button>
+                    <button class="filter-tab" data-type="태양광">
+                        <span class="filter-tab-emoji">☀️</span>
+                        <span>태양광</span>
+                    </button>
+                    <button class="filter-tab" data-type="화력">
+                        <span class="filter-tab-emoji">🔥</span>
+                        <span>화력</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="search-results" id="searchResults"></div>
+
+            <div class="power-data-container" id="powerDataContainer">
+                <div class="power-data-header">
+                    <h3 id="selectedPlantName">선택된 발전소</h3>
+                    <button class="reset-button" id="resetButton">
+                        <i class='bx bx-refresh'></i>
+                        <span>검색 초기화</span>
+                    </button>
+                </div>
+                <div class="power-data-content" id="powerDataContent">
+                    <div class="loading-power">발전량 데이터를 불러오는 중...</div>
+                </div>
+            </div>
         </div>
-      `;
-    }
+    </div>
 
-    // ===== 도넛 차트 호버 이벤트 =====
-    function setupDonutHover() {
-      const donutContainer = document.getElementById('donutContainer');
-      const tooltip = document.getElementById('powerTooltip');
-      const circle = document.getElementById('donutCircle');
-      
-      if (!donutContainer || !tooltip || !circle) return;
-      
-      const strokeDasharray = circle.getAttribute('stroke-dasharray');
-      const percentage = parseFloat(strokeDasharray.split(' ')[0]) / 2.51;
-      const power = (percentage * currentPlant.capacity / 100).toFixed(1);
-      
-      donutContainer.addEventListener('mouseenter', (e) => {
-        tooltip.textContent = `${percentage.toFixed(1)}% (${power} MW)`;
-        tooltip.classList.add('visible');
-      });
-      
-      donutContainer.addEventListener('mousemove', (e) => {
-        const rect = donutContainer.getBoundingClientRect();
-        tooltip.style.left = (e.clientX - rect.left + 10) + 'px';
-        tooltip.style.top = (e.clientY - rect.top - 30) + 'px';
-      });
-      
-      donutContainer.addEventListener('mouseleave', () => {
-        tooltip.classList.remove('visible');
-      });
-    }
+    <script>
+        let allPowerPlants = [];
+        let currentFilter = 'all';
+        let selectedPlant = null;
+        let currentChart = null;
+        let currentPlantData = null;
+        let availableYears = [];
+        let globalYAxisMin = 0;
+        let globalYAxisMax = 0;
 
-    // ===== 도넛 차트 업데이트 =====
-    async function updateDonutChart(plant, year, hour) {
-      const result = await calculateEfficiency(plant, year, hour);
-      
-      if (result.efficiency === null) {
-        const sidePanelContent = document.getElementById('sidePanelContent');
-        const donutHTML = await createDonutChart(plant, year, hour);
-        
-        let timeSliderHTML = '';
-        if (plant.type !== '원자력') {
-          timeSliderHTML = `
-            <div class="time-slider-container">
-              <div class="time-slider-title">시간대 선택</div>
-              <div class="time-display" id="timeDisplay">${hour.toString().padStart(2, '0')}:00</div>
-              <input type="range" min="0" max="23" value="${hour}" step="1" class="time-slider" id="timeSlider"/>
-              <div class="time-range">
-                <span>00:00</span>
-                <span>23:00</span>
-              </div>
-            </div>
-          `;
-        }
-        
-        sidePanelContent.innerHTML = donutHTML + timeSliderHTML;
-        
-        if (plant.type !== '원자력') {
-          const timeSlider = document.getElementById('timeSlider');
-          const timeDisplay = document.getElementById('timeDisplay');
-          
-          timeSlider.addEventListener('input', async (e) => {
-            const h = parseInt(e.target.value);
-            currentHour = h;
-            timeDisplay.textContent = `${h.toString().padStart(2, '0')}:00`;
-            await updateDonutChart(currentPlant, currentYear, currentHour);
-          });
-        }
-        
-        return;
-      }
-      
-      const percentage = result.efficiency;
-      const power = (percentage * plant.capacity / 100).toFixed(1);
-      
-      const circle = document.getElementById('donutCircle');
-      const percentageText = document.getElementById('percentageText');
-      const powerOutput = document.getElementById('powerOutput');
-      
-      if (circle && percentageText && powerOutput) {
-        circle.setAttribute('stroke-dasharray', `${percentage * 2.51} 251`);
-        percentageText.textContent = `${percentage.toFixed(1)}%`;
-        powerOutput.textContent = `${power} MW`;
-      }
-    }
+        const searchInput = document.getElementById('searchInput');
+        const searchResults = document.getElementById('searchResults');
+        const powerDataContainer = document.getElementById('powerDataContainer');
+        const powerDataContent = document.getElementById('powerDataContent');
+        const selectedPlantName = document.getElementById('selectedPlantName');
+        const resetButton = document.getElementById('resetButton');
 
-    // ===== 사이드 패널 열기 =====
-    async function openSidePanel(plant) {
-      currentPlant = plant;
-      const sidePanel = document.getElementById('sidePanel');
-      const sidePanelContent = document.getElementById('sidePanelContent');
-      
-      let content = '';
-      content += await createDonutChart(plant, currentYear, currentHour);
-      
-      if (plant.type !== '원자력') {
-        content += `
-          <div class="time-slider-container">
-            <div class="time-slider-title">시간대 선택</div>
-            <div class="time-display" id="timeDisplay">${currentHour.toString().padStart(2, '0')}:00</div>
-            <input type="range" min="0" max="23" value="${currentHour}" step="1" class="time-slider" id="timeSlider"/>
-            <div class="time-range">
-              <span>00:00</span>
-              <span>23:00</span>
-            </div>
-          </div>
-        `;
-      }
-      
-      sidePanelContent.innerHTML = content;
-      
-      setTimeout(() => setupDonutHover(), 0);
-      
-      if (plant.type !== '원자력') {
-        const timeSlider = document.getElementById('timeSlider');
-        const timeDisplay = document.getElementById('timeDisplay');
-        
-        timeSlider.addEventListener('input', async (e) => {
-          const hour = parseInt(e.target.value);
-          currentHour = hour;
-          timeDisplay.textContent = `${hour.toString().padStart(2, '0')}:00`;
-          await updateDonutChart(currentPlant, currentYear, currentHour);
-        });
-      }
-      
-      sidePanel.classList.add('active');
-    }
+        const iconEmoji = {
+            '수력': '💧',
+            '원자력': '☢️',
+            '풍력': '💨',
+            '태양광': '☀️',
+            '화력': '🔥'
+        };
 
-    // ===== 모든 발전소 데이터 로드 =====
-    async function loadAllPlants() {
-      console.log('\n🔄 ===== 발전소 데이터 로드 시작 =====');
-
-      allPowerPlants = await fetchAllPlants();
-
-      console.log('\n📊 ===== 로드 결과 =====');
-      const hydroCount = allPowerPlants.filter(p => p.type === '수력').length;
-      const nuclearCount = allPowerPlants.filter(p => p.type === '원자력').length;
-      const windCount = allPowerPlants.filter(p => p.type === '풍력').length;
-      const solarCount = allPowerPlants.filter(p => p.type === '태양광').length;
-      const thermalCount = allPowerPlants.filter(p => p.type === '화력').length;
-      
-      console.log(`수력발전소: ${hydroCount}개`);
-      console.log(`원자력발전소: ${nuclearCount}개`);
-      console.log(`풍력발전소: ${windCount}개`);
-      console.log(`태양광발전소: ${solarCount}개`);
-      console.log(`화력발전소: ${thermalCount}개`);
-      console.log(`총합: ${allPowerPlants.length}개`);
-      
-      renderMarkers('all');
-    }
-
-    // ===== 마커 렌더링 =====
-    function renderMarkers(typeFilter) {
-      markers.forEach(m => map.removeLayer(m));
-      markers.length = 0;
-
-      let filteredPlants = allPowerPlants;
-      if (typeFilter !== 'all') {
-        filteredPlants = allPowerPlants.filter(p => p.type === typeFilter);
-      }
-
-      const hydroCount = allPowerPlants.filter(p => p.type === '수력').length;
-      const nuclearCount = allPowerPlants.filter(p => p.type === '원자력').length;
-      const windCount = allPowerPlants.filter(p => p.type === '풍력').length;
-      const solarCount = allPowerPlants.filter(p => p.type === '태양광').length;
-      const thermalCount = allPowerPlants.filter(p => p.type === '화력').length;
-      
-      console.log(`✅ 통계: 수력 ${hydroCount}, 원자력 ${nuclearCount}, 풍력 ${windCount}, 태양광 ${solarCount}, 화력 ${thermalCount}`);
-
-      filteredPlants.forEach(p => {
-        if (!p.latitude || !p.longitude || isNaN(p.latitude) || isNaN(p.longitude)) {
-          console.warn(`⚠️ ${p.name}: 유효하지 않은 좌표`);
-          return;
+        async function fetchAllPlants() {
+            try {
+                const response = await fetch('http://localhost:3000/api/plants');
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                
+                const responseData = await response.json();
+                
+                let data = [];
+                if (responseData.plants && Array.isArray(responseData.plants)) {
+                    data = responseData.plants;
+                } else if (Array.isArray(responseData)) {
+                    data = responseData;
+                } else {
+                    throw new Error('잘못된 응답 형식');
+                }
+                
+                return data.map((plant, index) => {
+                    const plantType = plant.plant_type || '알 수 없음';
+                    
+                    let type = '화력';
+                    const typeStr = String(plantType).toLowerCase();
+                    
+                    if (typeStr.includes('수력') || typeStr === 'hydro') {
+                        type = '수력';
+                    } else if (typeStr.includes('원자력') || typeStr === 'nuclear') {
+                        type = '원자력';
+                    } else if (typeStr.includes('풍력') || typeStr === 'wind') {
+                        type = '풍력';
+                    } else if (typeStr.includes('태양광') || typeStr === 'solar') {
+                        type = '태양광';
+                    } else if (typeStr.includes('화력') || typeStr === 'thermal') {
+                        type = '화력';
+                    }
+                    
+                    return {
+                        id: `${type}_${index}`,
+                        name: plant.plant_name || '이름 없음',
+                        type: type,
+                        operator: plant.business || '정보 없음',
+                        unit: plant.remark || '',
+                        location: plant.adress || '위치 정보 없음',
+                        latitude: parseFloat(plant.latitude),
+                        longitude: parseFloat(plant.longitude),
+                        capacity: parseFloat(plant.capacity) || 100,
+                        installYear: parseInt(plant.install_year) || 2014
+                    };
+                });
+            } catch (error) {
+                console.error('❌ 발전소 데이터 로드 실패:', error);
+                return [];
+            }
         }
 
-        const color = colorMap[p.type];
-        const emoji = iconEmoji[p.type];
-
-        const icon = L.divIcon({
-          className: 'custom-marker',
-          html: `
-            <div style="position: relative; pointer-events: none; display: flex; align-items: center; justify-content: center;">
-              <div style="
-                width: 40px;
-                height: 40px;
-                background-color: white;
-                border: 3px solid ${color};
-                border-radius: 50%;
-                box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-size: 24px;
-              ">${emoji}</div>
-              <div style="
-                position: absolute;
-                width: 40px;
-                height: 40px;
-                border: 3px solid ${color};
-                border-radius: 50%;
-                animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
-                opacity: 0.3;
-              "></div>
-            </div>
-          `,
-          iconSize: [40, 40],
-          iconAnchor: [20, 20]
-        });
-
-        const marker = L.marker([p.latitude, p.longitude], { icon }).addTo(map);
-
-        marker.on('click', function() {
-          openSidePanel(p);
-        });
-
-        let tooltipContent = `
-          <div style="min-width: 150px; padding: 8px 0;">
-            <div style="font-weight: bold; font-size: 14px; color: #fff; text-align: center;">${p.name}</div>
-          </div>
-        `;
-
-        marker.bindTooltip(tooltipContent, {
-          direction: 'top',
-          offset: [0, -20],
-          className: 'custom-leaflet-tooltip'
-        });
-
-        markers.push(marker);
-      });
-
-      console.log(`✅ ${markers.length}개의 마커가 표시되었습니다.`);
-    }
-
-    // ===== 사이드 패널 닫기 =====
-    document.getElementById('closeSidePanel').addEventListener('click', function() {
-      document.getElementById('sidePanel').classList.remove('active');
-    });
-
-    // ===== 필터 버튼 이벤트 =====
-    document.querySelectorAll('.filter-tab').forEach(button => {
-      button.addEventListener('click', () => {
-        document.querySelector('.filter-tab.active').classList.remove('active');
-        button.classList.add('active');
-        
-        currentFilter = button.dataset.type;
-        renderMarkers(currentFilter);
-      });
-    });
-
-    // ===== 슬라이더 및 연도 관리 =====
-    const slider = document.getElementById('slider');
-    const playButton = document.getElementById('playButton');
-    const yearDisplay = document.getElementById('yearDisplay');
-    const yearMarkers = document.getElementById('yearMarkers');
-    let isPlaying = false;
-    let startTime = null;
-    let animationFrameId = null;
-
-    const MIN_YEAR = 2014;
-    const MAX_YEAR = 2024;
-    const ANIMATION_DURATION = 15000;
-
-    // ===== 연도 마커 생성 =====
-    function createYearMarkers() {
-      const totalYears = MAX_YEAR - MIN_YEAR;
-      for (let i = 0; i <= totalYears; i++) {
-        const year = MIN_YEAR + i;
-        const percentage = 10 + (i * 80 / totalYears);
-        
-        const marker = document.createElement('div');
-        marker.className = 'year-marker';
-        marker.style.left = percentage + '%';
-        
-        marker.innerHTML = `
-          <div class="year-marker-line"></div>
-          <div class="year-marker-label">${year}</div>
-        `;
-        
-        yearMarkers.appendChild(marker);
-      }
-    }
-
-    // ===== 연도 표시 업데이트 =====
-    async function updateYearDisplay(value) {
-      currentYear = value;
-      yearDisplay.textContent = value + '년';
-      
-      if (currentPlant) {
-        await updateDonutChart(currentPlant, currentYear, currentHour);
-      }
-    }
-
-    // ===== 슬라이더 입력 이벤트 =====
-    slider.addEventListener('input', async (e) => {
-      const sliderValue = parseFloat(e.target.value);
-      const mappedValue = 10 + (sliderValue * 0.8);
-      const year = MIN_YEAR + Math.round((mappedValue - 10) / 8);
-      await updateYearDisplay(year);
-      if (isPlaying) {
-        stopAnimation();
-      }
-    });
-
-    // ===== 애니메이션 정지 =====
-    function stopAnimation() {
-      isPlaying = false;
-      if (animationFrameId) {
-        cancelAnimationFrame(animationFrameId);
-        animationFrameId = null;
-      }
-      slider.setAttribute('step', '1');
-      playButton.innerHTML = '<i class="bx bx-play"></i>';
-    }
-
-    // ===== 애니메이션 프레임 =====
-    function animateSlider(timestamp) {
-      if (!isPlaying) return;
-      
-      if (!startTime) startTime = timestamp;
-      const elapsed = timestamp - startTime;
-      const progress = Math.min(elapsed / ANIMATION_DURATION, 1);
-      
-      const sliderValue = progress * 100;
-      const mappedValue = 10 + (progress * 80);
-      const currentYearCalc = MIN_YEAR + (progress * (MAX_YEAR - MIN_YEAR));
-      
-      slider.setAttribute('step', '0.01');
-      slider.value = sliderValue;
-      updateYearDisplay(Math.round(currentYearCalc));
-      
-      if (progress < 1) {
-        animationFrameId = requestAnimationFrame(animateSlider);
-      } else {
-        slider.setAttribute('step', '1');
-        stopAnimation();
-      }
-    }
-
-    // ===== 재생 버튼 클릭 =====
-    playButton.addEventListener('click', () => {
-      if (isPlaying) {
-        stopAnimation();
-      } else {
-        const currentValue = parseFloat(slider.value);
-        if (currentValue >= 100) {
-          slider.value = 0;
-          updateYearDisplay(MIN_YEAR);
+        async function loadAllPlants() {
+            allPowerPlants = await fetchAllPlants();
+            displaySearchResults(allPowerPlants);
         }
-        
-        isPlaying = true;
-        playButton.innerHTML = '<i class="bx bx-pause"></i>';
-        
-        const currentProgress = parseFloat(slider.value) / 100;
-        const elapsedTime = currentProgress * ANIMATION_DURATION;
-        startTime = performance.now() - elapsedTime;
-        
-        animationFrameId = requestAnimationFrame(animateSlider);
-      }
-    });
 
-    // ===== 초기화 =====
-    updateYearDisplay(MIN_YEAR);
-    createYearMarkers();
+        function displaySearchResults(plants) {
+            if (plants.length === 0) {
+                searchResults.innerHTML = '<div class="no-results">검색 결과가 없습니다</div>';
+                searchResults.classList.add('active');
+                return;
+            }
 
-    // ===== 페이지 로드 시 실행 =====
-    window.addEventListener('DOMContentLoaded', () => {
-      initMap();
-      loadAllPlants();
-    });
-  </script>
+            const html = plants.map(plant => `
+                <div class="search-result-item" data-plant-id="${plant.id}">
+                    <div class="result-left">
+                        <div class="result-name">${plant.name}</div>
+                        <div class="result-info">
+                            <div class="result-type">
+                                <span>${iconEmoji[plant.type]}</span>
+                                <span>${plant.type}</span>
+                            </div>
+                            <div class="result-detail">
+                                <span class="result-capacity">${plant.capacity} MW</span>
+                            </div>
+                            <div class="result-detail">
+                                <span>📍</span>
+                                <span>${plant.location}</span>
+                            </div>
+                            <div class="result-detail">
+                                <span>🏢</span>
+                                <span>${plant.operator}</span>
+                            </div>
+                            <div class="result-detail">
+                                <span>📅</span>
+                                <span>${plant.installYear}년 설치</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
 
+            searchResults.innerHTML = html;
+            searchResults.classList.add('active');
+
+            document.querySelectorAll('.search-result-item').forEach(item => {
+                item.addEventListener('click', async function() {
+                    const plantId = this.dataset.plantId;
+                    const plant = allPowerPlants.find(p => p.id === plantId);
+                    if (plant) {
+                        selectedPlant = plant;
+                        searchInput.value = plant.name;
+                        await displayPowerData(plant);
+                        powerDataContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                });
+            });
+        }
+
+        function formatUnitName(unitName) {
+            const match = unitName.match(/#(\d+)/);
+            if (match) {
+                return match[1] + '호기';
+            }
+            return unitName;
+        }
+
+        function calculateGlobalYAxisRange(powerData) {
+            let allValues = [];
+            Object.values(powerData).forEach(unitData => {
+                if (Array.isArray(unitData)) {
+                    unitData.forEach(item => {
+                        if (item.value && item.value > 0) {
+                            allValues.push(item.value);
+                        }
+                    });
+                }
+            });
+            
+            if (allValues.length === 0) {
+                return { min: 0, max: 100 };
+            }
+            
+            const maxValue = Math.max(...allValues);
+            const minValue = Math.min(...allValues);
+            
+            function getNiceMax(max) {
+                if (max === 0) return 100;
+                const magnitude = Math.pow(10, Math.floor(Math.log10(max)));
+                const normalized = max / magnitude;
+                let niceValue;
+                if (normalized <= 1) niceValue = 1;
+                else if (normalized <= 2) niceValue = 2;
+                else if (normalized <= 5) niceValue = 5;
+                else niceValue = 10;
+                return niceValue * magnitude * 1.1;
+            }
+            
+            function getNiceMin(min, max) {
+                if (min === 0 || min >= max * 0.5) return 0;
+                const magnitude = Math.pow(10, Math.floor(Math.log10(min)));
+                const normalized = min / magnitude;
+                let niceValue;
+                if (normalized >= 5) niceValue = 5;
+                else if (normalized >= 2) niceValue = 2;
+                else if (normalized >= 1) niceValue = 1;
+                else niceValue = 0.5;
+                return niceValue * magnitude * 0.9;
+            }
+            
+            const yAxisMax = getNiceMax(maxValue);
+            const yAxisMin = getNiceMin(minValue, maxValue);
+            
+            return { min: yAxisMin, max: yAxisMax };
+        }
+
+        function createPowerBarChart(canvasId, powerData, year, plantName) {
+            if (currentChart) {
+                currentChart.destroy();
+                currentChart = null;
+            }
+
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+
+            const ctx = canvas.getContext('2d');
+            
+            const units = Object.keys(powerData);
+            const values = units.map(unit => {
+                const yearData = powerData[unit].find(d => d.year === year);
+                return yearData ? yearData.value : 0;
+            });
+
+            currentChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: units,
+                    datasets: [{
+                        label: `${year}년 발전량 (MWh)`,
+                        data: values,
+                        backgroundColor: 'rgba(255, 51, 102, 0.8)',
+                        borderColor: '#ff3366',
+                        borderWidth: 2,
+                        borderRadius: 8,
+                        hoverBackgroundColor: 'rgba(255, 51, 102, 1)',
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: {
+                                font: { size: 14, weight: 'bold' },
+                                padding: 15
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: `${plantName} - ${year}년 호기별 발전량`,
+                            font: { size: 18, weight: 'bold' },
+                            padding: { top: 10, bottom: 20 }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            padding: 12,
+                            titleFont: { size: 14 },
+                            bodyFont: { size: 13 },
+                            callbacks: {
+                                label: function(context) {
+                                    return '발전량: ' + context.parsed.y.toLocaleString() + ' MWh';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: globalYAxisMin === 0,
+                            min: globalYAxisMin,
+                            max: globalYAxisMax,
+                            ticks: {
+                                callback: function(value) {
+                                    return value.toLocaleString() + ' MWh';
+                                },
+                                font: { size: 12 }
+                            },
+                            grid: { color: 'rgba(0, 0, 0, 0.05)' }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: {
+                                font: { size: 12, weight: 'bold' }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createYearMarkers(minYear, maxYear) {
+            const container = document.getElementById('yearMarkers');
+            if (!container) return;
+            
+            container.innerHTML = '';
+            const totalYears = maxYear - minYear;
+            
+            for (let i = 0; i <= totalYears; i++) {
+                const year = minYear + i;
+                const percentage = (i / totalYears) * 100;
+                
+                const marker = document.createElement('div');
+                marker.className = 'year-marker';
+                marker.style.left = percentage + '%';
+                marker.innerHTML = `
+                    <div class="year-marker-line"></div>
+                    <div class="year-marker-label">${year}</div>
+                `;
+                container.appendChild(marker);
+            }
+        }
+
+        async function displayPowerData(plant) {
+            selectedPlantName.textContent = plant.name;
+            powerDataContent.innerHTML = '<div class="loading-power">발전량 데이터를 불러오는 중...</div>';
+            powerDataContainer.classList.add('active');
+            
+            // 지도 컨테이너 생성 (접을 수 있는 형태)
+            const mapHTML = `
+                <div class="map-detail-section">
+                    <div class="map-detail-header" id="mapDetailHeader">
+                        <div class="map-detail-title">
+                            <span>📍</span>
+                            <span>발전소 위치</span>
+                        </div>
+                        <div class="map-detail-toggle" id="mapDetailToggle">
+                            <i class='bx bx-chevron-down'></i>
+                        </div>
+                    </div>
+                    <div class="map-detail-content" id="mapDetailContent">
+                        <div class="map-detail-inner">
+                            <div id="plant-map" style="width: 100%; height: 300px; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 15px;"></div>
+                            <div style="padding: 12px; background: #f8f9fa; border-radius: 8px; font-size: 14px;">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                                    <span style="color: #666; font-weight: 500;">위치:</span>
+                                    <span style="font-weight: 600; color: #333;">${plant.location}</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                                    <span style="color: #666; font-weight: 500;">운영기관:</span>
+                                    <span style="font-weight: 600; color: #333;">${plant.operator}</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                                    <span style="color: #666; font-weight: 500;">설치용량:</span>
+                                    <span style="font-weight: 600; color: #0066ff;">${plant.capacity} MW</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between;">
+                                    <span style="color: #666; font-weight: 500;">설치년도:</span>
+                                    <span style="font-weight: 600; color: #333;">${plant.installYear}년</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            powerDataContent.innerHTML = mapHTML + '<div class="loading-power">발전량 데이터를 불러오는 중...</div>';
+            
+            // 지도 토글 이벤트
+            const mapDetailHeader = document.getElementById('mapDetailHeader');
+            const mapDetailContent = document.getElementById('mapDetailContent');
+            const mapDetailToggle = document.getElementById('mapDetailToggle');
+            
+            mapDetailHeader.addEventListener('click', () => {
+                const isOpen = mapDetailContent.classList.toggle('open');
+                mapDetailToggle.classList.toggle('open');
+                
+                // 지도가 열릴 때만 초기화 (성능 최적화)
+                if (isOpen && !mapDetailContent.dataset.initialized) {
+                    initPlantMap(plant);
+                    mapDetailContent.dataset.initialized = 'true';
+                }
+            });
+            
+            if (plant.type === '원자력') {
+                try {
+                    const response = await fetch('http://localhost:3000/api/nuclear/full');
+                    if (!response.ok) throw new Error('데이터 조회 실패');
+                    
+                    const data = await response.json();
+                    
+                    const nuclearPlant = data.find(p => {
+                        const dbName = p.plant_name || '';
+                        return dbName === plant.name || dbName.includes(plant.name) || plant.name.includes(dbName);
+                    });
+                    
+                    if (nuclearPlant && nuclearPlant.powerData && Object.keys(nuclearPlant.powerData).length > 0) {
+                        currentPlantData = nuclearPlant.powerData;
+                        
+                        const yAxisRange = calculateGlobalYAxisRange(nuclearPlant.powerData);
+                        globalYAxisMin = yAxisRange.min;
+                        globalYAxisMax = yAxisRange.max;
+                        
+                        const yearsSet = new Set();
+                        Object.values(nuclearPlant.powerData).forEach(unitData => {
+                            if (Array.isArray(unitData)) {
+                                unitData.forEach(item => {
+                                    if (item.year) yearsSet.add(item.year);
+                                });
+                            }
+                        });
+                        availableYears = Array.from(yearsSet).sort((a, b) => a - b);
+                        
+                        if (availableYears.length === 0) {
+                            const loadingDiv = powerDataContent.querySelector('.loading-power');
+                            if (loadingDiv) {
+                                loadingDiv.innerHTML = '📊 연도 데이터가 없습니다';
+                            }
+                            return;
+                        }
+                        
+                        const minYear = Math.min(...availableYears);
+                        const maxYear = Math.max(...availableYears);
+                        const defaultYear = maxYear;
+                        
+                        let html = mapHTML + `
+                            <div class="slider-controls">
+                                <div class="slider-container" style="width: 90%;">
+                                    <div class="year-display" id="yearDisplay">${defaultYear}년</div>
+                                    <div class="year-markers" id="yearMarkers"></div>
+                                    <input type="range" 
+                                        id="powerSlider" 
+                                        min="0" 
+                                        max="${availableYears.length - 1}" 
+                                        value="${availableYears.length - 1}" 
+                                        step="1" />
+                                    <div class="year-range">
+                                        <span>${minYear}년</span>
+                                        <span>${maxYear}년</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="chart-container">
+                                <div class="chart-wrapper">
+                                    <canvas id="powerChart"></canvas>
+                                </div>
+                            </div>
+                            <div class="data-detail-section">
+                                <div class="data-detail-header" id="dataDetailHeader">
+                                    <div class="data-detail-title">
+                                        <span>📊</span>
+                                        <span>상세 데이터</span>
+                                    </div>
+                                    <div class="data-detail-toggle" id="dataDetailToggle">
+                                        <i class='bx bx-chevron-down'></i>
+                                    </div>
+                                </div>
+                                <div class="data-detail-content" id="dataDetailContent">
+                                    <div class="data-detail-inner">
+                                        <div id="dataTableContainer"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        
+                        powerDataContent.innerHTML = html;
+                        
+                        // 지도 토글 이벤트 재등록
+                        const mapDetailHeader = document.getElementById('mapDetailHeader');
+                        const mapDetailContent = document.getElementById('mapDetailContent');
+                        const mapDetailToggle = document.getElementById('mapDetailToggle');
+                        
+                        mapDetailHeader.addEventListener('click', () => {
+                            const isOpen = mapDetailContent.classList.toggle('open');
+                            mapDetailToggle.classList.toggle('open');
+                            
+                            if (isOpen && !mapDetailContent.dataset.initialized) {
+                                initPlantMap(plant);
+                                mapDetailContent.dataset.initialized = 'true';
+                            }
+                        });
+                        
+                        createYearMarkers(minYear, maxYear);
+                        
+                        const powerSlider = document.getElementById('powerSlider');
+                        const yearDisplay = document.getElementById('yearDisplay');
+                        const dataDetailHeader = document.getElementById('dataDetailHeader');
+                        const dataDetailContent = document.getElementById('dataDetailContent');
+                        const dataDetailToggle = document.getElementById('dataDetailToggle');
+                        
+                        dataDetailHeader.addEventListener('click', () => {
+                            dataDetailContent.classList.toggle('open');
+                            dataDetailToggle.classList.toggle('open');
+                        });
+                        
+                        powerSlider.addEventListener('input', function() {
+                            const yearIndex = parseInt(this.value);
+                            const selectedYear = availableYears[yearIndex];
+                            yearDisplay.textContent = selectedYear + '년';
+                            createPowerBarChart('powerChart', currentPlantData, selectedYear, plant.name);
+                            updateDataTable(currentPlantData, selectedYear);
+                        });
+                        
+                        createPowerBarChart('powerChart', currentPlantData, defaultYear, plant.name);
+                        updateDataTable(currentPlantData, defaultYear);
+                    } else {
+                        const loadingDiv = powerDataContent.querySelector('.loading-power');
+                        if (loadingDiv) {
+                            loadingDiv.innerHTML = '📊 이 발전소의 발전량 데이터가 없습니다';
+                        }
+                    }
+                } catch (error) {
+                    console.error('❌ 발전량 데이터 조회 실패:', error);
+                    const loadingDiv = powerDataContent.querySelector('.loading-power');
+                    if (loadingDiv) {
+                        loadingDiv.innerHTML = '❌ 발전량 데이터 조회 실패';
+                    }
+                }
+            } else {
+                const loadingDiv = powerDataContent.querySelector('.loading-power');
+                if (loadingDiv) {
+                    loadingDiv.innerHTML = `📊 ${plant.type} 발전소의 발전량 데이터는 아직 준비되지 않았습니다`;
+                }
+            }
+        }
+
+        function initPlantMap(plant) {
+            setTimeout(() => {
+                const plantMap = L.map('plant-map').setView([plant.latitude, plant.longitude], 10);
+                
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                }).addTo(plantMap);
+                
+                const colorMap = { 
+                    '수력': "#00aaff",
+                    '원자력': "#ff3366",
+                    '풍력': "#90ee90",
+                    '태양광': "#ffd700",
+                    '화력': "#ff6347"
+                };
+                
+                const color = colorMap[plant.type];
+                const emoji = iconEmoji[plant.type];
+                
+                const icon = L.divIcon({
+                    className: 'custom-marker',
+                    html: `
+                        <div style="position: relative; pointer-events: none; display: flex; align-items: center; justify-content: center;">
+                            <div style="
+                                width: 40px;
+                                height: 40px;
+                                background-color: white;
+                                border: 3px solid ${color};
+                                border-radius: 50%;
+                                box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                font-size: 24px;
+                            ">${emoji}</div>
+                            <div style="
+                                position: absolute;
+                                width: 40px;
+                                height: 40px;
+                                border: 3px solid ${color};
+                                border-radius: 50%;
+                                animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+                                opacity: 0.3;
+                            "></div>
+                        </div>
+                    `,
+                    iconSize: [40, 40],
+                    iconAnchor: [20, 20]
+                });
+                
+                L.marker([plant.latitude, plant.longitude], { icon }).addTo(plantMap);
+            }, 100);
+        }
+
+        function updateDataTable(powerData, year) {
+            const units = Object.keys(powerData).sort((a, b) => {
+                const numA = parseInt(a.match(/\d+/)?.[0] || 0);
+                const numB = parseInt(b.match(/\d+/)?.[0] || 0);
+                return numA - numB;
+            });
+            
+            const tableHtml = `
+                <table class="power-data-table">
+                    <thead>
+                        <tr>
+                            <th>호기</th>
+                            <th>발전량 (MWh)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${units.map(unit => {
+                            const yearData = powerData[unit].find(d => d.year === year);
+                            const value = yearData ? yearData.value : 0;
+                            return `
+                                <tr>
+                                    <td style="font-weight: 600;">${formatUnitName(unit)}</td>
+                                    <td class="power-value">${value ? value.toLocaleString() : '-'}</td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            `;
+            document.getElementById('dataTableContainer').innerHTML = tableHtml;
+        }
+
+        resetButton.addEventListener('click', () => {
+            searchInput.value = '';
+            currentFilter = 'all';
+            selectedPlant = null;
+            currentPlantData = null;
+            availableYears = [];
+            globalYAxisMin = 0;
+            globalYAxisMax = 0;
+            
+            if (currentChart) {
+                currentChart.destroy();
+                currentChart = null;
+            }
+            
+            document.querySelectorAll('.filter-tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelector('.filter-tab[data-type="all"]').classList.add('active');
+            
+            displaySearchResults(allPowerPlants);
+            powerDataContainer.classList.remove('active');
+            
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        function searchPlants(query) {
+            if (!query.trim()) {
+                if (currentFilter === 'all') {
+                    displaySearchResults(allPowerPlants);
+                } else {
+                    const filtered = allPowerPlants.filter(p => p.type === currentFilter);
+                    displaySearchResults(filtered);
+                }
+                return;
+            }
+
+            let filteredPlants = allPowerPlants;
+
+            if (currentFilter !== 'all') {
+                filteredPlants = filteredPlants.filter(p => p.type === currentFilter);
+            }
+
+            const searchQuery = query.toLowerCase();
+            filteredPlants = filteredPlants.filter(p => 
+                p.name.toLowerCase().includes(searchQuery) ||
+                p.location.toLowerCase().includes(searchQuery) ||
+                p.operator.toLowerCase().includes(searchQuery)
+            );
+
+            displaySearchResults(filteredPlants);
+        }
+
+        searchInput.addEventListener('input', (e) => {
+            searchPlants(e.target.value);
+        });
+
+        document.querySelectorAll('.filter-tab').forEach(button => {
+            button.addEventListener('click', () => {
+                document.querySelector('.filter-tab.active').classList.remove('active');
+                button.classList.add('active');
+                
+                currentFilter = button.dataset.type;
+                
+                const searchQuery = searchInput.value.trim();
+                if (searchQuery) {
+                    searchPlants(searchQuery);
+                } else {
+                    if (currentFilter === 'all') {
+                        displaySearchResults(allPowerPlants);
+                    } else {
+                        const filtered = allPowerPlants.filter(p => p.type === currentFilter);
+                        displaySearchResults(filtered);
+                    }
+                }
+            });
+        });
+
+        loadAllPlants();
+    </script>
 </body>
 </html>
