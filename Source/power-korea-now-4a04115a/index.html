@@ -440,6 +440,7 @@
                     return {
                         id: `${type}_${index}`,
                         name: plantName,
+                        plant_name: plantName,
                         type: type,
                         operator: plant.business || '정보 없음',
                         unit: plant.remark || '',
@@ -672,9 +673,9 @@
                         <button class="unit-tab" data-unit="${unit}" data-plant="${plant.plant_name}" style="
                             padding: 4px 7px;
                             margin: 4px 2px;
-                            border: 2px solid ${idx === 0 ? '#ff3366' : '#ddd'};
-                            background: ${idx === 0 ? '#ff3366' : '#fff'};
-                            color: ${idx === 0 ? '#fff' : '#333'};
+                            border: 2px solid ${'#ddd'};
+                            background: ${'#fff'};
+                            color: ${'#333'};
                             border-radius: 6px;
                             cursor: pointer;
                             font-weight: 600;
@@ -696,7 +697,7 @@
                                         ${unitsTabsHTML}
                                     </div>
                                 </div>
-                                <div id="chart-container-${plant.id}" style="height: 300px; background: #f9f9f9; border-radius: 6px; padding: 10px; display: none;">
+                                <div id="chart-container-${plant.id}" style="height: 200px; background: #f9f9f9; border-radius: 6px; padding: 10px; display: none;">
                                     <canvas id="${chartId}"></canvas>
                                 </div>
                                 <div id="data-table-${plant.id}" style="margin-top: 12px; display: none;">
@@ -745,7 +746,7 @@
                             document.querySelectorAll('.unit-tab').forEach(btn => {
                                 btn.addEventListener('click', async function() {
                                     const selectedUnit = this.dataset.unit;
-                                    const selectedPlant = this.dataset.plantName;
+                                    const selectedPlant = this.dataset.plant;
                                     
                                     console.log(`✅ 선택된 호기: ${selectedPlant}${selectedUnit}`);
                                     
@@ -772,26 +773,9 @@
                                         // 차트 표시
                                         const chartContainer = document.getElementById(`chart-container-${plant.id}`);
                                         chartContainer.style.display = 'block';
-                                        toggleBtn.style.display = 'block';
                                         
                                         // 차트 생성
-                                        createPowerChart(chartId, powerData, `${plant.name} ${selectedUnit}`);
-                                        
-                                        // 데이터 테이블 채우기 (숨겨진 상태)
-                                        const tbody = document.getElementById(`data-tbody-${plant.id}`);
-                                        tbody.innerHTML = powerData.map((row, idx) => `
-                                            <tr style="background-color: ${idx % 2 === 0 ? '#fff' : '#f9f9f9'};">
-                                                <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">${row.year}</td>
-                                                <td style="padding: 8px; border: 1px solid #ddd; text-align: right; font-weight: 500;">${row.value ? row.value.toLocaleString() : '-'}</td>
-                                            </tr>
-                                        `).join('');
-                                        
-                                        // 테이블 초기 상태로 리셋
-                                        tableVisible = false;
-                                        tableContainer.style.display = 'none';
-                                        toggleBtn.textContent = '📊 데이터 표 보기';
-                                        toggleBtn.style.background = '#f0f0f0';
-                                        
+                                        createPowerChart(chartId, powerData, `${plant.plant_name} ${selectedUnit}`);
                                         console.log(`✅ 차트 및 데이터 테이블 표시 완료`);
                                     } else {
                                         console.log(`⚠️ 발전량 데이터 없음`);
@@ -801,10 +785,6 @@
                                     }
                                 });
                             });
-                            
-                            // 첫 번째 호기 자동 선택
-                            const firstTab = document.querySelector('.unit-tab');
-                            if (firstTab) firstTab.click();
                         });
                     }, 50);
                 }
