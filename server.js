@@ -389,6 +389,50 @@ app.get('/api/nuclear/full', async (req, res) => {
   }
 });
 
+// =====  화력 발전소 호기별 일자별 시간대별 발전량 조회 API =====
+app.get('/api/thermal/power', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT 
+        "호기", 
+        "일자", 
+        "발전시간", 
+        "발전량_mwh"
+      FROM public."남동발전_분당화력_시간대별발전실적"
+      ORDER BY "호기", "일자", "발전시간"
+    `);
+
+    const data = {};
+
+    // 변환: 호기 → 일자 → 시간대
+    result.rows.forEach(row => {
+      const unit = row.호기;
+      const date = row.일자;
+      const hour = row.발전시간;
+      const amount = row.발전량_mwh;
+
+      if (!data[unit]) data[unit] = {};
+      if (!data[unit][date]) data[unit][date] = {};
+
+      data[unit][date][hour] = amount;
+    });
+
+    res.json({
+      success: true,
+      data
+    });
+
+  } catch (err) {
+    console.error('❌ [호기/일자/시간대별 발전량 조회 오류]:', err);
+    res.status(500).json({
+      success: false,
+      message: 'DB 조회 실패',
+      error: err.message
+    });
+  }
+});
+
+
 // ===== 디버깅용 전체 발전소 현황 API =====
 app.get('/api/debug/all-plants', async (req, res) => {
   try {
