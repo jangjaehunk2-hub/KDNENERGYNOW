@@ -403,21 +403,18 @@ app.get('/api/thermal/power', async (req, res) => {
 
     const data = {};
 
-    // 변환: 객체 → 배열 형태
     result.rows.forEach(row => {
       const unit = row.호기;
       const date = row.일자;
       const hour = row.발전시간;
-      const amount = row.발전량_mwh;
+      const amount = Number(row.발전량_mwh);
 
-      if (!data[unit]) data[unit] = [];
-      // 배열에 year/value 형태로 push
-      data[unit].push({
-        year: `${date} ${hour}h`,
-        value: Number(amount)
-      });
+      if (!data[unit]) data[unit] = {};         // 호기 생성
+      if (!data[unit][date]) data[unit][date] = {}; // 날짜 생성
+
+      data[unit][date][hour] = amount;          // 시간별 발전량 저장
     });
-
+    
     res.json({
       success: true,
       data
