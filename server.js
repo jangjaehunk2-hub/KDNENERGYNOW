@@ -178,10 +178,6 @@ app.get('/api/plants', async (req, res) => {
     res.status(500).json({ success: false, message: 'DB 조회 실패', error: err.message });
   }
 });
-
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
 // ===== 발전 데이터 조회 API (NEW) =====
 app.get('/api/power-data', async (req, res) => {
   const { plant, year, hour } = req.query;
@@ -254,7 +250,6 @@ app.get('/api/power-data', async (req, res) => {
         source: 'database',
         year: parseInt(year),
         plant: plant
-=======
 // ===== 원자력 발전소 호기별 발전량 통합 조회 =====
 app.get('/api/nuclear/full', async (req, res) => {
   try {
@@ -278,7 +273,6 @@ app.get('/api/nuclear/full', async (req, res) => {
     const groupedPower = {};
     const plantUnits = {};
 
-=======
 // ===== 원자력 발전소 호기별 발전량 통합 조회 =====
 app.get('/api/nuclear/full', async (req, res) => {
   try {
@@ -302,7 +296,6 @@ app.get('/api/nuclear/full', async (req, res) => {
     const groupedPower = {};
     const plantUnits = {};
 
->>>>>>> Stashed changes
     powerResult.rows.forEach(row => {
       const key = row.발전소명; // 발전소명 기준
 
@@ -311,12 +304,9 @@ app.get('/api/nuclear/full', async (req, res) => {
         year: row.년도,
         unit: row.호기명,
         value: row.발전량mwh
->>>>>>> Stashed changes
       });
-    }
+    });
 
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
     // 다른 발전소 유형은 데이터 없음 처리
     return res.status(404).json({ 
       success: false, 
@@ -330,10 +320,8 @@ app.get('/api/nuclear/full', async (req, res) => {
       message: 'DB 조회 실패', 
       error: err.message 
     });
-=======
-      if (!plantUnits[key]) plantUnits[key] = [];
-      if (!plantUnits[key].includes(row.호기명)) plantUnits[key].push(row.호기명);
-    });
+  }
+});
 
     // 4️⃣ 발전소 위치 + 호기정보 합치기
     const result = plantsResult.rows.map(plant => {
@@ -358,16 +346,13 @@ app.get('/api/nuclear/full', async (req, res) => {
   } catch (err) {
     console.error('❌ 발전소/호기 통합 조회 오류:', err);
     res.status(500).json({ success: false, message: 'DB 조회 실패', error: err.message });
->>>>>>> Stashed changes
   }
 });
 
 // ===== 원자력발전소 발전량 조회 API =====
 app.get('/api/nuclear/power', async (req, res) => {
-=======
 // ===== 원자력 발전소 호기별 발전량 통합 조회 =====
 app.get('/api/nuclear/full', async (req, res) => {
->>>>>>> Stashed changes
   try {
     // 1️⃣ 발전소 위치 정보 가져오기
     const plantsResult = await pool.query(`
@@ -424,7 +409,6 @@ app.get('/api/nuclear/full', async (req, res) => {
     res.json(result);
 
   } catch (err) {
-=======
       if (!plantUnits[key]) plantUnits[key] = [];
       if (!plantUnits[key].includes(row.호기명)) plantUnits[key].push(row.호기명);
     });
@@ -450,7 +434,6 @@ app.get('/api/nuclear/full', async (req, res) => {
     res.json(result);
 
   } catch (err) {
->>>>>>> Stashed changes
     console.error('❌ 발전소/호기 통합 조회 오류:', err);
     res.status(500).json({ success: false, message: 'DB 조회 실패', error: err.message });
   }
