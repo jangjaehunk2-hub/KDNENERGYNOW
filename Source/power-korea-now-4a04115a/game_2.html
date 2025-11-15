@@ -1,3 +1,4 @@
+// ...existing code...
 <!doctype html>
 <html lang="ko">
 <head>
@@ -27,6 +28,7 @@
     .diff-btn { padding:8px 12px; border-radius:6px; border:1px solid #d6dde6; background:#fff; cursor:pointer; }
     .diff-btn.active { background:#0366d6; color:#fff; border-color:#024a9a; }
     .start-wrap { text-align:center; margin-bottom:12px; }
+    .cooldown { margin-top:8px; color:#666; font-size:13px; }
   </style>
 </head>
 <body>
@@ -43,6 +45,7 @@
       </div>
       <div class="start-wrap">
         <button id="startBtn" class="btn">시작</button>
+        <div id="remaining" class="cooldown" aria-live="polite"></div>
       </div>
     </div>
 
@@ -70,52 +73,38 @@
   </div>
 
   <script>
-    // 문제 은행에 난이도 항목 추가 및 각 난이도 문항 확장
     const bank = [
-      // 쉬움 (기본 상식, 직관적 정답)
+      // 쉬움
       { q: "전력 소비량을 나타내는 단위 'kWh'는 무엇을 의미하나요?", choices: ["전기의 순간 전력","1시간 동안 사용한 전력의 양","전압의 단위","전류의 단위"], correct:1, explain:"kWh는 킬로와트시로, 예: 1kW 기기를 1시간 사용하면 1kWh의 에너지를 소비합니다.", difficulty:"easy" },
       { q: "전력의 단위 'W'는 무엇의 약자인가요?", choices: ["와트 - 전력","볼트 - 전압","암페어 - 전류","줄 - 에너지"], correct:0, explain:"W(와트)는 전력의 단위로, 에너지(J)를 시간(s)으로 나눈 값입니다.", difficulty:"easy" },
       { q: "전기 안전을 위해 가장 먼저 해야 할 일은?", choices: ["젖은 손으로 전기 기기 만지기","차단기를 내리고 전원을 차단","전선을 모두 분해","전원 코드를 강제로 뽑기"], correct:1, explain:"문제가 발생하면 우선 차단기를 내려 전원을 차단하고 안전을 확보해야 합니다.", difficulty:"easy" },
       { q: "LED 전구의 장점으로 옳은 것은?", choices: ["발열이 크다","에너지 효율이 높고 수명이 김","전력 소비가 가장 높다","교체 주기가 짧다"], correct:1, explain:"LED는 전력 소비가 적고 수명이 길어 효율적입니다.", difficulty:"easy" },
       { q: "가정용 전압(한국)은 대략 몇 V인가요?", choices: ["110V","220V","380V","12V"], correct:1, explain:"한국의 가정용 표준 전압은 220V입니다.", difficulty:"easy" },
-      { q: "1kW는 몇 W와 같은가요?", choices: ["100W","1000W","10W","10000W"], correct:1, explain:"킬로는 1000배이므로 1kW = 1000W입니다.", difficulty:"easy" },
-      { q: "절전 모드를 활용하면 주로 어떤 효과가 있나요?", choices: ["전력 소비 감소","전력 소비 증가","주파수 상승","전압 고정화"], correct:0, explain:"절전 모드는 사용하지 않는 시간에 전력 소비를 줄입니다.", difficulty:"easy" },
-      { q: "스마트 플러그의 기본 기능은 무엇인가요?", choices: ["전력 생산","원격으로 전원 ON/OFF 제어","전압을 높임","발전을 저장"], correct:1, explain:"스마트 플러그는 원격 제어나 예약으로 전력 관리를 돕습니다.", difficulty:"easy" },
 
-      // 보통 (조금 더 기술적, 운영 관련)
+      // 보통
       { q: "발전소에서 생산된 전력은 높은 전압으로 보내지는 이유는?", choices: ["전력 손실을 줄이기 위해","전압을 높이면 전기가 더 안전해서","전압을 높이면 전류가 늘어나서","전압을 높이면 전기가 더 빠르게 흐르기 때문에"], correct:0, explain:"송전 손실은 I²R에 비례하므로 전류를 줄이기 위해 전압을 높여 전력을 보냅니다.", difficulty:"normal" },
       { q: "변압기(트랜스포머)의 주된 역할은?", choices: ["전류를 생성","전압을 바꿔 송전과 배전을 용이하게 함","전력을 저장","교류를 직류로 변환"], correct:1, explain:"변압기는 전압을 올리거나 내려 송전 손실을 줄이거나 가정용 전압으로 변환합니다.", difficulty:"normal" },
       { q: "태양광 패널의 출력은 주로 어떤 조건에 영향을 받나요?", choices: ["빛의 세기와 패널 온도","설치 각도만","배터리 용량만","지역의 전선 굵기"], correct:0, explain:"일사량, 온도, 패널 각도 등이 출력에 큰 영향을 줍니다.", difficulty:"normal" },
       { q: "스마트 미터의 주요 장점은 무엇인가요?", choices: ["원격으로 전력 사용량을 측정하고 요금/관리를 개선","전기를 더 많이 생산","배터리 수명을 늘림","전압을 자동으로 높임"], correct:0, explain:"스마트 미터는 실시간 사용량 전송으로 요금제 및 효율 관리에 도움을 줍니다.", difficulty:"normal" },
-      { q: "배전반(전기 패널)의 역할은 무엇인가요?", choices: ["전기를 생산","전기를 여러 회로로 분배하고 보호장치를 제공","전기를 장시간 저장","전력을 먼 거리로 송전"], correct:1, explain:"배전반은 전력을 여러 회로로 분배하고 차단기 등으로 보호합니다.", difficulty:"normal" },
-      { q: "피크타임에 전력 요금이 높은 이유는?", choices: ["수요가 많아 추가 비용이 발생하기 때문","전기가 더 깨끗해지기 때문","전압이 낮아져서","송전 거리가 줄어들기 때문"], correct:0, explain:"피크 시간대는 수요 증가로 공급 비용과 설비 부담이 커져 요금이 높습니다.", difficulty:"normal" },
-      { q: "UPS(Uninterruptible Power Supply)의 주 목적은?", choices: ["전력 소비를 늘리기","정전 시에도 임시 전원 공급","송전 손실 감소","전압을 영구히 상승"], correct:1, explain:"UPS는 정전이나 전원 이상 시 장비에 임시 전원을 제공합니다.", difficulty:"normal" },
-      { q: "인버터는 주로 어떤 기능을 하나요?", choices: ["교류를 직류로 변환","전기를 저장","직류를 교류로 변환","전압을 무조건 올림"], correct:2, explain:"인버터는 배터리(DC) 전력을 가정용/계통(AC) 전력으로 변환합니다.", difficulty:"normal" },
-      { q: "수요반응(DR, Demand Response)의 목적은?", choices: ["피크 부하를 낮춰 계통 안정성 및 비용을 개선","항상 전력을 더 많이 소비하게 함","발전소 수를 늘림","전력을 저장하는 기술"], correct:0, explain:"DR은 소비 패턴을 조절해 피크를 낮추고 비용·안정성을 개선합니다.", difficulty:"normal" },
-      { q: "송전선의 절연체 역할은 무엇인가요?", choices: ["전기를 통하게 함","전선을 지지하며 전류가 기둥으로 흐르지 않게 함","전력을 생성","전력을 저장"], correct:1, explain:"절연체는 전선과 지지물 사이 전류 흐름을 차단하고 기계적 지지를 제공합니다.", difficulty:"normal" },
       { q: "ESS(Energy Storage System)의 일반적인 쓰임은?", choices: ["전력 저장을 통한 피크 절감 및 계통 보조","항상 전압을 낮춤","전선을 대체","전력을 소비"], correct:0, explain:"ESS는 저장된 전력을 이용해 피크를 완화하고 계통을 보조합니다.", difficulty:"normal" },
-      { q: "배전망에서 '무정전 전원(UPS 포함)'이 중요한 이유는?", choices: ["민감한 장비의 연속 가동을 위해","전력을 더 많이 소비하려고","전선을 보호하려고","전압을 낮추기 위해서"], correct:0, explain:"의료·통신 등 민감한 장비는 전원 연속성이 필수입니다.", difficulty:"normal" },
 
-      // 어려움 (전력 이론, 계통 운영, 장비 심화)
+      // 어려움
       { q: "역률(Power Factor)은 무엇을 의미하나요?", choices: ["유효전력과 피상전력의 비","전압과 전류의 곱","전력 손실량","배터리 충전비율"], correct:0, explain:"역률은 유효전력(P) ÷ 피상전력(S)으로, 1에 가까우면 효율적입니다.", difficulty:"hard" },
       { q: "무효전력(reactive power)이 전력계통에 주는 영향은?", choices: ["전압 조절 및 전력 전달에 영향","에너지를 영구히 소비","전류를 항상 줄인다","송전로를 보호한다"], correct:0, explain:"무효전력은 전압 유지와 전력 흐름에 영향을 주며 보상 필요성이 있습니다.", difficulty:"hard" },
-      { q: "베이스로드(Base load)는 무엇을 가리키나요?", choices: ["항상 유지되는 최소한의 전력 수요","최대 수요 시간대","일시적인 급증 수요","비상 전력"], correct:0, explain:"베이스로드는 장기간 일정하게 요구되는 최소 전력량입니다.", difficulty:"hard" },
-      { q: "주파수(frequency) 저하 시 통상 취하는 조치는?", choices: ["부하 차단(Load shedding)","전압을 올림","모든 발전기 정지","계통을 분리하지 않음"], correct:0, explain:"주파수 저하는 공급 부족을 뜻해 부하 차단 등으로 안정화합니다.", difficulty:"hard" },
       { q: "스피닝 리저브(spinning reserve)의 역할은?", choices: ["급작스런 수요 증가에 즉시 대응 가능한 예비력 제공","발전 비용을 줄이는 제도","항상 충전되는 배터리","송전 손실을 증가시키는 장치"], correct:0, explain:"스피닝 리저브는 가동 중인 발전기가 즉시 출력을 늘려 불시 상황에 대응합니다.", difficulty:"hard" },
       { q: "HVDC(고압 직류 송전)의 장점은?", choices: ["장거리 송전에 전력 손실이 적고 안정적","항상 저렴하다","교류보다 변압이 쉬움","직류는 주파수가 있다"], correct:0, explain:"HVDC는 장거리 및 해저 송전에서 손실과 동기 문제를 줄여 유리합니다.", difficulty:"hard" },
-      { q: "무효전력 보상을 위해 주로 쓰이는 장치는?", choices: ["콘덴서 뱅크(Capacitor bank)","발전기의 로터","송전탑","차단기"], correct:0, explain:"콘덴서 뱅크는 무효전력을 보상해 역률을 개선합니다.", difficulty:"hard" },
-      { q: "FACTS(Flexible AC Transmission Systems)의 목적은?", choices: ["교류 송전의 유연성 및 전력 흐름 제어","전력을 저장하기","배전반을 대체","전선을 물리적으로 줄임"], correct:0, explain:"FACTS 장치는 전력 흐름·전압·안정성을 제어해 송전 효율을 높입니다.", difficulty:"hard" },
-      { q: "동기발전기(synchronous generator)의 동작 원리 핵심은?", choices: ["회전하는 자계와 정지하는 자계의 상호작용","전류가 스스로 생성되는 것","전압을 자동으로 저장","계통 주파수를 무시함"], correct:0, explain:"동기발전기는 회전자와 고정자 사이의 전자기 유도에 의해 전력을 생성합니다.", difficulty:"hard" },
-      { q: "블랙아웃(대정전) 주요 원인 중 하나는?", choices: ["동시다발적 설비고장과 급격한 수요변화로 인한 연쇄 실패","전기가 너무 싸서","전선을 너무 짧게 만든 것","전력 저장이 너무 많음"], correct:0, explain:"연쇄적 설비 고장·주파수·전압 불안정 등이 대규모 정전(블랙아웃)을 초래할 수 있습니다.", difficulty:"hard" },
-      { q: "계통 안정성(Transient stability)에서 중요한 요소는?", choices: ["발전기 동기 유지","스마트 미터의 정확성","전구의 색온도","가정용 전압"], correct:0, explain:"계통 안정성은 큰 교란 시 발전기 간 동기 유지가 핵심입니다.", difficulty:"hard" },
-      { q: "분산형 전원 통합 시 고려사항으로 적절한 것은?", choices: ["출력 변동성, 계통 연결 방식, 보호·제어 방안","전선을 무조건 제거","모든 부하를 즉시 분리","전력을 무한대로 생산"], correct:0, explain:"분산원은 변동성·계통 영향·보호·제어를 고려해 통합해야 합니다.", difficulty:"hard" }
+      { q: "무효전력 보상을 위해 주로 쓰이는 장치는?", choices: ["콘덴서 뱅크(Capacitor bank)","발전기의 로터","송전탑","차단기"], correct:0, explain:"콘덴서 뱅크는 무효전력을 보상해 역률을 개선합니다.", difficulty:"hard" }
     ];
 
     const QUESTIONS_PER_SESSION = 5;
     const POINTS = { easy:10, normal:15, hard:20 };
 
+    // 쿨다운 설정: 6시간
+    const COOLDOWN_MS = 6 * 60 * 60 * 1000;
+    const COOLDOWN_KEY = 'quizCooldown_ts';
+
     let selectedDifficulty = null;
-    let POINTS_PER_CORRECT = POINTS.normal; // 기본
+    let POINTS_PER_CORRECT = POINTS.normal;
     let currentQuestions = [];
     let idx = 0;
     let score = 0;
@@ -133,6 +122,7 @@
     const restartBtn = document.getElementById('restartBtn');
     const startBtn = document.getElementById('startBtn');
     const diffBtns = document.querySelectorAll('.diff-btn');
+    const remainingEl = document.getElementById('remaining');
 
     function shuffleArray(a) {
       for (let i = a.length - 1; i > 0; i--) {
@@ -142,21 +132,45 @@
       return a;
     }
 
-    // 난이도 버튼 토글
+    function getCooldownRemaining() {
+      const ts = Number(localStorage.getItem(COOLDOWN_KEY) || 0);
+      if (!ts) return 0;
+      const rem = ts + COOLDOWN_MS - Date.now();
+      return rem > 0 ? rem : 0;
+    }
+    function formatMs(ms) {
+      const s = Math.floor(ms/1000);
+      const h = Math.floor(s/3600);
+      const m = Math.floor((s%3600)/60);
+      const sec = s%60;
+      return `${h}시간 ${m}분 ${sec}초`;
+    }
+    function updateCooldownUI() {
+      const rem = getCooldownRemaining();
+      if (rem > 0) {
+        startBtn.disabled = true;
+        remainingEl.textContent = `다시 도전 가능까지: ${formatMs(rem)}`;
+      } else {
+        startBtn.disabled = false;
+        remainingEl.textContent = '지금 도전 가능';
+      }
+    }
+    function setCooldownNow() {
+      localStorage.setItem(COOLDOWN_KEY, Date.now().toString());
+      updateCooldownUI();
+    }
+
     diffBtns.forEach(b => b.addEventListener('click', () => {
       diffBtns.forEach(x => x.classList.remove('active'));
       b.classList.add('active');
       selectedDifficulty = b.dataset.diff;
     }));
 
-    // 준비: 선택된 난이도 기반 세션 문제 준비
     function prepareQuiz() {
       if (!selectedDifficulty) selectedDifficulty = 'normal';
       POINTS_PER_CORRECT = POINTS[selectedDifficulty];
 
-      // 해당 난이도 문제만 필터
       let pool = bank.filter(x => x.difficulty === selectedDifficulty).slice();
-      // 필요한 개수보다 적으면 다른 난이도에서 보충
       if (pool.length < QUESTIONS_PER_SESSION) {
         const others = bank.filter(x => x.difficulty !== selectedDifficulty);
         pool = pool.concat(others);
@@ -165,7 +179,6 @@
       shuffleArray(pool);
       const picked = pool.slice(0, Math.min(QUESTIONS_PER_SESSION, pool.length));
 
-      // 선택지 섞기 및 정답 인덱스 보정
       currentQuestions = picked.map(q => {
         const mapped = q.choices.map((c,i) => ({ text:c, orig:i }));
         shuffleArray(mapped);
@@ -220,6 +233,7 @@
       if (idx < currentQuestions.length - 1) {
         nextBtn.style.display = 'inline-block';
       } else {
+        setCooldownNow();
         restartBtn.style.display = 'inline-block';
         setTimeout(() => showEnd(), 700);
       }
@@ -244,12 +258,17 @@
       diffBtns.forEach(x => x.classList.remove('active'));
       selectedDifficulty = null;
       scoreEl.textContent = 0;
+      updateCooldownUI();
     }
 
     restartBtn.addEventListener('click', resetToSetup);
     document.getElementById('restartBtn2').addEventListener('click', resetToSetup);
 
     startBtn.addEventListener('click', () => {
+      if (getCooldownRemaining() > 0) {
+        updateCooldownUI();
+        return;
+      }
       if (!selectedDifficulty) selectedDifficulty = 'normal';
       prepareQuiz();
       setupEl.style.display = 'none';
@@ -258,8 +277,10 @@
       renderQuestion();
     });
 
-    // 초기 상태: setup 보이기
     resetToSetup();
+    updateCooldownUI();
+    setInterval(updateCooldownUI, 1000);
   </script>
 </body>
 </html>
+// ...existing code...
