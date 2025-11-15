@@ -21,12 +21,18 @@
             min-height: 100vh;
         }
         .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
             width: 140px;
+            height: 100vh;
             background-color: #1a1a1a;
             color: white;
             display: flex;
             flex-direction: column;
             align-items: center;
+            overflow-y: auto;
+            z-index: 1000;
         }
         .sidebar-button {
             width: 100%;
@@ -57,6 +63,7 @@
         .main-content {
             flex: 1;
             padding: 40px;
+            margin-left: 140px;
         }
         .header {
             margin-bottom: 40px;
@@ -202,6 +209,9 @@
                 <button class="filter-tab active" data-type="all">전체</button>
                 <button class="filter-tab" data-type="hydro">수력</button>
                 <button class="filter-tab" data-type="nuclear">원자력</button>
+                <button class="filter-tab" data-type="wind">풍력</button>
+                <button class="filter-tab" data-type="solar">태양광</button>
+                <button class="filter-tab" data-type="thermal">화력</button>
             </div>
 
             <div class="map-container" id="map">
@@ -209,15 +219,27 @@
                 <div class="stats-card">
                     <div class="stats-title">발전소 현황</div>
                     <div class="stats-row">
-                        <span class="stats-label">수력 발전소:</span>
+                        <span class="stats-label">수력:</span>
                         <span class="stats-value power-type-hydro" id="hydroPlants">0개</span>
                     </div>
                     <div class="stats-row">
-                        <span class="stats-label">원자력 발전소:</span>
+                        <span class="stats-label">원자력:</span>
                         <span class="stats-value power-type-nuclear" id="nuclearPlants">0개</span>
                     </div>
+                    <div class="stats-row">
+                        <span class="stats-label">풍력:</span>
+                        <span class="stats-value" id="windPlants" style="color: #90ee90;">0개</span>
+                    </div>
+                    <div class="stats-row">
+                        <span class="stats-label">태양광:</span>
+                        <span class="stats-value" id="solarPlants" style="color: #ffd700;">0개</span>
+                    </div>
+                    <div class="stats-row">
+                        <span class="stats-label">화력:</span>
+                        <span class="stats-value" id="thermalPlants" style="color: #ff6347;">0개</span>
+                    </div>
                     <div class="stats-row" style="padding-top: 10px; border-top: 1px solid #eee;">
-                        <span class="stats-label">총 발전소:</span>
+                        <span class="stats-label">총계:</span>
                         <span class="stats-value" id="totalPlants">0개</span>
                     </div>
                 </div>
@@ -233,9 +255,22 @@
         let allPowerPlants = []; // 모든 발전소 데이터
         let currentFilter = 'all'; // 현재 선택된 필터
         let nuclearPowerData = {}; // 발전량 저장용 객체 {호기명: [{year, value}...]}
+        let plantUnits = {}; // 발전소별 호기 정보 {발전소명: [호기1, 호기2, ...]}
         const colorMap = { 
             hydro: "#00aaff",
-            nuclear: "#ff3366"
+            nuclear: "#ff3366",
+            wind: "#90ee90",
+            solar: "#ffd700",
+            thermal: "#ff6347"
+        };
+        
+        // 발전소 유형별 이모지 아이콘
+        const iconEmoji = {
+            hydro: '💧',      // 폭포
+            nuclear: '☢️',     // 핵 표시
+            wind: '💨',       // 바람개비
+            solar: '☀️',      // 태양
+            thermal: '🔥'     // 불
         };
 
         // ===== Chart.js 인스턴스 관리 =====
@@ -354,62 +389,50 @@
             }).addTo(map);
         }
 
-        // ===== DB에서 수력발전소 데이터 가져오기 =====
+        // ===== 모든 발전소 데이터 가져오기 =====
         async function fetchHydroPlants() {
             try {
-                const response = await fetch('http://localhost:3000/api/hydro');
+                const response = await fetch('http://localhost:3000/api/plants');
                 if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                 
                 const data = await response.json();
-                console.log('✅ 수력발전소 데이터:', data.length + '개');
+                console.log('✅ 발전소 데이터:', data.length + '개');
                 
-                return data.map((plant, index) => ({
-                    id: 'hydro_' + index,
-                    name: plant.발전소명 || '이름 없음',
-                    type: 'hydro',
-                    operator: plant.운영기관 || '정보 없음',
-                    location: plant.위치_수계 || '위치 정보 없음',
-                    latitude: parseFloat(plant.latitude),
-                    longitude: parseFloat(plant.longitude)
-                }));
+                // 발전소 타입 확인 및 동일 형태로 변환
+                return data.map((plant, index) => {
+                    // DB에서 받은 실제 필드명: plant_type
+                    const plantType = plant.plant_type || '알 수 없음';
+                    console.log(`[${index}] ${plant.plant_name} - plant_type: "${plantType}"`);
+                    
+                    // 발전소 타입 자동 분류
+                    let type = 'thermal'; // 기본값
+                    const typeStr = String(plantType).toLowerCase();
+                    
+                    if (typeStr.includes('수력') || typeStr === 'hydro') {
+                        type = 'hydro';
+                    } else if (typeStr.includes('원자력') || typeStr === 'nuclear') {
+                        type = 'nuclear';
+                    } else if (typeStr.includes('풍력') || typeStr === 'wind') {
+                        type = 'wind';
+                    } else if (typeStr.includes('태양광') || typeStr === 'solar') {
+                        type = 'solar';
+                    } else if (typeStr.includes('화력') || typeStr === 'thermal') {
+                        type = 'thermal';
+                    }
+                    
+                    return {
+                        id: `${type}_${index}`,
+                        name: plant.plant_name || '이름 없음',
+                        type: type,
+                        operator: plant.business || '정보 없음',
+                        unit: plant.remark || '',
+                        location: plant.adress || '위치 정보 없음',
+                        latitude: parseFloat(plant.latitude),
+                        longitude: parseFloat(plant.longitude)
+                    };
+                });
             } catch (error) {
-                console.error('❌ 수력발전소 데이터 로드 실패:', error);
-                return [];
-            }
-        }
-
-        // ===== DB에서 원자력발전소 데이터 가져오기 =====
-        async function fetchNuclearPlants() {
-            try {
-                const response = await fetch('http://localhost:3000/api/nuclear');
-                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                
-                const data = await response.json();
-                console.log('✅ 원자력발전소 원본 데이터:', data);
-                
-                const mapped = data.map((plant, index) => ({
-                    id: 'nuclear_' + index,
-                    name: plant.발전소명 || '이름 없음',
-                    type: 'nuclear',
-                    unit: plant.호기 || '-',
-                    // 발전량 매칭을 위한 복합 키 생성 (발전소명 + 호기)
-                    powerKey: (plant.발전소명 || '') + (plant.호기 || ''),
-                    reactorType: plant.노형 || '정보 없음',
-                    capacity1: plant.용량1mwe || plant.용량1MWe || '-',
-                    capacity2: plant.용량2mwe || plant.용량2MWe || '-',
-                    operationDate: plant.상업운전개시일 || '정보 없음',
-                    latitude: parseFloat(plant.latitude),
-                    longitude: parseFloat(plant.longitude)
-                }));
-                
-                console.log('✅ 변환된 원자력발전소:', mapped);
-                console.log('✅ powerKey 샘플:', mapped.slice(0, 3).map(p => p.powerKey));
-                console.log('✅ 유효한 좌표를 가진 원자력발전소:', 
-                    mapped.filter(p => !isNaN(p.latitude) && !isNaN(p.longitude)).length + '개');
-                
-                return mapped;
-            } catch (error) {
-                console.error('❌ 원자력발전소 데이터 로드 실패:', error);
+                console.error('❌ 발전소 데이터 로드 실패:', error);
                 return [];
             }
         }
@@ -422,14 +445,17 @@
                 
                 const data = await res.json();
                 
-                // 백엔드가 이미 {호기명: [{year, value},...]} 형태의 객체로 반환
-                nuclearPowerData = data;
+                // 새로운 응답 구조: {powerData: {...}, plantUnits: {...}}
+                nuclearPowerData = data.powerData || {};
+                plantUnits = data.plantUnits || {};
                 
                 console.log("⚡ 발전량 데이터 저장됨:", Object.keys(nuclearPowerData).length + '개 호기');
                 console.log("📋 발전량 키 샘플:", Object.keys(nuclearPowerData).slice(0, 10));
+                console.log("🔌 발전소별 호기 정보:", plantUnits);
             } catch (err) { 
                 console.error('❌ 발전량 데이터 로드 실패:', err); 
                 nuclearPowerData = {}; // 에러 시 빈 객체로 초기화
+                plantUnits = {};
             }
         }
 
@@ -437,33 +463,34 @@
         async function loadAllPlants() {
             console.log('\n🔄 ===== 발전소 데이터 로드 시작 =====');
 
-            // 발전량 데이터 먼저 로드
-            await fetchNuclearPowerData();
-            
-            // 발전소 위치 데이터 로드
-            const [hydroPlants, nuclearPlants] = await Promise.all([
-                fetchHydroPlants(),
-                fetchNuclearPlants()
-            ]);
+            try {
+                // 발전소 데이터 로드
+                allPowerPlants = await fetchHydroPlants();
 
-            console.log('\n📊 ===== 로드 결과 =====');
-            console.log(`수력발전소: ${hydroPlants.length}개`);
-            console.log(`원자력발전소: ${nuclearPlants.length}개`);
-            console.log(`총합: ${hydroPlants.length + nuclearPlants.length}개`);
+                console.log('\n📊 ===== 로드 결과 =====');
+                const hydroCount = allPowerPlants.filter(p => p.type === 'hydro').length;
+                const nuclearCount = allPowerPlants.filter(p => p.type === 'nuclear').length;
+                const windCount = allPowerPlants.filter(p => p.type === 'wind').length;
+                const solarCount = allPowerPlants.filter(p => p.type === 'solar').length;
+                const thermalCount = allPowerPlants.filter(p => p.type === 'thermal').length;
+                console.log(`수력발전소: ${hydroCount}개`);
+                console.log(`원자력발전소: ${nuclearCount}개`);
+                console.log(`풍력발전소: ${windCount}개`);
+                console.log(`태양광발전소: ${solarCount}개`);
+                console.log(`화력발전소: ${thermalCount}개`);
+                console.log(`총합: ${allPowerPlants.length}개`);
 
-            allPowerPlants = [...hydroPlants, ...nuclearPlants];
-            
-            console.log('\n🗺️ 전체 발전소 목록:');
-            allPowerPlants.forEach((plant, idx) => {
-                if (plant.type === 'nuclear') {
-                    console.log(`${idx + 1}. [${plant.type}] ${plant.name} - ${plant.unit} (powerKey: ${plant.powerKey})`);
-                } else {
-                    console.log(`${idx + 1}. [${plant.type}] ${plant.name}`);
-                }
-            });
-            
-            document.getElementById('loadingMessage').style.display = 'none';
-            updateMarkers();
+                console.log('\n🗺️ 전체 발전소 목록:');
+                allPowerPlants.forEach((plant, idx) => {
+                    console.log(`${idx + 1}. [${plant.type}] ${plant.name} ${plant.unit ? '- ' + plant.unit : ''}`);
+                });
+
+                document.getElementById('loadingMessage').style.display = 'none';
+                updateMarkers();
+            } catch (error) {
+                console.error('❌ 발전소 데이터 로드 실패:', error);
+                document.getElementById('loadingMessage').textContent = '데이터 로드 실패';
+            }
         }
 
         // ===== 마커 업데이트 함수 =====
@@ -481,9 +508,15 @@
             // 통계 업데이트
             const hydroCount = allPowerPlants.filter(p => p.type === 'hydro').length;
             const nuclearCount = allPowerPlants.filter(p => p.type === 'nuclear').length;
+            const windCount = allPowerPlants.filter(p => p.type === 'wind').length;
+            const solarCount = allPowerPlants.filter(p => p.type === 'solar').length;
+            const thermalCount = allPowerPlants.filter(p => p.type === 'thermal').length;
             
             document.getElementById('hydroPlants').textContent = `${hydroCount}개`;
             document.getElementById('nuclearPlants').textContent = `${nuclearCount}개`;
+            document.getElementById('windPlants').textContent = `${windCount}개`;
+            document.getElementById('solarPlants').textContent = `${solarCount}개`;
+            document.getElementById('thermalPlants').textContent = `${thermalCount}개`;
             document.getElementById('totalPlants').textContent = `${allPowerPlants.length}개`;
 
             // 각 발전소에 대해 마커 생성
@@ -495,65 +528,64 @@
                 }
 
                 const color = colorMap[plant.type];
+                const emoji = iconEmoji[plant.type];
 
-                // 커스텀 아이콘 생성
+                // 커스텀 아이콘 생성 (이모지 포함)
                 const icon = L.divIcon({
                     className: 'custom-marker',
                     html: `
-                        <div style="position: relative; pointer-events: none;">
+                        <div style="position: relative; pointer-events: none; display: flex; align-items: center; justify-content: center;">
                             <div style="
-                                width: 32px;
-                                height: 32px;
-                                background-color: ${color};
-                                border: 4px solid white;
+                                width: 40px;
+                                height: 40px;
+                                background-color: white;
+                                border: 3px solid ${color};
                                 border-radius: 50%;
-                                box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-                            "></div>
+                                box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                font-size: 24px;
+                            ">${emoji}</div>
                             <div style="
                                 position: absolute;
-                                inset: 0;
-                                background-color: ${color};
+                                width: 40px;
+                                height: 40px;
+                                border: 3px solid ${color};
                                 border-radius: 50%;
                                 animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
                                 opacity: 0.3;
                             "></div>
                         </div>
                     `,
-                    iconSize: [32, 32],
-                    iconAnchor: [16, 16]
+                    iconSize: [40, 40],
+                    iconAnchor: [20, 20]
                 });
 
                 // 마커 생성
                 const marker = L.marker([plant.latitude, plant.longitude], { icon }).addTo(map);
 
                 // ===== 툴팁 (마우스 호버 시 표시) =====
-                let tooltipContent = '';
+                const typeMap = {
+                    'hydro': '수력발전',
+                    'nuclear': '원자력발전',
+                    'wind': '풍력발전',
+                    'solar': '태양광발전',
+                    'thermal': '화력발전'
+                };
                 
-                if (plant.type === 'hydro') {
-                    tooltipContent = `
-                        <div style="min-width: 180px;">
-                            <div style="font-weight: bold; margin-bottom: 8px; font-size: 15px;">${plant.name}</div>
-                            <div style="font-size: 13px; line-height: 1.6;">
-                                <div style="color: #00aaff;">● 수력발전</div>
-                                <div style="opacity: 0.9;">운영: ${plant.operator}</div>
-                                <div style="opacity: 0.9;">위치: ${plant.location}</div>
+                let tooltipContent = `
+                    <div style="min-width: 200px; padding: 8px 0;">
+                        <div style="font-weight: bold; margin-bottom: 8px; font-size: 14px; color: #fff;">${plant.name}</div>
+                        <div style="font-size: 12px; line-height: 1.8; color: #fff;">
+                            <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
+                                <span style="font-size: 16px;">${emoji}</span>
+                                <span style="font-weight: 600; color: #fff;">${typeMap[plant.type] || plant.type}</span>
                             </div>
+                            ${plant.location && plant.location !== '위치 정보 없음' ? `<div style="margin-top: 6px;"><strong>📍 위치:</strong> ${plant.location}</div>` : ''}
                         </div>
-                    `;
-                } else if (plant.type === 'nuclear') {
-                    tooltipContent = `
-                        <div style="min-width: 180px;">
-                            <div style="font-weight: bold; margin-bottom: 8px; font-size: 15px;">${plant.name}</div>
-                            <div style="font-size: 13px; line-height: 1.6;">
-                                <div style="color: #ff3366;">● 원자력발전</div>
-                                <div style="opacity: 0.9;">호기: ${plant.unit}</div>
-                                <div style="opacity: 0.9;">노형: ${plant.reactorType}</div>
-                                <div style="opacity: 0.9;">용량: ${plant.capacity1} MWe</div>
-                                <div style="opacity: 0.9;">상업운전: ${plant.operationDate}</div>
-                            </div>
-                        </div>
-                    `;
-                }
+                    </div>
+                `;
 
                 // 툴팁 바인딩 (마우스 호버)
                 marker.bindTooltip(tooltipContent, {
@@ -590,11 +622,13 @@
                         </div>
                     `;
                 } else if (plant.type === 'nuclear') {
-                    // 원자력발전소는 클릭 시 발전량 데이터 표시
+                    // 원자력발전소는 클릭 시 호기 정보와 발전량 데이터 표시
                     const key = plant.powerKey;
                     const powerData = nuclearPowerData[key];
+                    const units = plantUnits[plant.name] || [];
                     
                     console.log(`🔍 [${plant.name} ${plant.unit}] 발전량 조회 - 키: "${key}"`);
+                    console.log(`🔌 호기 정보: ${units.join(', ')}`);
                     
                     const chartId = `chart-${plant.id}`;
                     
@@ -602,7 +636,13 @@
                         <div style="font-family: system-ui; min-width: 500px; max-width: 600px;">
                             <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px; padding: 20px 20px 12px 20px; border-bottom: 2px solid #ff3366;">
                                 <div style="width: 14px; height: 14px; background-color: ${color}; border-radius: 50%;"></div>
-                                <h3 style="font-weight: bold; font-size: 18px; margin: 0; color: #333;">${plant.name} ${plant.unit}</h3>
+                                <h3 style="font-weight: bold; font-size: 18px; margin: 0; color: #333;">${plant.name}</h3>
+                            </div>
+                            <div style="padding: 0 20px;">
+                                <div style="background: #f0f0f0; padding: 12px; border-radius: 8px; margin-bottom: 16px;">
+                                    <div style="font-size: 13px; color: #666; margin-bottom: 6px;"><strong>⚡ 호기 정보</strong></div>
+                                    <div style="font-size: 14px; font-weight: 600; color: #333;">${units.length}개 호기: ${units.join(', ')}</div>
+                                </div>
                             </div>
                     `;
 
