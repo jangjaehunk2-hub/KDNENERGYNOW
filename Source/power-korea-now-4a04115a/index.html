@@ -257,6 +257,7 @@
         let nuclearPowerData = {}; // 발전량 저장용 객체 {호기명: [{year, value}...]}
         let plantUnits = {}; // 발전소별 호기 정보 {발전소명: [호기1, 호기2, ...]}
         let plantNameMapping = {}; // {plant_name: 발전소명} - plant_name과 발전소명 매칭
+        let chartInstances = {}; // 차트 인스턴스 저장용
         const colorMap = { 
             hydro: "#00aaff",
             nuclear: "#ff3366",
@@ -277,104 +278,82 @@
         // ===== Chart.js 인스턴스 관리 =====
         let currentChart = null;
 
-        function createPowerChart(canvasId, powerData, plantName) {
-            // 기존 차트가 있으면 제거
-            if (currentChart) {
-                currentChart.destroy();
-                currentChart = null;
-            }
-
-            const canvas = document.getElementById(canvasId);
-            if (!canvas) {
-                console.error('Canvas element not found:', canvasId);
-                return;
-            }
-
-            const ctx = canvas.getContext('2d');
-            
-            // 데이터 준비
-            const years = powerData.map(d => d.year);
-            const values = powerData.map(d => d.value || 0);
-
-            currentChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: years,
-                    datasets: [{
-                        label: '발전량 (MWh)',
-                        data: values,
-                        borderColor: '#ff3366',
-                        backgroundColor: 'rgba(255, 51, 102, 0.1)',
-                        borderWidth: 3,
-                        fill: true,
-                        tension: 0.4,
-                        pointRadius: 5,
-                        pointHoverRadius: 7,
-                        pointBackgroundColor: '#ff3366',
-                        pointBorderColor: '#fff',
-                        pointBorderWidth: 2
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        },
-                        title: {
-                            display: true,
-                            text: `${plantName} 연도별 발전량`,
-                            font: {
-                                size: 16,
-                                weight: 'bold'
-                            },
-                            padding: {
-                                top: 10,
-                                bottom: 20
-                            }
-                        },
-                        tooltip: {
-                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                            padding: 12,
-                            titleFont: {
-                                size: 14
-                            },
-                            bodyFont: {
-                                size: 13
-                            },
-                            callbacks: {
-                                label: function(context) {
-                                    return '발전량: ' + context.parsed.y.toLocaleString() + ' MWh';
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: false,
-                            ticks: {
-                                callback: function(value) {
-                                    return value.toLocaleString();
-                                }
-                            },
-                            grid: {
-                                color: 'rgba(0, 0, 0, 0.05)'
-                            }
-                        },
-                        x: {
-                            grid: {
-                                display: false
-                            }
-                        }
-                    },
-                    interaction: {
-                        intersect: false,
-                        mode: 'index'
-                    }
+            function createPowerChart(canvasId, powerData, plantName) {
+                // 기존 차트가 있으면 제거
+                if (chartInstances[canvasId]) {
+                    chartInstances[canvasId].destroy();
+                    delete chartInstances[canvasId];
                 }
-            });
-        }
+
+                const canvas = document.getElementById(canvasId);
+                if (!canvas) {
+                    console.error('Canvas element not found:', canvasId);
+                    return;
+                }
+
+                const ctx = canvas.getContext('2d');
+                const years = powerData.map(d => d.year);
+                const values = powerData.map(d => d.value || 0);
+
+                chartInstances[canvasId] = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: years,
+                        datasets: [{
+                            label: '발전량 (MWh)',
+                            data: values,
+                            borderColor: '#ff3366',
+                            backgroundColor: 'rgba(255, 51, 102, 0.1)',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.4,
+                            pointRadius: 4,
+                            pointHoverRadius: 6,
+                            pointBackgroundColor: '#ff3366',
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            title: {
+                                display: true,
+                                text: `${plantName} 연도별 발전량`,
+                                font: { size: 12, weight: 'bold' },
+                                padding: { top: 5, bottom: 10 }
+                            },
+                            tooltip: {
+                                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                padding: 10,
+                                callbacks: {
+                                    label: function(context) {
+                                        return '발전량: ' + context.parsed.y.toLocaleString() + ' MWh';
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: false,
+                                ticks: {
+                                    font: { size: 9 },
+                                    callback: function(value) {
+                                        return value.toLocaleString();
+                                    }
+                                },
+                                grid: { color: 'rgba(0, 0, 0, 0.05)' }
+                            },
+                            x: {
+                                ticks: { font: { size: 9 } },
+                                grid: { display: false }
+                            }
+                        }
+                    }
+                });
+            }
 
         // ===== 지도 초기화 =====
         function initMap() {
@@ -445,24 +424,31 @@
                     // plant_name과 발전소명 매칭
                     // 예: "고리원전" -> "고리"
                     let matchedPowerName = null;
+                    let units = [];
                     if (type === 'nuclear') {
-                        // plantUnits의 키 중에서 plant_name에 포함된 것 찾기
-                        matchedPowerName = Object.keys(plantUnits).find(key => plantName.includes(key));
-                    }
-                    if (matchedPowerName) {
-                        plantNameMapping[plantName] = matchedPowerName;
+                        // ✅ plant_name이 이미 짧은 형태 (예: "한울", "고리")이므로 직접 사용
+                        matchedPowerName = plantName;
+                        units = plantUnits[plantName] || [];
+                        
+                        if (units.length > 0) {
+                            console.log(`🔗 매칭 성공: ${plantName}, 호기: ${units.join(', ')}`);
+                        } else {
+                            console.warn(`⚠️ 호기 없음: ${plantName}`);
+                        }
                     }
                     
                     return {
                         id: `${type}_${index}`,
                         name: plantName,
+                        plant_name: plantName,
                         type: type,
                         operator: plant.business || '정보 없음',
                         unit: plant.remark || '',
                         location: plant.adress || '위치 정보 없음',
                         latitude: parseFloat(plant.latitude),
                         longitude: parseFloat(plant.longitude),
-                        powerName: matchedPowerName // 발전량 조회용 발전소명
+                        powerName: matchedPowerName, // 발전량 조회용 발전소명
+                        units: units // 호기 리스트 추가
                     };
                 });
             } catch (error) {
@@ -685,11 +671,11 @@
                     // 호기 버튼 HTML 생성
                     let unitsTabsHTML = units.map((unit, idx) => `
                         <button class="unit-tab" data-unit="${unit}" data-plant="${plant.plant_name}" style="
-                            padding: 8px 14px;
+                            padding: 4px 7px;
                             margin: 4px 2px;
-                            border: 2px solid ${idx === 0 ? '#ff3366' : '#ddd'};
-                            background: ${idx === 0 ? '#ff3366' : '#fff'};
-                            color: ${idx === 0 ? '#fff' : '#333'};
+                            border: 2px solid ${'#ddd'};
+                            background: ${'#fff'};
+                            color: ${'#333'};
                             border-radius: 6px;
                             cursor: pointer;
                             font-weight: 600;
@@ -699,7 +685,7 @@
                     `).join('');
                     
                     popupHTML = `
-                        <div style="font-family: system-ui; min-width: 500px; max-width: 600px;">
+                        <div style="font-family: system-ui; min-width: 200px; max-width: 300px;">
                             <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 14px; padding: 14px 16px 10px 16px; border-bottom: 2px solid #ff3366;">
                                 <div style="width: 12px; height: 12px; background-color: ${color}; border-radius: 50%;"></div>
                                 <h3 style="font-weight: bold; font-size: 16px; margin: 0; color: #333;">${plant.name}</h3>
@@ -711,7 +697,7 @@
                                         ${unitsTabsHTML}
                                     </div>
                                 </div>
-                                <div id="chart-container-${plant.id}" style="height: 300px; background: #f9f9f9; border-radius: 6px; padding: 10px; display: none;">
+                                <div id="chart-container-${plant.id}" style="height: 200px; background: #f9f9f9; border-radius: 6px; padding: 10px; display: none;">
                                     <canvas id="${chartId}"></canvas>
                                 </div>
                                 <div id="data-table-${plant.id}" style="margin-top: 12px; display: none;">
@@ -734,6 +720,27 @@
                     setTimeout(() => {
                         marker.on('popupopen', function() {
                             console.log('📊 팝업 열림 - 호기 탭 이벤트 바인딩');
+                            
+                            let tableVisible = false;
+                            
+                            // 테이블 토글 버튼 이벤트
+                            const toggleBtn = document.getElementById(`toggle-table-${plant.id}`);
+                            const tableContainer = document.getElementById(`data-table-${plant.id}`);
+                            
+                            if (toggleBtn) {
+                                toggleBtn.addEventListener('click', function() {
+                                    tableVisible = !tableVisible;
+                                    if (tableVisible) {
+                                        tableContainer.style.display = 'block';
+                                        this.textContent = '📊 데이터 표 숨기기';
+                                        this.style.background = '#e0e0e0';
+                                    } else {
+                                        tableContainer.style.display = 'none';
+                                        this.textContent = '📊 데이터 표 보기';
+                                        this.style.background = '#f0f0f0';
+                                    }
+                                });
+                            }
                             
                             // 호기 탭 이벤트
                             document.querySelectorAll('.unit-tab').forEach(btn => {
@@ -765,34 +772,19 @@
                                     if (powerData && powerData.length > 0) {
                                         // 차트 표시
                                         const chartContainer = document.getElementById(`chart-container-${plant.id}`);
-                                        const dataTable = document.getElementById(`data-table-${plant.id}`);
                                         chartContainer.style.display = 'block';
-                                        dataTable.style.display = 'block';
                                         
                                         // 차트 생성
-                                        createPowerChart(chartId, powerData, `${plant.name} ${selectedUnit}`);
-                                        
-                                        // 데이터 테이블 채우기
-                                        const tbody = document.getElementById(`data-tbody-${plant.id}`);
-                                        tbody.innerHTML = powerData.map((row, idx) => `
-                                            <tr style="background-color: ${idx % 2 === 0 ? '#fff' : '#f9f9f9'};">
-                                                <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">${row.year}</td>
-                                                <td style="padding: 8px; border: 1px solid #ddd; text-align: right; font-weight: 500;">${row.value ? row.value.toLocaleString() : '-'}</td>
-                                            </tr>
-                                        `).join('');
-                                        
+                                        createPowerChart(chartId, powerData, `${plant.plant_name} ${selectedUnit}`);
                                         console.log(`✅ 차트 및 데이터 테이블 표시 완료`);
                                     } else {
                                         console.log(`⚠️ 발전량 데이터 없음`);
                                         document.getElementById(`chart-container-${plant.id}`).style.display = 'none';
-                                        document.getElementById(`data-table-${plant.id}`).style.display = 'none';
+
+                                        tableContainer.style.display = 'none';
                                     }
                                 });
                             });
-                            
-                            // 첫 번째 호기 자동 선택
-                            const firstTab = document.querySelector('.unit-tab');
-                            if (firstTab) firstTab.click();
                         });
                     }, 50);
                 }
