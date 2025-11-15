@@ -1078,7 +1078,7 @@
                                 <div class="chart-wrapper">
                                     <canvas id="powerChart"></canvas>
                                 </div>
-                                <div id="emptyChartMessage" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; color: #999; font-size: 18px; font-weight: 500;">
+                                <div id="emptyChartMessage" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; color: #999; font-size: 18px; font-weight: 500;">
                                     <i class='bx bx-line-chart' style="font-size: 48px; margin-bottom: 10px; display: block;"></i>
                                     슬라이더를 오른쪽으로 움직여 연도별 발전량을 확인하세요
                                 </div>
@@ -1140,24 +1140,12 @@
                             currentUnit = this.value;
                             currentYearIndex = parseInt(yearSlider.value);
                             
-                            if (currentYearIndex === 0) {
-                                // 슬라이더가 맨 왼쪽이면 빈 차트
-                                const emptyMessage = document.getElementById('emptyChartMessage');
-                                if (emptyMessage) {
-                                    emptyMessage.style.display = 'block';
-                                }
-                                if (currentChart) {
-                                    currentChart.destroy();
-                                    currentChart = null;
-                                }
-                            } else {
-                                // 슬라이더 위치에 따라 그래프 업데이트
-                                const emptyMessage = document.getElementById('emptyChartMessage');
-                                if (emptyMessage) {
-                                    emptyMessage.style.display = 'none';
-                                }
-                                createPowerLineChart('powerChart', currentPlantData, currentUnit, plant.name, currentYearIndex);
+                            // 현재 슬라이더 위치에 따라 그래프 업데이트
+                            const emptyMessage = document.getElementById('emptyChartMessage');
+                            if (emptyMessage) {
+                                emptyMessage.style.display = 'none';
                             }
+                            createPowerLineChart('powerChart', currentPlantData, currentUnit, plant.name, currentYearIndex);
                             
                             updateDataTableForUnit(currentPlantData, currentUnit);
                         });
@@ -1172,14 +1160,11 @@
                             const emptyMessage = document.getElementById('emptyChartMessage');
                             
                             if (yearIndex === 0) {
-                                // 맨 왼쪽: 빈 차트 표시
+                                // 맨 왼쪽: 첫 연도 점 하나만 표시
                                 if (emptyMessage) {
-                                    emptyMessage.style.display = 'block';
+                                    emptyMessage.style.display = 'none';
                                 }
-                                if (currentChart) {
-                                    currentChart.destroy();
-                                    currentChart = null;
-                                }
+                                createPowerLineChart('powerChart', currentPlantData, currentUnit, plant.name, 0);
                             } else {
                                 // 오른쪽으로 이동: 해당 연도까지의 그래프 표시
                                 if (emptyMessage) {
@@ -1189,7 +1174,8 @@
                             }
                         });
                         
-                        // 초기에는 차트를 그리지 않음 (빈 메시지만 표시)
+                        // 초기에는 첫 번째 점만 표시
+                        createPowerLineChart('powerChart', currentPlantData, firstUnit, plant.name, 0);
                         updateDataTableForUnit(currentPlantData, firstUnit);
                     } else {
                         const loadingDiv = powerDataContent.querySelector('.loading-power');
