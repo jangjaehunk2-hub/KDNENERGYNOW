@@ -256,7 +256,7 @@
         let currentFilter = 'all'; // 현재 선택된 필터
         let nuclearPowerData = {}; // 발전량 저장용 객체 {호기명: [{year, value}...]}
         let plantUnits = {}; // 발전소별 호기 정보 {발전소명: [호기1, 호기2, ...]}
-        let plantNameMapping = {}; // {plant_name: 발전소명} - plant_name과 발전소명 매칭
+
         let chartInstances = {}; // 차트 인스턴스 저장용
         const colorMap = { 
             hydro: "#00aaff",
@@ -797,8 +797,10 @@
                     });
                 } else if (plant.type === 'nuclear') {
                     marker.bindPopup(popupHTML, {
+
                         maxWidth: 400,
-                        className: 'custom-popup'
+                        className: 'custom-popup',
+                        autoPan: false
                     });
                 }
 
