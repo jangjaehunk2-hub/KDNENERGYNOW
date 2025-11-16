@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>대한민국 발전소 슬라이드 | 시각화</title>
+    <title>대한민국 발전소 슬라이드 | 시각화 v24</title>
     <meta name="description" content="대한민국 전국 발전소의 연도별 설치 현황을 시각화합니다." />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
     <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet" />
@@ -274,12 +274,6 @@
             color: #666;
             font-size: 16px;
         }
-        .no-power-data {
-            text-align: center;
-            padding: 40px;
-            color: #999;
-            font-size: 16px;
-        }
         .power-data-table {
             width: 100%;
             border-collapse: collapse;
@@ -302,6 +296,38 @@
         .power-value {
             font-weight: 600;
             color: #0066ff;
+        }
+        .unit-selector-container {
+            margin-bottom: 20px;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .unit-selector-label {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+            display: block;
+        }
+        .unit-selector {
+            width: 100%;
+            padding: 12px 15px;
+            font-size: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            outline: none;
+        }
+        .unit-selector:hover {
+            border-color: #0066ff;
+        }
+        .unit-selector:focus {
+            border-color: #0066ff;
+            box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.1);
         }
         .slider-controls {
             display: flex;
@@ -362,29 +388,6 @@
             width: 100%;
             accent-color: #ff3366;
         }
-        .play-button {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            border: none;
-            background: #ff3366;
-            color: white;
-            font-size: 20px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s;
-            box-shadow: 0 2px 8px rgba(255, 51, 102, 0.3);
-        }
-        .play-button:hover {
-            background: #e62e5c;
-            transform: scale(1.05);
-            box-shadow: 0 4px 12px rgba(255, 51, 102, 0.4);
-        }
-        .play-button:active {
-            transform: scale(0.95);
-        }
         .chart-container {
             margin-top: 20px;
             background: #f9f9f9;
@@ -396,38 +399,6 @@
         .chart-wrapper {
             position: relative;
             height: 350px;
-        }
-        .unit-selector-container {
-            margin-bottom: 20px;
-            padding: 15px;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        }
-        .unit-selector-label {
-            font-size: 14px;
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 8px;
-            display: block;
-        }
-        .unit-selector {
-            width: 100%;
-            padding: 10px 15px;
-            font-size: 15px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            background: white;
-            cursor: pointer;
-            transition: all 0.3s;
-            outline: none;
-        }
-        .unit-selector:hover {
-            border-color: #0066ff;
-        }
-        .unit-selector:focus {
-            border-color: #0066ff;
-            box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.1);
         }
         .data-detail-section {
             margin-top: 30px;
@@ -521,12 +492,6 @@
         .map-detail-inner {
             padding: 20px;
         }
-        @keyframes ping {
-            75%, 100% {
-                transform: scale(2);
-                opacity: 0;
-            }
-        }
         .scroll-buttons {
             position: fixed;
             right: 30px;
@@ -563,6 +528,12 @@
             opacity: 0;
             pointer-events: none;
         }
+        @keyframes ping {
+            75%, 100% {
+                transform: scale(2);
+                opacity: 0;
+            }
+        }
     </style>
 </head>
 <body>
@@ -573,15 +544,15 @@
                 <span>Map</span>
             </button>
             <button class="sidebar-button active" data-tab="slide">
-                <i class='bx bx-slider'></i>
+                <i class='bx bx-slideshow'></i>
                 <span>Slide</span>
             </button>
-            <button class="sidebar-button" data-tab="game" onclick="window.location.href='gameplatform.html'">
+            <button class="sidebar-button" data-tab="game" onclick="window.location.href='game.html'">
                 <i class='bx bx-game'></i>
                 <span>Game</span>
             </button>
             <button class="sidebar-button" data-tab="education" onclick="window.location.href='education.html'">
-                <i class='bx bx-book-reader'></i>
+                <i class='bx bx-graduation'></i>
                 <span>Education</span>
             </button>
             <button class="sidebar-button" data-tab="login" onclick="window.location.href='login.html'">
@@ -589,6 +560,15 @@
                 <span>Login</span>
             </button>
         </aside>
+
+        <div class="scroll-buttons">
+            <button class="scroll-btn" id="scrollToTop" title="맨 위로">
+                <i class='bx bx-chevron-up'></i>
+            </button>
+            <button class="scroll-btn" id="scrollToBottom" title="맨 아래로">
+                <i class='bx bx-chevron-down'></i>
+            </button>
+        </div>
 
         <div class="main-content">
             <div class="header">
@@ -677,14 +657,30 @@
             '화력': '🔥'
         };
 
+        function extractDetailedLocation(address) {
+            if (!address) return '상세 위치 정보 없음';
+            
+            const parts = address.split(' ');
+            
+            if (parts.length >= 3) {
+                return parts.slice(0, 3).join(' ');
+            } else if (parts.length === 2) {
+                return parts.join(' ');
+            }
+            
+            return address.length > 30 ? address.substring(0, 30) + '...' : address;
+        }
+
         async function fetchAllPlants() {
             try {
                 const response = await fetch('http://localhost:3000/api/plants');
                 if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                 
                 const responseData = await response.json();
+                console.log('✅ 서버 응답:', responseData);
                 
                 let data = [];
+                
                 if (responseData.plants && Array.isArray(responseData.plants)) {
                     data = responseData.plants;
                 } else if (Array.isArray(responseData)) {
@@ -692,6 +688,8 @@
                 } else {
                     throw new Error('잘못된 응답 형식');
                 }
+                
+                console.log('✅ 발전소 데이터:', data.length + '개');
                 
                 return data.map((plant, index) => {
                     const plantType = plant.plant_type || '알 수 없음';
@@ -711,17 +709,47 @@
                         type = '화력';
                     }
                     
+                    let location = '정보 없음';
+                    const address = plant.adress || '';
+                    
+                    if (address) {
+                        if (address.includes('서울')) location = '서울';
+                        else if (address.includes('부산')) location = '부산';
+                        else if (address.includes('대구')) location = '대구';
+                        else if (address.includes('인천')) location = '인천';
+                        else if (address.includes('광주')) location = '광주';
+                        else if (address.includes('대전')) location = '대전';
+                        else if (address.includes('울산')) location = '울산';
+                        else if (address.includes('세종')) location = '세종';
+                        else if (address.includes('경기')) location = '경기';
+                        else if (address.includes('강원')) location = '강원';
+                        else if (address.includes('충청북도') || address.includes('충북')) location = '충북';
+                        else if (address.includes('충청남도') || address.includes('충남')) location = '충남';
+                        else if (address.includes('전라북도') || address.includes('전북')) location = '전북';
+                        else if (address.includes('전라남도') || address.includes('전남')) location = '전남';
+                        else if (address.includes('경상북도') || address.includes('경북')) location = '경북';
+                        else if (address.includes('경상남도') || address.includes('경남')) location = '경남';
+                        else if (address.includes('제주')) location = '제주';
+                        else {
+                            const cityMatch = address.match(/([가-힣]+시|[가-힣]+군)/);
+                            if (cityMatch) location = cityMatch[1];
+                            else location = address.split(' ')[0] || '정보 없음';
+                        }
+                    }
+                    
                     return {
                         id: `${type}_${index}`,
                         name: plant.plant_name || '이름 없음',
                         type: type,
                         operator: plant.business || '정보 없음',
                         unit: plant.remark || '',
-                        location: plant.adress || '위치 정보 없음',
+                        location: location,
+                        fullAddress: address || '위치 정보 없음',
+                        detailedLocation: extractDetailedLocation(address),
                         latitude: parseFloat(plant.latitude),
                         longitude: parseFloat(plant.longitude),
                         capacity: parseFloat(plant.capacity) || 100,
-                        installYear: parseInt(plant.install_year) || 2014
+                        installYear: 2014
                     };
                 });
             } catch (error) {
@@ -754,17 +782,13 @@
                             <div class="result-detail">
                                 <span class="result-capacity">${plant.capacity} MW</span>
                             </div>
-                            <div class="result-detail">
+                            <div class="result-detail" style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${plant.fullAddress}">
                                 <span>📍</span>
-                                <span>${plant.location}</span>
+                                <span>${plant.detailedLocation}</span>
                             </div>
                             <div class="result-detail">
                                 <span>🏢</span>
                                 <span>${plant.operator}</span>
-                            </div>
-                            <div class="result-detail">
-                                <span>📅</span>
-                                <span>${plant.installYear}년 설치</span>
                             </div>
                         </div>
                     </div>
@@ -856,11 +880,8 @@
 
             const ctx = canvas.getContext('2d');
             
-            // 선택된 호기의 연도별 데이터 가져오기
             const unitData = powerData[selectedUnit] || [];
             const sortedData = unitData.sort((a, b) => a.year - b.year);
-            
-            // maxYearIndex까지만 데이터 표시
             const filteredData = sortedData.slice(0, maxYearIndex + 1);
             
             const years = filteredData.map(d => d.year + '년');
@@ -985,12 +1006,132 @@
             `;
         }
 
+        function updateDataTableForUnit(powerData, selectedUnit) {
+            const unitData = powerData[selectedUnit] || [];
+            const sortedData = unitData.sort((a, b) => a.year - b.year);
+            
+            const tableHtml = `
+                <table class="power-data-table">
+                    <thead>
+                        <tr>
+                            <th>연도</th>
+                            <th>발전량 (MWh)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${sortedData.map(data => `
+                            <tr>
+                                <td style="font-weight: 600;">${data.year}년</td>
+                                <td class="power-value">${data.value ? data.value.toLocaleString() : '-'}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+            document.getElementById('dataTableContainer').innerHTML = tableHtml;
+        }
+
+        function displayPowerChart(plant, powerData, years, minYear, maxYear, firstUnit, mapHTML) {
+            let html = mapHTML + `
+                ${createUnitSelector(powerData)}
+                <div class="slider-controls">
+                    <div class="slider-container" style="width: 90%;">
+                        <div class="year-display" id="yearDisplay">${minYear}년</div>
+                        <div class="year-markers" id="yearMarkers"></div>
+                        <input type="range" 
+                            id="yearSlider" 
+                            min="0" 
+                            max="${years.length - 1}" 
+                            value="0" 
+                            step="1" />
+                        <div class="year-range">
+                            <span>${minYear}년</span>
+                            <span>${maxYear}년</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-wrapper">
+                        <canvas id="powerChart"></canvas>
+                    </div>
+                </div>
+                <div class="data-detail-section">
+                    <div class="data-detail-header" id="dataDetailHeader">
+                        <div class="data-detail-title">
+                            <span>📊</span>
+                            <span>상세 데이터</span>
+                        </div>
+                        <div class="data-detail-toggle" id="dataDetailToggle">
+                            <i class='bx bx-chevron-down'></i>
+                        </div>
+                    </div>
+                    <div class="data-detail-content" id="dataDetailContent">
+                        <div class="data-detail-inner">
+                            <div id="dataTableContainer"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            powerDataContent.innerHTML = html;
+            
+            const mapDetailHeader = document.getElementById('mapDetailHeader');
+            const mapDetailContent = document.getElementById('mapDetailContent');
+            const mapDetailToggle = document.getElementById('mapDetailToggle');
+            
+            if (mapDetailHeader) {
+                mapDetailHeader.addEventListener('click', () => {
+                    const isOpen = mapDetailContent.classList.toggle('open');
+                    mapDetailToggle.classList.toggle('open');
+                    
+                    if (isOpen && !mapDetailContent.dataset.initialized) {
+                        initPlantMap(plant);
+                        mapDetailContent.dataset.initialized = 'true';
+                    }
+                });
+            }
+            
+            createYearMarkers(minYear, maxYear);
+            
+            const unitSelector = document.getElementById('unitSelector');
+            const yearSlider = document.getElementById('yearSlider');
+            const yearDisplay = document.getElementById('yearDisplay');
+            const dataDetailHeader = document.getElementById('dataDetailHeader');
+            const dataDetailContent = document.getElementById('dataDetailContent');
+            const dataDetailToggle = document.getElementById('dataDetailToggle');
+            
+            let currentUnit = firstUnit;
+            let currentYearIndex = 0;
+            
+            dataDetailHeader.addEventListener('click', () => {
+                dataDetailContent.classList.toggle('open');
+                dataDetailToggle.classList.toggle('open');
+            });
+            
+            unitSelector.addEventListener('change', function() {
+                currentUnit = this.value;
+                currentYearIndex = parseInt(yearSlider.value);
+                createPowerLineChart('powerChart', currentPlantData, currentUnit, plant.name, currentYearIndex);
+                updateDataTableForUnit(currentPlantData, currentUnit);
+            });
+            
+            yearSlider.addEventListener('input', function() {
+                const yearIndex = parseInt(this.value);
+                currentYearIndex = yearIndex;
+                const selectedYear = availableYears[yearIndex];
+                yearDisplay.textContent = selectedYear + '년';
+                createPowerLineChart('powerChart', currentPlantData, currentUnit, plant.name, yearIndex);
+            });
+            
+            createPowerLineChart('powerChart', currentPlantData, firstUnit, plant.name, 0);
+            updateDataTableForUnit(currentPlantData, firstUnit);
+        }
+
         async function displayPowerData(plant) {
             selectedPlantName.textContent = plant.name;
             powerDataContent.innerHTML = '<div class="loading-power">발전량 데이터를 불러오는 중...</div>';
             powerDataContainer.classList.add('active');
             
-            // 지도 컨테이너 생성 (접을 수 있는 형태)
             const mapHTML = `
                 <div class="map-detail-section">
                     <div class="map-detail-header" id="mapDetailHeader">
@@ -1008,7 +1149,7 @@
                             <div style="padding: 12px; background: #f8f9fa; border-radius: 8px; font-size: 14px;">
                                 <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
                                     <span style="color: #666; font-weight: 500;">위치:</span>
-                                    <span style="font-weight: 600; color: #333;">${plant.location}</span>
+                                    <span style="font-weight: 600; color: #333;">${plant.detailedLocation}</span>
                                 </div>
                                 <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
                                     <span style="color: #666; font-weight: 500;">운영기관:</span>
@@ -1018,10 +1159,6 @@
                                     <span style="color: #666; font-weight: 500;">설치용량:</span>
                                     <span style="font-weight: 600; color: #0066ff;">${plant.capacity} MW</span>
                                 </div>
-                                <div style="display: flex; justify-content: space-between;">
-                                    <span style="color: #666; font-weight: 500;">설치년도:</span>
-                                    <span style="font-weight: 600; color: #333;">${plant.installYear}년</span>
-                                </div>
                             </div>
                         </div>
                     </div>
@@ -1030,7 +1167,6 @@
             
             powerDataContent.innerHTML = mapHTML + '<div class="loading-power">발전량 데이터를 불러오는 중...</div>';
             
-            // 지도 토글 이벤트
             const mapDetailHeader = document.getElementById('mapDetailHeader');
             const mapDetailContent = document.getElementById('mapDetailContent');
             const mapDetailToggle = document.getElementById('mapDetailToggle');
@@ -1039,13 +1175,13 @@
                 const isOpen = mapDetailContent.classList.toggle('open');
                 mapDetailToggle.classList.toggle('open');
                 
-                // 지도가 열릴 때만 초기화 (성능 최적화)
                 if (isOpen && !mapDetailContent.dataset.initialized) {
                     initPlantMap(plant);
                     mapDetailContent.dataset.initialized = 'true';
                 }
             });
             
+            // ===== 원자력 발전소 =====
             if (plant.type === '원자력') {
                 try {
                     const response = await fetch('http://localhost:3000/api/nuclear/full');
@@ -1085,134 +1221,13 @@
                         
                         const minYear = Math.min(...availableYears);
                         const maxYear = Math.max(...availableYears);
-                        const defaultYear = minYear;
                         const firstUnit = Object.keys(currentPlantData).sort((a, b) => {
                             const numA = parseInt(a.match(/\d+/)?.[0] || 0);
                             const numB = parseInt(b.match(/\d+/)?.[0] || 0);
                             return numA - numB;
                         })[0];
                         
-                        let html = mapHTML + `
-                            ${createUnitSelector(currentPlantData)}
-                            <div class="slider-controls">
-                                <div class="slider-container" style="width: 90%;">
-                                    <div class="year-display" id="yearDisplay">${minYear}년</div>
-                                    <div class="year-markers" id="yearMarkers"></div>
-                                    <input type="range" 
-                                        id="yearSlider" 
-                                        min="0" 
-                                        max="${availableYears.length - 1}" 
-                                        value="0" 
-                                        step="1" />
-                                    <div class="year-range">
-                                        <span>${minYear}년</span>
-                                        <span>${maxYear}년</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="chart-container">
-                                <div class="chart-wrapper">
-                                    <canvas id="powerChart"></canvas>
-                                </div>
-                                <div id="emptyChartMessage" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; color: #999; font-size: 18px; font-weight: 500;">
-                                    <i class='bx bx-line-chart' style="font-size: 48px; margin-bottom: 10px; display: block;"></i>
-                                    슬라이더를 오른쪽으로 움직여 연도별 발전량을 확인하세요
-                                </div>
-                            </div>
-                            <div class="data-detail-section">
-                                <div class="data-detail-header" id="dataDetailHeader">
-                                    <div class="data-detail-title">
-                                        <span>📊</span>
-                                        <span>상세 데이터</span>
-                                    </div>
-                                    <div class="data-detail-toggle" id="dataDetailToggle">
-                                        <i class='bx bx-chevron-down'></i>
-                                    </div>
-                                </div>
-                                <div class="data-detail-content" id="dataDetailContent">
-                                    <div class="data-detail-inner">
-                                        <div id="dataTableContainer"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        `;
-                        
-                        powerDataContent.innerHTML = html;
-                        
-                        // 지도 토글 이벤트 재등록
-                        const mapDetailHeader = document.getElementById('mapDetailHeader');
-                        const mapDetailContent = document.getElementById('mapDetailContent');
-                        const mapDetailToggle = document.getElementById('mapDetailToggle');
-                        
-                        mapDetailHeader.addEventListener('click', () => {
-                            const isOpen = mapDetailContent.classList.toggle('open');
-                            mapDetailToggle.classList.toggle('open');
-                            
-                            if (isOpen && !mapDetailContent.dataset.initialized) {
-                                initPlantMap(plant);
-                                mapDetailContent.dataset.initialized = 'true';
-                            }
-                        });
-                        
-                        createYearMarkers(minYear, maxYear);
-                        
-                        const unitSelector = document.getElementById('unitSelector');
-                        const yearSlider = document.getElementById('yearSlider');
-                        const yearDisplay = document.getElementById('yearDisplay');
-                        const dataDetailHeader = document.getElementById('dataDetailHeader');
-                        const dataDetailContent = document.getElementById('dataDetailContent');
-                        const dataDetailToggle = document.getElementById('dataDetailToggle');
-                        
-                        let currentUnit = firstUnit;
-                        let currentYearIndex = 0;
-                        
-                        dataDetailHeader.addEventListener('click', () => {
-                            dataDetailContent.classList.toggle('open');
-                            dataDetailToggle.classList.toggle('open');
-                        });
-                        
-                        // 호기 선택 이벤트
-                        unitSelector.addEventListener('change', function() {
-                            currentUnit = this.value;
-                            currentYearIndex = parseInt(yearSlider.value);
-                            
-                            // 현재 슬라이더 위치에 따라 그래프 업데이트
-                            const emptyMessage = document.getElementById('emptyChartMessage');
-                            if (emptyMessage) {
-                                emptyMessage.style.display = 'none';
-                            }
-                            createPowerLineChart('powerChart', currentPlantData, currentUnit, plant.name, currentYearIndex);
-                            
-                            updateDataTableForUnit(currentPlantData, currentUnit);
-                        });
-                        
-                        // 연도 슬라이더 이벤트
-                        yearSlider.addEventListener('input', function() {
-                            const yearIndex = parseInt(this.value);
-                            currentYearIndex = yearIndex;
-                            const selectedYear = availableYears[yearIndex];
-                            yearDisplay.textContent = selectedYear + '년';
-                            
-                            const emptyMessage = document.getElementById('emptyChartMessage');
-                            
-                            if (yearIndex === 0) {
-                                // 맨 왼쪽: 첫 연도 점 하나만 표시
-                                if (emptyMessage) {
-                                    emptyMessage.style.display = 'none';
-                                }
-                                createPowerLineChart('powerChart', currentPlantData, currentUnit, plant.name, 0);
-                            } else {
-                                // 오른쪽으로 이동: 해당 연도까지의 그래프 표시
-                                if (emptyMessage) {
-                                    emptyMessage.style.display = 'none';
-                                }
-                                createPowerLineChart('powerChart', currentPlantData, currentUnit, plant.name, yearIndex);
-                            }
-                        });
-                        
-                        // 초기에는 첫 번째 점만 표시
-                        createPowerLineChart('powerChart', currentPlantData, firstUnit, plant.name, 0);
-                        updateDataTableForUnit(currentPlantData, firstUnit);
+                        displayPowerChart(plant, currentPlantData, availableYears, minYear, maxYear, firstUnit, mapHTML);
                     } else {
                         const loadingDiv = powerDataContent.querySelector('.loading-power');
                         if (loadingDiv) {
@@ -1226,7 +1241,304 @@
                         loadingDiv.innerHTML = '❌ 발전량 데이터 조회 실패';
                     }
                 }
-            } else {
+            } 
+            // ===== 수력 발전소 =====
+            else if (plant.type === '수력') {
+                try {
+                    console.log('🔍 수력 발전소 데이터 요청 시작:', plant.name);
+                    
+                    const response = await fetch('http://localhost:3000/api/hydro/khnp-yearly');
+                    if (!response.ok) {
+                        console.error('❌ HTTP 에러:', response.status);
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
+                    const result = await response.json();
+                    console.log('✅ 수력 발전소 전체 응답:', result);
+                    
+                    if (!result.success) {
+                        console.error('❌ API success: false');
+                        throw new Error('API returned success: false');
+                    }
+                    
+                    if (!result.data) {
+                        console.error('❌ result.data가 없음');
+                        throw new Error('No data in response');
+                    }
+                    
+                    const data = result.data;
+                    console.log('📋 사용 가능한 수력 발전소 목록:', Object.keys(data));
+                    console.log('🔍 검색할 발전소명:', plant.name);
+                    
+                    // 1차: 정확히 일치하는 이름 찾기
+                    let hydroPlant = data[plant.name];
+                    let matchedName = plant.name;
+                    
+                    // 2차: 유사한 이름 찾기
+                    if (!hydroPlant) {
+                        const plantNames = Object.keys(data);
+                        console.log('🔍 유사한 이름 검색 중...');
+                        
+                        // 발전소 이름에서 불필요한 접미사 제거
+                        const cleanPlantName = plant.name.replace(/발전소|수력|댐/g, '').trim();
+                        console.log('🔍 정제된 발전소명:', cleanPlantName);
+                        
+                        const similarName = plantNames.find(name => {
+                            const cleanDbName = name.replace(/발전소|수력|댐/g, '').trim();
+                            return cleanDbName.includes(cleanPlantName) || 
+                                   cleanPlantName.includes(cleanDbName) ||
+                                   name.includes(plant.name) || 
+                                   plant.name.includes(name);
+                        });
+                        
+                        if (similarName) {
+                            console.log(`✅ 유사한 발전소명 발견: ${similarName}`);
+                            hydroPlant = data[similarName];
+                            matchedName = similarName;
+                        } else {
+                            console.log('❌ 유사한 발전소명을 찾지 못함');
+                        }
+                    } else {
+                        console.log('✅ 정확히 일치하는 발전소명 발견');
+                    }
+                    
+                    if (hydroPlant && Array.isArray(hydroPlant) && hydroPlant.length > 0) {
+                        console.log(`✅ ${matchedName} 데이터 발견: ${hydroPlant.length}개 연도`);
+                        console.log('📊 첫 번째 데이터 샘플:', hydroPlant[0]);
+                        
+                        currentPlantData = { '발전소': hydroPlant };
+                        
+                        const yAxisRange = calculateGlobalYAxisRange(currentPlantData);
+                        globalYAxisMin = yAxisRange.min;
+                        globalYAxisMax = yAxisRange.max;
+                        
+                        availableYears = hydroPlant.map(item => item.year).sort((a, b) => a - b);
+                        
+                        if (availableYears.length === 0) {
+                            throw new Error('연도 데이터가 비어있습니다');
+                        }
+                        
+                        const minYear = Math.min(...availableYears);
+                        const maxYear = Math.max(...availableYears);
+                        
+                        console.log(`📊 연도 범위: ${minYear} ~ ${maxYear}`);
+                        console.log(`📊 전체 연도: ${availableYears.join(', ')}`);
+                        
+                        displayPowerChart(plant, currentPlantData, availableYears, minYear, maxYear, '발전소', mapHTML);
+                    } else {
+                        console.warn('⚠️ 수력 발전소 데이터 없음:', plant.name);
+                        const loadingDiv = powerDataContent.querySelector('.loading-power');
+                        if (loadingDiv) {
+                            const availablePlants = Object.keys(data).slice(0, 10).join(', ');
+                            loadingDiv.innerHTML = `
+                                <div style="padding: 20px; text-align: left;">
+                                    <h3 style="color: #ff6347; margin-bottom: 15px;">📊 발전량 데이터 없음</h3>
+                                    <p style="margin-bottom: 10px;"><strong>검색한 발전소:</strong> ${plant.name}</p>
+                                    <p style="margin-bottom: 10px;"><strong>사용 가능한 수력 발전소 (상위 10개):</strong></p>
+                                    <p style="color: #666; font-size: 14px;">${availablePlants}</p>
+                                    <p style="margin-top: 15px; font-size: 14px; color: #999;">
+                                        💡 위 목록에서 발전소를 선택해주세요.
+                                    </p>
+                                </div>
+                            `;
+                        }
+                    }
+                } catch (error) {
+                    console.error('❌ 수력 발전량 데이터 조회 실패:', error);
+                    console.error('❌ 에러 스택:', error.stack);
+                    const loadingDiv = powerDataContent.querySelector('.loading-power');
+                    if (loadingDiv) {
+                        loadingDiv.innerHTML = `
+                            <div style="padding: 20px; text-align: left;">
+                                <h3 style="color: #ff0000; margin-bottom: 15px;">❌ 오류 발생</h3>
+                                <p style="color: #666;"><strong>에러 메시지:</strong> ${error.message}</p>
+                                <p style="margin-top: 10px; font-size: 14px; color: #999;">
+                                    브라우저 콘솔(F12)에서 자세한 로그를 확인하세요.
+                                </p>
+                            </div>
+                        `;
+                    }
+                }
+            }
+            // ===== 화력 발전소 =====
+            else if (plant.type === '화력') {
+                try {
+                    console.log('🔍 화력 발전소 데이터 요청 시작:', plant.name);
+                    
+                    const response = await fetch('http://localhost:3000/api/thermal/yearly-power');
+                    if (!response.ok) throw new Error('데이터 조회 실패');
+                    
+                    const result = await response.json();
+                    console.log('✅ 화력 발전소 응답:', result);
+                    
+                    if (!result.success || !result.data) {
+                        throw new Error('잘못된 응답 형식');
+                    }
+                    
+                    const data = result.data;
+                    console.log('📋 사용 가능한 화력 발전소 호기:', Object.keys(data));
+                    
+                    if (Object.keys(data).length > 0) {
+                        currentPlantData = data;
+                        
+                        const yAxisRange = calculateGlobalYAxisRange(data);
+                        globalYAxisMin = yAxisRange.min;
+                        globalYAxisMax = yAxisRange.max;
+                        
+                        const yearsSet = new Set();
+                        Object.values(data).forEach(unitData => {
+                            unitData.forEach(item => {
+                                if (item.year) yearsSet.add(item.year);
+                            });
+                        });
+                        availableYears = Array.from(yearsSet).sort((a, b) => a - b);
+                        
+                        const minYear = Math.min(...availableYears);
+                        const maxYear = Math.max(...availableYears);
+                        const firstUnit = Object.keys(data).sort()[0];
+                        
+                        console.log(`📊 연도 범위: ${minYear} ~ ${maxYear}`);
+                        
+                        displayPowerChart(plant, currentPlantData, availableYears, minYear, maxYear, firstUnit, mapHTML);
+                    } else {
+                        const loadingDiv = powerDataContent.querySelector('.loading-power');
+                        if (loadingDiv) {
+                            loadingDiv.innerHTML = '📊 이 발전소의 발전량 데이터가 없습니다';
+                        }
+                    }
+                } catch (error) {
+                    console.error('❌ 화력 발전량 데이터 조회 실패:', error);
+                    const loadingDiv = powerDataContent.querySelector('.loading-power');
+                    if (loadingDiv) {
+                        loadingDiv.innerHTML = '❌ 발전량 데이터 조회 실패: ' + error.message;
+                    }
+                }
+            }
+            // ===== 태양광 발전소 =====
+            else if (plant.type === '태양광') {
+                try {
+                    console.log('🔍 태양광 발전소 데이터 요청 시작:', plant.name);
+                    
+                    const response = await fetch('http://localhost:3000/api/solar/yearly-power');
+                    if (!response.ok) throw new Error('데이터 조회 실패');
+                    
+                    const result = await response.json();
+                    console.log('✅ 태양광 발전소 응답:', result);
+                    
+                    if (!result.success || !result.data) {
+                        throw new Error('잘못된 응답 형식');
+                    }
+                    
+                    const data = result.data;
+                    console.log('📋 사용 가능한 태양광 발전소:', Object.keys(data));
+                    
+                    let solarPlant = data[plant.name];
+                    
+                    if (!solarPlant) {
+                        const plantNames = Object.keys(data);
+                        const similarName = plantNames.find(name => 
+                            name.includes(plant.name) || plant.name.includes(name)
+                        );
+                        
+                        if (similarName) {
+                            console.log(`✅ 유사한 발전소명 발견: ${similarName}`);
+                            solarPlant = data[similarName];
+                        }
+                    }
+                    
+                    if (solarPlant && solarPlant.length > 0) {
+                        currentPlantData = { '발전소': solarPlant };
+                        
+                        const yAxisRange = calculateGlobalYAxisRange(currentPlantData);
+                        globalYAxisMin = yAxisRange.min;
+                        globalYAxisMax = yAxisRange.max;
+                        
+                        availableYears = solarPlant.map(item => item.year).sort((a, b) => a - b);
+                        
+                        const minYear = Math.min(...availableYears);
+                        const maxYear = Math.max(...availableYears);
+                        
+                        console.log(`📊 연도 범위: ${minYear} ~ ${maxYear}`);
+                        
+                        displayPowerChart(plant, currentPlantData, availableYears, minYear, maxYear, '발전소', mapHTML);
+                    } else {
+                        const loadingDiv = powerDataContent.querySelector('.loading-power');
+                        if (loadingDiv) {
+                            const availablePlants = Object.keys(data).slice(0, 5).join(', ');
+                            loadingDiv.innerHTML = `📊 이 발전소의 발전량 데이터가 없습니다<br><small style="color: #999;">사용 가능한 발전소: ${availablePlants}...</small>`;
+                        }
+                    }
+                } catch (error) {
+                    console.error('❌ 태양광 발전량 데이터 조회 실패:', error);
+                    const loadingDiv = powerDataContent.querySelector('.loading-power');
+                    if (loadingDiv) {
+                        loadingDiv.innerHTML = '❌ 발전량 데이터 조회 실패: ' + error.message;
+                    }
+                }
+            }
+            // ===== 풍력 발전소 =====
+            else if (plant.type === '풍력') {
+                try {
+                    console.log('🔍 풍력 발전소 데이터 요청 시작:', plant.name);
+                    
+                    const response = await fetch('http://localhost:3000/api/wind/yearly-power');
+                    if (!response.ok) throw new Error('데이터 조회 실패');
+                    
+                    const result = await response.json();
+                    console.log('✅ 풍력 발전소 응답:', result);
+                    
+                    if (!result.success || !result.data) {
+                        throw new Error('잘못된 응답 형식');
+                    }
+                    
+                    const data = result.data;
+                    console.log('📋 사용 가능한 풍력 발전소:', Object.keys(data));
+                    
+                    let windPlant = data[plant.name];
+                    
+                    if (!windPlant) {
+                        const plantNames = Object.keys(data);
+                        const similarName = plantNames.find(name => 
+                            name.includes(plant.name) || plant.name.includes(name)
+                        );
+                        
+                        if (similarName) {
+                            console.log(`✅ 유사한 발전소명 발견: ${similarName}`);
+                            windPlant = data[similarName];
+                        }
+                    }
+                    
+                    if (windPlant && windPlant.length > 0) {
+                        currentPlantData = { '발전소': windPlant };
+                        
+                        const yAxisRange = calculateGlobalYAxisRange(currentPlantData);
+                        globalYAxisMin = yAxisRange.min;
+                        globalYAxisMax = yAxisRange.max;
+                        
+                        availableYears = windPlant.map(item => item.year).sort((a, b) => a - b);
+                        
+                        const minYear = Math.min(...availableYears);
+                        const maxYear = Math.max(...availableYears);
+                        
+                        console.log(`📊 연도 범위: ${minYear} ~ ${maxYear}`);
+                        
+                        displayPowerChart(plant, currentPlantData, availableYears, minYear, maxYear, '발전소', mapHTML);
+                    } else {
+                        const loadingDiv = powerDataContent.querySelector('.loading-power');
+                        if (loadingDiv) {
+                            const availablePlants = Object.keys(data).slice(0, 5).join(', ');
+                            loadingDiv.innerHTML = `📊 이 발전소의 발전량 데이터가 없습니다<br><small style="color: #999;">사용 가능한 발전소: ${availablePlants}...</small>`;
+                        }
+                    }
+                } catch (error) {
+                    console.error('❌ 풍력 발전량 데이터 조회 실패:', error);
+                    const loadingDiv = powerDataContent.querySelector('.loading-power');
+                    if (loadingDiv) {
+                        loadingDiv.innerHTML = '❌ 발전량 데이터 조회 실패: ' + error.message;
+                    }
+                }
+            }
+            else {
                 const loadingDiv = powerDataContent.querySelector('.loading-power');
                 if (loadingDiv) {
                     loadingDiv.innerHTML = `📊 ${plant.type} 발전소의 발전량 데이터는 아직 준비되지 않았습니다`;
@@ -1286,31 +1598,6 @@
                 
                 L.marker([plant.latitude, plant.longitude], { icon }).addTo(plantMap);
             }, 100);
-        }
-
-        function updateDataTableForUnit(powerData, selectedUnit) {
-            const unitData = powerData[selectedUnit] || [];
-            const sortedData = unitData.sort((a, b) => a.year - b.year);
-            
-            const tableHtml = `
-                <table class="power-data-table">
-                    <thead>
-                        <tr>
-                            <th>연도</th>
-                            <th>발전량 (MWh)</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${sortedData.map(data => `
-                            <tr>
-                                <td style="font-weight: 600;">${data.year}년</td>
-                                <td class="power-value">${data.value ? data.value.toLocaleString() : '-'}</td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-            `;
-            document.getElementById('dataTableContainer').innerHTML = tableHtml;
         }
 
         resetButton.addEventListener('click', () => {
@@ -1387,6 +1674,37 @@
                 }
             });
         });
+
+        const scrollToTopBtn = document.getElementById('scrollToTop');
+        const scrollToBottomBtn = document.getElementById('scrollToBottom');
+
+        scrollToTopBtn.addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        scrollToBottomBtn.addEventListener('click', () => {
+            window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
+        });
+
+        window.addEventListener('scroll', () => {
+            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            const scrollHeight = document.documentElement.scrollHeight;
+            const clientHeight = document.documentElement.clientHeight;
+
+            if (scrollTop < 100) {
+                scrollToTopBtn.classList.add('hidden');
+            } else {
+                scrollToTopBtn.classList.remove('hidden');
+            }
+
+            if (scrollTop + clientHeight >= scrollHeight - 100) {
+                scrollToBottomBtn.classList.add('hidden');
+            } else {
+                scrollToBottomBtn.classList.remove('hidden');
+            }
+        });
+
+        window.dispatchEvent(new Event('scroll'));
 
         loadAllPlants();
     </script>
