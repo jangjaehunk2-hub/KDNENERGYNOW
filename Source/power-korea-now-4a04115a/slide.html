@@ -527,6 +527,42 @@
                 opacity: 0;
             }
         }
+        .scroll-buttons {
+            position: fixed;
+            right: 30px;
+            bottom: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 999;
+        }
+        .scroll-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: none;
+            background: #0066ff;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(0, 102, 255, 0.3);
+            transition: all 0.3s;
+        }
+        .scroll-btn:hover {
+            background: #0052cc;
+            transform: scale(1.1);
+            box-shadow: 0 6px 16px rgba(0, 102, 255, 0.4);
+        }
+        .scroll-btn:active {
+            transform: scale(0.95);
+        }
+        .scroll-btn.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
     </style>
 </head>
 <body>
