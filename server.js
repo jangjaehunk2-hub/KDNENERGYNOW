@@ -403,19 +403,16 @@ app.get('/api/thermal/power', async (req, res) => {
 
     const data = {};
 
-    // 변환: 객체 → 배열 형태
     result.rows.forEach(row => {
       const unit = row.호기;
       const date = row.일자;
       const hour = row.발전시간;
-      const amount = row.발전량_mwh;
+      const amount = Number(row.발전량_mwh);
 
-      if (!data[unit]) data[unit] = [];
-      // 배열에 year/value 형태로 push
-      data[unit].push({
-        year: `${date} ${hour}h`,
-        value: Number(amount)
-      });
+      if (!data[unit]) data[unit] = {};         // 호기 생성
+      if (!data[unit][date]) data[unit][date] = {}; // 날짜 생성
+
+      data[unit][date][hour] = amount;          // 시간별 발전량 저장
     });
 
     res.json({
@@ -425,6 +422,171 @@ app.get('/api/thermal/power', async (req, res) => {
 
   } catch (err) {
     console.error('❌ [호기/일자/시간대별 발전량 조회 오류]:', err);
+    res.status(500).json({
+      success: false,
+      message: 'DB 조회 실패',
+      error: err.message
+    });
+  }
+});
+
+// ===== 태양광 발전소 일자별 시간대별 발전량 조회 API =====
+app.get('/api/solar/power', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT 
+        "발전구분",
+        "일자", 
+        "발전시간", 
+        "발전량_kwh"
+      FROM public."남동발전_시간대별태양광발전실적"
+      ORDER BY "발전구분", "일자", "발전시간"
+    `);
+
+    const data = {};
+
+    result.rows.forEach(row => {
+      const plantName = row.발전구분;  // 발전소명
+      const date = row.일자;
+      const hour = row.발전시간;
+      const amount = Number(row.발전량_kwh);
+
+      if (!data[plantName]) data[plantName] = {};  // 발전소 생성
+      if (!data[plantName][date]) data[plantName][date] = {};  // 날짜 생성
+
+      data[plantName][date][hour] = amount;  // 시간별 발전량 저장
+    });
+    
+    res.json({
+      success: true,
+      data  // { "발전소명": { "날짜": { "시간": 발전량 } }, ... }
+    });
+
+  } catch (err) {
+    console.error('❌ [태양광 일자/시간대별 발전량 조회 오류]:', err);
+    res.status(500).json({
+      success: false,
+      message: 'DB 조회 실패',
+      error: err.message
+    });
+  }
+});
+
+// ===== 풍력 발전소 일자별 시간대별 발전량 조회 API =====
+app.get('/api/wind/power', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT 
+        "발전구분",
+        "일자", 
+        "발전시간", 
+        "발전량_mwh"
+      FROM public."남동발전_시간대별풍력발전실적"
+      ORDER BY "발전구분", "일자", "발전시간"
+    `);
+
+    const data = {};
+
+    result.rows.forEach(row => {
+      const plantName = row.발전구분;  // 발전소명
+      const date = row.일자;
+      const hour = row.발전시간;
+      const amount = Number(row.발전량_mwh);
+
+      if (!data[plantName]) data[plantName] = {};  // 발전소 생성
+      if (!data[plantName][date]) data[plantName][date] = {};  // 날짜 생성
+
+      data[plantName][date][hour] = amount;  // 시간별 발전량 저장
+    });
+    
+    res.json({
+      success: true,
+      data  // { "발전소명": { "날짜": { "시간": 발전량 } }, ... }
+    });
+
+  } catch (err) {
+    console.error('❌ [풍력 일자/시간대별 발전량 조회 오류]:', err);
+    res.status(500).json({
+      success: false,
+      message: 'DB 조회 실패',
+      error: err.message
+    });
+  }
+});
+
+// ===== 한국수자원공사 일별 수력발전소 발전량 조회 API =====
+app.get('/api/hydro/daily-power', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT
+        "댐이름",
+        "관측년월일",
+        "발전량누계실적"
+      FROM public."한국수자원공사_다목적댐일자별발전량"
+      ORDER BY "댐이름", "관측년월일"
+    `);
+
+    const data = {};
+
+    result.rows.forEach(row => {
+      const damName = row.댐이름;
+      const date = row.관측년월일;
+      const amount = Number(row.발전량누계실적);
+
+      if (!data[damName]) data[damName] = {};
+
+      data[damName][date] = amount;
+    });
+
+    res.json({
+      success: true,
+      data
+    });
+
+  } catch (err) {
+    console.error('❌ [수력 일별 발전량 조회 오류]:', err);
+    res.status(500).json({
+      success: false,
+      message: 'DB 조회 실패',
+      error: err.message
+    });
+  }
+});
+
+// ===== 한국수력원자력 수력발전소 연도별 발전량 조회 API =====
+app.get('/api/hydro/khnp-yearly', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT
+        "발전소명",
+        "YEAR",
+        "발전량_MW"
+      FROM public."한국수력원자력_수력발전소별연도별"
+      ORDER BY "발전소명", "YEAR"
+    `);
+
+    const data = {};
+
+    result.rows.forEach(row => {
+      const plantName = row.발전소명;
+      const year = row.YEAR;
+      const amount = Number(row.발전량_MW);
+
+      if (!data[plantName]) data[plantName] = [];
+      
+      data[plantName].push({
+        year: year,
+        value: amount
+      });
+    });
+
+    res.json({
+      success: true,
+      data
+    });
+
+  } catch (err) {
+    console.error('❌ [한수원 수력 연도별 발전량 조회 오류]:', err);
     res.status(500).json({
       success: false,
       message: 'DB 조회 실패',

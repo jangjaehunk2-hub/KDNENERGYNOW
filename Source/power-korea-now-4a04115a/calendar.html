@@ -4,7 +4,48 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>절전 챌린지 달력</title>
+  <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet" />
   <style>
+    .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 140px;
+            height: 100vh;
+            background-color: #1a1a1a;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-y: auto;
+            z-index: 1000;
+        }
+        .sidebar-button {
+            width: 100%;
+            padding: 24px 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            border: none;
+            background: transparent;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .sidebar-button:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        .sidebar-button.active {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-left: 4px solid #0066ff;
+        }
+        .sidebar-button i {
+            font-size: 24px;
+        }
+        .sidebar-button span {
+            font-size: 14px;
+        }
     * { margin:0; padding:0; box-sizing:border-box; }
     body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif; padding:24px; background:#f7f9fc; color:#111; }
     .container { max-width:900px; margin:0 auto; }
@@ -59,11 +100,34 @@
   </style>
 </head>
 <body>
+  <!-- ===== 사이드바 ===== -->
+  <aside class="sidebar">
+      <button class="sidebar-button" onclick="window.location.href='index.html'">
+          <i class='bx bx-map'></i>
+          <span>Map</span>
+      </button>
+      <button class="sidebar-button" onclick="window.location.href='slide.html'">
+          <i class='bx bx-slider'></i>
+          <span>Slide</span>
+      </button>
+      <button class="sidebar-button active" onclick="window.location.href='game.html'">
+          <i class='bx bx-game'></i>
+          <span>Game</span>
+      </button>
+      <button class="sidebar-button" onclick="window.location.href='education.html'">
+          <i class='bx bx-book-reader'></i>
+          <span>Education</span>
+      </button>
+      <button class="sidebar-button" onclick="window.location.href='login.html'">
+          <i class='bx bx-log-in'></i>
+          <span>Login</span>
+      </button>
+  </aside>
   <div class="container">
     <h1>절전 챌린지 달력</h1>
-
+    
     <div class="header">
-      <button class="nav-btn" id="prevMonth">< 이전</button>
+      <button class="nav-btn" id="prevMonth">이전</button>
       <div class="month-year" id="monthYear"></div>
       <button class="nav-btn" id="nextMonth">다음 ></button>
       <button class="today-btn" id="todayBtn">오늘</button>

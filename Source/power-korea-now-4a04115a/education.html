@@ -250,15 +250,15 @@
             <span>Map</span>
         </button>
         <button class="sidebar-button" onclick="window.location.href='slide.html'">
-            <i class='bx bx-slideshow'></i>
+            <i class='bx bx-slider'></i>
             <span>Slide</span>
         </button>
-        <button class="sidebar-button" onclick="window.location.href='game.html'">
+        <button class="sidebar-button" onclick="window.location.href='gameplatform.html'">
             <i class='bx bx-game'></i>
             <span>Game</span>
         </button>
         <button class="sidebar-button active" onclick="window.location.href='education.html'">
-            <i class='bx bx-graduation'></i>
+            <i class='bx bx-book-reader'></i>
             <span>Education</span>
         </button>
         <button class="sidebar-button" onclick="window.location.href='login.html'">
@@ -306,11 +306,29 @@
                         tags = item.tag.split(/[,\s]+/).filter(t => t.trim());
                     }
                     
+                    // URL 기반으로 로컬 이미지 매칭
+                    let thumbnailUrl = null;
+                    const url = item.content_url || '';
+                    
+                    if (url.includes('khnp.co.kr')) {
+                        thumbnailUrl = '/Source/images/한국수력원자력_발전현황.png';
+                    } else if (url.includes('rv-c419ETx4')) {
+                        thumbnailUrl = '/Source/images/태양광_발전의_원리.png';
+                    } else if (url.includes('BipYSdKKmDc')) {
+                        thumbnailUrl = '/Source/images/수력_발전_원리.png';
+                    } else if (url.includes('bigdata-environment.kr')) {
+                        thumbnailUrl = '/Source/images/풍력_발전_현황.png';
+                    } else if (url.includes('kospo.co.kr')) {
+                        thumbnailUrl = '/Source/images/한국남부발전_현황.png';
+                    } else {
+                        thumbnailUrl = '/Source/images/풍력발전의원리.png';
+                    }
+                    
                     return {
                         id: item.id,
                         url: item.content_url,
                         description: item.explain || '',
-                        image: item.image || null,
+                        image: thumbnailUrl,
                         tags: tags
                     };
                 });
@@ -331,21 +349,25 @@
 
         // 콘텐츠 카드 생성
         function createContentCard(item) {
-            // 썸네일 이미지 우선순위: DB image > 기본 이미지
+            // 썸네일 이미지 처리
             let thumbnailHtml = '';
+            let placeholderStyle = '';
+            
             if (item.image) {
                 // DB에 이미지 경로가 있으면 사용
                 thumbnailHtml = `<img src="${item.image}" alt="${item.description}" class="thumbnail-image" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">`;
+                placeholderStyle = 'display:none;';
             } else {
-                // DB에 없으면 기본 이미지 사용
-                thumbnailHtml = `<img src="/Source/images/풍력발전의원리.png" alt="${item.description}" class="thumbnail-image" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">`;
+                // DB에 이미지가 없으면 아이콘만 표시
+                thumbnailHtml = '';
+                placeholderStyle = '';
             }
             
             return `
                 <div class="content-item" onclick="window.open('${item.url}', '_blank')">
                     <div class="thumbnail-container">
                         ${thumbnailHtml}
-                        <i class='bx bx-video thumbnail-placeholder' style="display:none;"></i>
+                        <i class='bx bx-video thumbnail-placeholder' style="${placeholderStyle}"></i>
                     </div>
                     <div class="content-info">
                         <div class="content-description">
