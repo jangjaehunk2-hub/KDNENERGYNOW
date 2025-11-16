@@ -823,3 +823,210 @@ app.get('/api/wind/yearly-power', async (req, res) => {
     });
   }
 });
+app.get('/api/thermal/daily-power', async (req, res) => {
+  try {
+    console.log('\n🔍 [화력] 일별 발전량 조회 시작...');
+    
+    const result = await pool.query(`
+      SELECT "호기", "일자", "발전시간", "발전량_mwh"
+      FROM public."남동발전_분당화력_시간대별발전실적"
+      ORDER BY "호기", "일자", "발전시간"
+    `);
+
+    console.log(`📊 [화력] 조회된 원본 데이터: ${result.rows.length}행`);
+
+    if (result.rows.length === 0) {
+      return res.json({
+        success: false,
+        message: '화력 발전소 데이터가 없습니다',
+        data: {}
+      });
+    }
+
+    const dailyData = {};
+
+    result.rows.forEach(row => {
+      const unit = row.호기;
+      const date = row.일자; // 형식: YYYYMMDD
+      const amount = Number(row.발전량_mwh) || 0;
+
+      if (!date) return;
+
+      if (!dailyData[unit]) {
+        dailyData[unit] = {};
+      }
+      if (!dailyData[unit][date]) {
+        dailyData[unit][date] = 0;
+      }
+
+      dailyData[unit][date] += amount;
+    });
+
+    // 배열 형태로 변환
+    const data = {};
+    Object.keys(dailyData).forEach(unit => {
+      data[unit] = [];
+      Object.keys(dailyData[unit]).forEach(date => {
+        data[unit].push({
+          date: date,
+          value: Math.round(dailyData[unit][date] * 100) / 100
+        });
+      });
+      // 날짜순 정렬
+      data[unit].sort((a, b) => a.date.localeCompare(b.date));
+    });
+
+    console.log(`✅ [화력] 일별 데이터 조회 완료: ${Object.keys(data).length}개 호기`);
+
+    res.json({
+      success: true,
+      data: data
+    });
+
+  } catch (err) {
+    console.error('❌ [화력 일별] 조회 오류:', err);
+    res.status(500).json({
+      success: false,
+      message: 'DB 조회 실패',
+      error: err.message
+    });
+  }
+});
+
+// ===== 태양광 발전소 일별 발전량 조회 API =====
+app.get('/api/solar/daily-power', async (req, res) => {
+  try {
+    console.log('\n🔍 [태양광] 일별 발전량 조회 시작...');
+    
+    const result = await pool.query(`
+      SELECT "발전구분", "일자", "발전시간", "발전량_kwh"
+      FROM public."남동발전_시간대별태양광발전실적"
+      ORDER BY "발전구분", "일자", "발전시간"
+    `);
+
+    console.log(`📊 [태양광] 조회된 원본 데이터: ${result.rows.length}행`);
+
+    if (result.rows.length === 0) {
+      return res.json({
+        success: false,
+        message: '태양광 발전소 데이터가 없습니다',
+        data: {}
+      });
+    }
+
+    const dailyData = {};
+
+    result.rows.forEach(row => {
+      const plantName = row.발전구분;
+      const date = row.일자;
+      const amount = (Number(row.발전량_kwh) || 0) / 1000; // kWh -> MWh
+
+      if (!date || !plantName) return;
+
+      if (!dailyData[plantName]) {
+        dailyData[plantName] = {};
+      }
+      if (!dailyData[plantName][date]) {
+        dailyData[plantName][date] = 0;
+      }
+
+      dailyData[plantName][date] += amount;
+    });
+
+    const data = {};
+    Object.keys(dailyData).forEach(plantName => {
+      data[plantName] = [];
+      Object.keys(dailyData[plantName]).forEach(date => {
+        data[plantName].push({
+          date: date,
+          value: Math.round(dailyData[plantName][date] * 100) / 100
+        });
+      });
+      data[plantName].sort((a, b) => a.date.localeCompare(b.date));
+    });
+
+    console.log(`✅ [태양광] 일별 데이터 조회 완료: ${Object.keys(data).length}개 발전소`);
+
+    res.json({
+      success: true,
+      data: data
+    });
+
+  } catch (err) {
+    console.error('❌ [태양광 일별] 조회 오류:', err);
+    res.status(500).json({
+      success: false,
+      message: 'DB 조회 실패',
+      error: err.message
+    });
+  }
+});
+
+// ===== 풍력 발전소 일별 발전량 조회 API =====
+app.get('/api/wind/daily-power', async (req, res) => {
+  try {
+    console.log('\n🔍 [풍력] 일별 발전량 조회 시작...');
+    
+    const result = await pool.query(`
+      SELECT "발전구분", "일자", "발전시간", "발전량_mwh"
+      FROM public."남동발전_시간대별풍력발전실적"
+      ORDER BY "발전구분", "일자", "발전시간"
+    `);
+
+    console.log(`📊 [풍력] 조회된 원본 데이터: ${result.rows.length}행`);
+
+    if (result.rows.length === 0) {
+      return res.json({
+        success: false,
+        message: '풍력 발전소 데이터가 없습니다',
+        data: {}
+      });
+    }
+
+    const dailyData = {};
+
+    result.rows.forEach(row => {
+      const plantName = row.발전구분;
+      const date = row.일자;
+      const amount = Number(row.발전량_mwh) || 0;
+
+      if (!date || !plantName) return;
+
+      if (!dailyData[plantName]) {
+        dailyData[plantName] = {};
+      }
+      if (!dailyData[plantName][date]) {
+        dailyData[plantName][date] = 0;
+      }
+
+      dailyData[plantName][date] += amount;
+    });
+
+    const data = {};
+    Object.keys(dailyData).forEach(plantName => {
+      data[plantName] = [];
+      Object.keys(dailyData[plantName]).forEach(date => {
+        data[plantName].push({
+          date: date,
+          value: Math.round(dailyData[plantName][date] * 100) / 100
+        });
+      });
+      data[plantName].sort((a, b) => a.date.localeCompare(b.date));
+    });
+
+    console.log(`✅ [풍력] 일별 데이터 조회 완료: ${Object.keys(data).length}개 발전소`);
+
+    res.json({
+      success: true,
+      data: data
+    });
+
+  } catch (err) {
+    console.error('❌ [풍력 일별] 조회 오류:', err);
+    res.status(500).json({
+      success: false,
+      message: 'DB 조회 실패',
+      error: err.message
+    });
+  }
+});
