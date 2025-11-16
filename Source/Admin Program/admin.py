@@ -24,7 +24,7 @@ DB_CONFIG = {
 # API 설정
 API_ENDPOINT = 'http://data.khnp.co.kr/environ/service/realtime/waterPwr'
 # 인코딩된 키와 디코딩된 키 모두 준비
-SERVICE_KEY_ENCODED = 'c3954e9662c80625eb247874b0e41b76d59882aa61a4e9e0fed4f7b33980b2b8'
+SERVICE_KEY_ENCODED = '2ea671893271f4e1752c6a258014c54339c040da9783555cff1014fdf0cc1716'
 SERVICE_KEY = SERVICE_KEY_ENCODED  # 기본값
 
 
