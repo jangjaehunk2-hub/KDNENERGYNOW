@@ -611,6 +611,42 @@ app.get('/api/debug/all-plants', async (req, res) => {
   }
 });
 
+// ===== Alert 테이블 실시간 조회 API (5초마다 자동 갱신용) =====
+app.get('/api/alerts', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT 
+        id,
+        "발전종류", 
+        "발전소명", 
+        "경고단계"
+      FROM public.alert
+      ORDER BY "경고단계" DESC, id DESC
+    `);
+    
+    console.log(`✅ [Alert API] ${result.rows.length}개 경고 데이터 조회됨`);
+    
+    res.json({
+      success: true,
+      count: result.rows.length,
+      data: result.rows,
+      timestamp: new Date().toISOString()
+    });
+  } catch (err) {
+    console.error('❌ [Alert 조회 오류]:', err);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Alert 데이터 조회 실패', 
+      error: err.message 
+    });
+  }
+});
+
+// ===== Alert HTML 페이지 제공 =====
+app.get('/alerts', (req, res) => {
+  res.sendFile(path.join(__dirname, 'alerts.html'));
+});
+
 // ===== 서버 실행 =====
 const serverPort = 3000;
 app.listen(serverPort, () => {
