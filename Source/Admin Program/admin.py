@@ -27,6 +27,17 @@ API_ENDPOINT = 'http://data.khnp.co.kr/environ/service/realtime/waterPwr'
 SERVICE_KEY_ENCODED = '2ea671893271f4e1752c6a258014c54339c040da9783555cff1014fdf0cc1716'
 SERVICE_KEY = SERVICE_KEY_ENCODED  # 기본값
 
+GEN_NAMES = {
+    'AH': '안흥',
+    'CH': '춘천',
+    'UA': '의암',
+    'HC': '화천',
+    'CP': '청평',
+    'SJ': '섬진강',
+    'BS': '보성강',
+    'PD': '팔당',
+    'GS': '괴산'
+}
 
 # 로그인 화면을 구현하는 클래스
 class LoginApp:
@@ -130,18 +141,20 @@ def open_data_viewer():
     scrollbar_x = tk.Scrollbar(table_frame, orient="horizontal")
 
     # Treeview (테이블)
-    columns = ("번호", "발전소구분코드", "현재출력", "측정시간")
+    columns = ("번호", "발전소명", "발전소코드", "현재출력", "측정시간")
     tree = ttk.Treeview(table_frame, columns=columns, show="headings", 
                         yscrollcommand=scrollbar_y.set, xscrollcommand=scrollbar_x.set)
 
     # 컬럼 설정
     tree.heading("번호", text="번호")
-    tree.heading("발전소구분코드", text="발전소 구분코드")
+    tree.heading("발전소명", text="발전소명")
+    tree.heading("발전소코드", text="발전소 코드")
     tree.heading("현재출력", text="현재출력 (MW)")
     tree.heading("측정시간", text="측정시간")
 
     tree.column("번호", width=80, anchor="center")
-    tree.column("발전소구분코드", width=200, anchor="center")
+    tree.column("발전소명", width=120, anchor="center")
+    tree.column("발전소코드", width=200, anchor="center")
     tree.column("현재출력", width=200, anchor="center")
     tree.column("측정시간", width=300, anchor="center")
 
@@ -158,8 +171,7 @@ def open_data_viewer():
 
     tk.Label(bottom_frame, text="📊 API 정보", font=("맑은 고딕", 10, "bold")).grid(row=0, column=0, columnspan=2, pady=5, sticky="w")
 
-    info_text = tk.Text(bottom_frame, height=6, width=100, state="disabled",
-                       font=("맑은 고딕", 9))
+    info_text = tk.Text(bottom_frame, height=6, width=100, state="disabled",font=("맑은 고딕", 9))
     info_text.grid(row=1, column=0, columnspan=2, padx=5, pady=5)
 
     def update_info(message):
@@ -168,129 +180,104 @@ def open_data_viewer():
         info_text.insert("end", message)
         info_text.config(state="disabled")
 
-    # API 데이터 로드 함수
     def load_api_data():
         try:
             status_label.config(text="데이터 불러오는 중...", fg="orange")
             viewer_window.update()
 
-            # 방법 1: 키를 그대로 사용 (이미 디코딩된 키일 경우)
-            print("=== 방법 1: 키 그대로 사용 ===")
-            url1 = API_ENDPOINT + '?serviceKey=' + SERVICE_KEY + '&genName=HC'
-            print("URL:", url1)
-            
-            response = requests.get(url1)
-            print("응답 상태 코드:", response.status_code)
-            print("응답 내용:", response.content.decode('utf-8'))
-            
-            root = ET.fromstring(response.content)
-            result_code = root.findtext('.//resultCode', default='')
-            result_msg = root.findtext('.//resultMsg', default='')
-            
-            # 방법 1이 실패하면 방법 2 시도 (URL 인코딩)
-            if result_code != '00':
-                print("\n=== 방법 2: URL 인코딩 사용 ===")
-                params = {
-                    'serviceKey': SERVICE_KEY,
-                    'genName': 'HC'
-                }
-                print("Params:", params)
-                
-                response = requests.get(API_ENDPOINT, params=params)
-                print("응답 상태 코드:", response.status_code)
-                print("응답 내용:", response.content.decode('utf-8'))
-                
-                root = ET.fromstring(response.content)
-                result_code = root.findtext('.//resultCode', default='')
-                result_msg = root.findtext('.//resultMsg', default='')
-            
-            if response.status_code == 200:
-                # XML 응답 파싱
-                root = ET.fromstring(response.content)
-                
-                # API 가이드에 따른 구조: header와 body로 구성
-                result_code = root.findtext('.//resultCode', default='')
-                result_msg = root.findtext('.//resultMsg', default='')
-                
-                if result_code == '00':  # 정상 응답
-                    # 기존 데이터 삭제
-                    for item in tree.get_children():
-                        tree.delete(item)
+            # 기존 데이터 삭제
+            for item in tree.get_children():
+                tree.delete(item)
+
+            total_count = 0
+            row_index = 1
+            all_success = True
+            error_messages = []
+
+            conn = psycopg2.connect(**DB_CONFIG)
+            cur = conn.cursor()
+
+
+            # 모든 발전소에 대해 반복 조회
+            for gen_code, gen_name in GEN_NAMES.items():
+                try:
+                    url = API_ENDPOINT + '?serviceKey=' + SERVICE_KEY + '&genName=' + gen_code
+                    print("\n=== {}({}) 조회 ===".format(gen_name, gen_code))
                     
-                    # 데이터 항목들 추출 (API 가이드에 따라 code, power, time 사용)
-                    items = root.findall('.//item')
+                    response = requests.get(url, timeout=10)
                     
-                    if items:
-                        for idx, item in enumerate(items, 1):
-                            code = item.findtext('code', default='-')
-                            power = item.findtext('power', default='0')
-                            time = item.findtext('time', default='-')
+                    if response.status_code == 200:
+                        root = ET.fromstring(response.content)
+                        result_code = root.findtext('.//resultCode', default='')
+                        result_msg = root.findtext('.//resultMsg', default='')
+                        
+                        if result_code != '00':
+                            params = {'serviceKey': SERVICE_KEY, 'genName': gen_code}
+                            response = requests.get(API_ENDPOINT, params=params, timeout=10)
+                            root = ET.fromstring(response.content)
+                            result_code = root.findtext('.//resultCode', default='')
+                        
+                        if result_code == '00':
+                            items = root.findall('.//item')
+                            for item in items:
+                                code = item.findtext('code', default='-')
+                                power = item.findtext('power', default='0')
+                                time = item.findtext('time', default='-')
+                                
+                                # 발전소명 추가하여 삽입
+                                tree.insert("", "end", values=(row_index, gen_name, code, power, time))
+                                
+                                row_index += 1
+                                total_count += 1
+
+                                try:
+                                    insert_query = """
+                                        INSERT INTO public."수력발전소실시간발전현황" (power_name, code, power, time)
+                                        VALUES (%s, %s, %s, %s);
+                                    """
+                                    cur.execute(insert_query, (gen_name, code, power, time))
+
+                                    print(insert_query)
+                                except psycopg2.Error as db_err:
+                                    print("DB 저장 오류 ({}): {}".format(gen_name, db_err))
+                        else:
+                            error_messages.append("{}({}): {}".format(gen_name, gen_code, result_msg))
+                            all_success = False
                             
-                            # 테이블에 삽입
-                            tree.insert("", "end", values=(idx, code, power, time))
-                        
-                        status_label.config(text="✓ 조회 성공 ({}건)".format(len(items)), fg="green")
-                        
-                        # 상세 정보 표시
-                        info_msg = "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-                        info_msg += "✓ API 호출 성공\n"
-                        info_msg += "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-                        info_msg += "• 조회 시간: {}\n".format(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-                        info_msg += "• 결과 코드: {} ({})\n".format(result_code, result_msg)
-                        info_msg += "• 조회 건수: {}건\n".format(len(items))
-                        info_msg += "• API Endpoint: {}\n".format(API_ENDPOINT)
-                        info_msg += "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-                        update_info(info_msg)
-                    else:
-                        status_label.config(text="⚠ 데이터 없음", fg="orange")
-                        update_info("조회된 데이터가 없습니다.")
-                else:
-                    status_label.config(text="✗ API 오류", fg="red")
-                    error_msg = "API 오류 발생\n"
-                    error_msg += "결과 코드: {}\n".format(result_code)
-                    error_msg += "메시지: {}".format(result_msg)
-                    update_info(error_msg)
-                    messagebox.showerror("API 오류", "결과 코드: {}\n메시지: {}".format(result_code, result_msg))
-            else:
-                status_label.config(text="✗ 연결 실패", fg="red")
-                messagebox.showerror("오류", "API 호출 실패\nHTTP 상태 코드: {}".format(response.status_code))
-                update_info("HTTP 오류: {}".format(response.status_code))
+                except Exception as e:
+                    error_messages.append("{}({}): {}".format(gen_name, gen_code, str(e)))
+                    all_success = False
+
+            conn.commit()
+            cur.close()
+            conn.close()
+            
+            # 결과 표시
+            if total_count > 0:
+                status_label.config(
+                    text="✓ 조회 성공 ({}건)".format(total_count) if all_success else "⚠ 부분 성공 ({}건)".format(total_count),
+                    fg="green" if all_success else "orange"
+                )
+                # 상세 정보 업데이트 로직...
                 
-        except requests.exceptions.Timeout:
-            status_label.config(text="✗ 시간 초과", fg="red")
-            messagebox.showerror("오류", "API 요청 시간이 초과되었습니다.")
-            update_info("요청 시간 초과")
-        except requests.exceptions.RequestException as e:
-            status_label.config(text="✗ 네트워크 오류", fg="red")
-            messagebox.showerror("오류", "네트워크 오류가 발생했습니다.\n{}".format(e))
-            update_info("네트워크 오류: {}".format(e))
-            print("네트워크 오류 상세:", str(e))
-        except ET.ParseError as e:
-            status_label.config(text="✗ 데이터 파싱 오류", fg="red")
-            messagebox.showerror("오류", "XML 파싱 오류가 발생했습니다.\n{}".format(e))
-            update_info("XML 파싱 오류: {}".format(e))
-            print("파싱 오류 상세:", str(e))
         except Exception as e:
             status_label.config(text="✗ 오류 발생", fg="red")
-            messagebox.showerror("오류", "예상치 못한 오류가 발생했습니다.\n{}".format(e))
-            update_info("오류: {}".format(e))
-            print("예외 발생:", str(e))
+            # DB 연결이 있으면 롤백
+            if 'conn' in locals():
+                conn.rollback()
+                conn.close()
 
     # 버튼 프레임
     button_frame = tk.Frame(viewer_window, padx=10, pady=10)
     button_frame.pack()
 
-    tk.Button(button_frame, text="닫기", command=viewer_window.destroy, 
-              width=12, height=2, font=("맑은 고딕", 10)).pack(side="left", padx=5)
+    tk.Button(button_frame, text="닫기", command=viewer_window.destroy, width=12, height=2, font=("맑은 고딕", 10)).pack(side="left", padx=5)
 
     # 초기 정보 표시
-    initial_info = "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-    initial_info += "수력발전소 실시간 발전 데이터 조회 시스템\n"
-    initial_info += "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-    initial_info += "• API: 한국수력원자력 공공데이터\n"
-    initial_info += "• 대상: 수력발전소 (HC)\n"
-    initial_info += "• 정보: 발전소 구분코드, 현재출력, 측정시간\n"
-    initial_info += "\n'🔄 새로고침' 버튼을 눌러 최신 데이터를 조회하세요."
+    initial_info = "수력발전소 실시간 발전 데이터 조회 시스템\n"
+    initial_info += "• 조회 대상 발전소 ({}개):\n".format(len(GEN_NAMES))
+    for code, name in GEN_NAMES.items():
+        initial_info += "  - {}({})\n".format(name, code)
     update_info(initial_info)
 
     # 초기 데이터 로드
