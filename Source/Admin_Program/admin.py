@@ -113,6 +113,9 @@ def open_data_viewer():
     viewer_window.geometry("900x600")
     viewer_window.resizable(False, False)
 
+    auto_refresh_enabled = tk.BooleanVar(value=True)
+    auto_refresh_job = None
+
     # 상단 프레임 - 정보 및 새로고침
     top_frame = tk.Frame(viewer_window, padx=10, pady=10)
     top_frame.pack(fill="x")
@@ -124,9 +127,32 @@ def open_data_viewer():
     def refresh_data():
         load_api_data()
 
-    tk.Button(top_frame, text="🔄 새로고침", command=refresh_data, 
-              width=12, bg="#4CAF50", fg="white",
+    def toggle_auto_refresh():
+        nonlocal auto_refresh_job
+        if auto_refresh_enabled.get():
+            auto_refresh_btn.config(text="⏸ 자동새로고침 중지", bg="#FF5722")
+            schedule_auto_refresh()
+        else:
+            auto_refresh_btn.config(text="▶ 자동새로고침 시작", bg="#2196F3")
+            if auto_refresh_job:
+                viewer_window.after_cancel(auto_refresh_job)
+                auto_refresh_job = None
+
+    def schedule_auto_refresh():
+        nonlocal auto_refresh_job
+        if auto_refresh_enabled.get():
+            load_api_data()
+            auto_refresh_job = viewer_window.after(30000, schedule_auto_refresh)
+
+    tk.Button(top_frame, text="🔄 수동 새로고침", command=refresh_data, 
+              width=15, bg="#4CAF50", fg="white",
               font=("맑은 고딕", 9, "bold")).pack(side="right", padx=5)
+    
+    auto_refresh_btn = tk.Button(top_frame, text="⏸ 자동새로고침 중지", 
+                                  command=lambda: [auto_refresh_enabled.set(not auto_refresh_enabled.get()), toggle_auto_refresh()],
+                                  width=18, bg="#FF5722", fg="white",
+                                  font=("맑은 고딕", 9, "bold"))
+    auto_refresh_btn.pack(side="right", padx=5)
 
     # 상태 표시
     status_label = tk.Label(top_frame, text="", font=("맑은 고딕", 9), fg="blue")
@@ -281,7 +307,7 @@ def open_data_viewer():
     update_info(initial_info)
 
     # 초기 데이터 로드
-    load_api_data()
+    schedule_auto_refresh()
 
 
 # 위도 경도 수정 창
