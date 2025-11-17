@@ -3,6 +3,8 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const { Pool } = require('pg');
 const path = require('path');
+const axios = require('axios');
+const xml2js = require('xml2js');
 
 const app = express();
 // Middleware 설정
@@ -1030,3 +1032,63 @@ app.get('/api/wind/daily-power', async (req, res) => {
     });
   }
 });
+
+// ===== 한수원 실시간 API (JSON 반환) =====
+app.get('/api/khnp/realtime-json', async (req, res) => {
+  const { genName } = req.query;
+  
+  if (!genName) {
+    return res.status(400).json({ 
+      success: false, 
+      message: 'genName 파라미터가 필요합니다' 
+    });
+  }
+
+  const API_URL = 'http://data.khnp.co.kr/environ/service/realtime/waterPwr';
+  const SERVICE_KEY = '2ea671893271f4e1752c6a258014c54339c040da9783555cff1014fdf0cc1716';
+
+  try {
+    const response = await axios.get(API_URL, {
+      params: {
+        serviceKey: SERVICE_KEY,
+        genName: genName
+      },
+      timeout: 10000
+    });
+
+    // XML을 JSON으로 파싱
+    const parser = new xml2js.Parser({ explicitArray: false });
+    const result = await parser.parseStringPromise(response.data);
+    
+    // 발전량 데이터 추출
+    const item = result?.response?.body?.items?.item;
+    
+    if (item && item.genOutput) {
+      res.json({
+        success: true,
+        genName: genName,
+        genOutput: parseFloat(item.genOutput),
+        unit: 'MW',
+        timestamp: new Date().toISOString()
+      });
+    } else {
+      res.status(404).json({
+        success: false,
+        message: '발전량 데이터를 찾을 수 없습니다'
+      });
+    }
+
+  } catch (error) {
+    console.error('❌ [한수원 API JSON] 오류:', error.message);
+    res.status(500).json({
+      success: false,
+      message: 'API 호출 실패',
+      error: error.message
+    });
+  }
+});
+
+console.log(`📍 API 엔드포인트:`);
+console.log(`   - GET  /api/plants                 (모든 발전소)`);
+console.log(`   - GET  /api/khnp/realtime          (한수원 실시간 데이터 - XML)`);
+console.log(`   - GET  /api/khnp/realtime-json     (한수원 실시간 데이터 - JSON)`);

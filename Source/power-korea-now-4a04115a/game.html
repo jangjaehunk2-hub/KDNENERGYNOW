@@ -107,6 +107,35 @@ input[type=number] { border-radius:10px; padding:8px; border:1px solid #cbd5e1; 
 .prediction-container { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:10px; }
 .prediction-container input { width:100px; text-align:center; }
 .prediction-score { font-size:14px; color:#333; background:#f0f0f0; padding:5px 10px; border-radius:8px; font-weight:bold; white-space:nowrap; }
+
+/* 발전소 선택 드롭다운 */
+.plant-selector {
+  margin-top: 15px;
+}
+.plant-selector select {
+  width: 100%;
+  padding: 10px;
+  border: 2px solid #cbd5e1;
+  border-radius: 10px;
+  font-size: 16px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.plant-selector select:focus {
+  outline: none;
+  border-color: #4f46e5;
+}
+.plant-selector select:hover {
+  border-color: #94a3b8;
+}
+
+.loading {
+  text-align: center;
+  padding: 20px;
+  color: #666;
+}
+
 @media screen and (max-width:600px){
   .grid-3 { grid-template-columns:1fr; }
 }
@@ -145,7 +174,8 @@ input[type=number] { border-radius:10px; padding:8px; border:1px solid #cbd5e1; 
 
     <div class="card">
       <h1>⚡ 발전량 예측 게임</h1>
-      <p style="text-align:center;">랜덤으로 선택된 지역과 발전원에 대해 발전량을 예측하세요!</p>
+      <p style="text-align:center;">실시간 수력 발전소 데이터로 발전량을 예측하세요!</p>
+      <p style="text-align:center;font-size:12px;color:#666;">🔌 실시간 API 연동 (한국수력원자력 공공데이터)</p>
     </div>
 
     <!-- 점수판 -->
@@ -163,32 +193,57 @@ input[type=number] { border-radius:10px; padding:8px; border:1px solid #cbd5e1; 
 
     <!-- 입력 카드 -->
     <div id="inputCard" class="card">
-      <p>① 지역: <span id="regionDisplay"></span></p>
-      <p>② 발전원: <span id="powerDisplay"></span></p>
-
-      <label style="margin-top:15px;">예측 발전량 (MWh)</label>
-      <div class="prediction-container">
-        <button onclick="adjustPrediction(-100)">-100</button>
-        <input type="number" id="prediction" value="500" min="0" step="100">
-        <button onclick="adjustPrediction(100)">+100</button>
-        <div class="prediction-score">
-          오차 ≤20% → 3점 | 20~50% → 2점 | 그 외 → 1점
-        </div>
+      <label><strong>발전소 선택</strong></label>
+      <div class="plant-selector">
+        <select id="plantSelect" onchange="selectPlant(this.value)">
+          <option value="AH">안흥 (AH)</option>
+          <option value="CH">청평 (CH)</option>
+          <option value="UA">의암 (UA)</option>
+          <option value="HC">화천 (HC)</option>
+          <option value="CP">춘천 (CP)</option>
+          <option value="SJ">소양강 (SJ)</option>
+          <option value="BS">보성강 (BS)</option>
+          <option value="PD">파로호 (PD)</option>
+          <option value="GS">괴산 (GS)</option>
+        </select>
       </div>
 
-      <div id="hint" class="hint" onclick="revealHint()">🔒 힌트를 보려면 클릭하세요!</div>
+      <div id="plantInfo" style="margin-top:20px; display:none;">
+        <p><strong>선택된 발전소:</strong> <span id="selectedPlantName"></span></p>
+        <p><strong>발전원:</strong> 수력</p>
 
-      <button onclick="submitPrediction()" class="btn-primary" style="margin-top:15px;width:100%;padding:12px;">예측 제출</button>
+        <label style="margin-top:15px;">예측 발전량 (MW)</label>
+        <div class="prediction-container">
+          <button onclick="adjustPrediction(-10)">-10</button>
+          <button onclick="adjustPrediction(-1)">-1</button>
+          <input type="number" id="prediction" value="50" min="0" step="1">
+          <button onclick="adjustPrediction(1)">+1</button>
+          <button onclick="adjustPrediction(10)">+10</button>
+        </div>
+        <div class="prediction-score">
+          오차 ≤10% → 3점 | 10~30% → 2점 | 그 외 → 1점
+        </div>
+
+        <div id="hint" class="hint" onclick="revealHint()">🔒 힌트를 보려면 클릭하세요!</div>
+
+        <button onclick="submitPrediction()" class="btn-primary" style="margin-top:15px;width:100%;padding:12px;">예측 제출</button>
+      </div>
     </div>
 
     <!-- 결과 카드 -->
     <div id="resultCard" class="card" style="display:none;">
       <h2 id="resultMessage"></h2>
       <div class="bar-container">
-        <div class="bar bar-pred" id="barPred" style="height:0"></div>
-        <div class="bar bar-actual" id="barActual" style="height:0"></div>
+        <div>
+          <div class="bar bar-pred" id="barPred" style="height:0"></div>
+          <p style="text-align:center;margin-top:5px;">예측</p>
+        </div>
+        <div>
+          <div class="bar bar-actual" id="barActual" style="height:0"></div>
+          <p style="text-align:center;margin-top:5px;">실제</p>
+        </div>
       </div>
-      <p style="text-align:center;margin-top:10px;">예측: <span id="displayPred">0</span> MWh | 실제: <span id="displayActual">0</span> MWh</p>
+      <p style="text-align:center;margin-top:10px;">예측: <span id="displayPred">0</span> MW | 실제: <span id="displayActual">0</span> MW</p>
       <p style="text-align:center;">오차율: <span id="displayError">0</span>% | 획득 점수: <span id="displayPoints">0</span></p>
       <button onclick="resetGame()" class="btn-secondary" style="margin-top:10px;width:100%;padding:10px;">다시 시작</button>
     </div>
@@ -199,6 +254,40 @@ input[type=number] { border-radius:10px; padding:8px; border:1px solid #cbd5e1; 
 <!-- ===== JS ===== -->
 <script>
 let totalScore = 0, gamesPlayed = 0;
+let selectedPlant = null;
+let actualPowerData = null;
+let hintPowerData = null;
+
+const plantNames = {
+  'AH': '안흥',
+  'CH': '청평',
+  'UA': '의암',
+  'HC': '화천',
+  'CP': '춘천',
+  'SJ': '소양강',
+  'BS': '보성강',
+  'PD': '파로호',
+  'GS': '괴산'
+};
+
+// 발전소별 평균 발전량 (시뮬레이션용 백업)
+const plantAvgPower = {
+  'AH': 45,
+  'CH': 62,
+  'UA': 38,
+  'HC': 108,
+  'CP': 51,
+  'SJ': 156,
+  'BS': 28,
+  'PD': 19,
+  'GS': 33
+};
+
+// API 설정 - 백엔드 프록시 사용
+const USE_REAL_API = true;
+const API_URL = 'http://localhost:3000/api/khnp/realtime-json';
+
+// 로그인 체크 및 점수 로드
 const userId = localStorage.getItem('userId');
 if (!userId) {
     window.location.href = 'login.html';
@@ -208,41 +297,125 @@ if (!userId) {
       .then(data => {
           totalScore = data.score || 0;
           document.getElementById('totalScore').innerText = totalScore + "점";
+      })
+      .catch(err => {
+          console.error('점수 로드 실패:', err);
+          totalScore = 0;
       });
 }
 
-const regions = ['서울','부산','대구','인천','광주','대전','울산','세종','경기','강원','충북','충남','전북','전남','경북','경남','제주'];
-const powerTypes = ['태양광','풍력','원자력','수력'];
+// 페이지 로드 시 첫 번째 발전소 자동 선택
+window.addEventListener('DOMContentLoaded', () => {
+  const plantSelect = document.getElementById('plantSelect');
+  const firstPlant = Object.keys(plantNames)[0]; // 'AH'
+  plantSelect.value = firstPlant;
+  selectPlant(firstPlant);
+  
+  // API 모드 안내
+  if (USE_REAL_API) {
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('🔌 실시간 API 모드로 실행 중');
+    console.log('📡 서버: http://localhost:3000');
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  }
+});
 
-const region = regions[Math.floor(Math.random()*regions.length)];
-const power = powerTypes[Math.floor(Math.random()*powerTypes.length)];
-document.getElementById('regionDisplay').innerText = region;
-document.getElementById('powerDisplay').innerText = power;
+function selectPlant(plantCode) {
+  if (!plantCode) {
+    document.getElementById('plantInfo').style.display = 'none';
+    selectedPlant = null;
+    return;
+  }
+  
+  selectedPlant = plantCode;
+  
+  // 발전소 정보 표시
+  document.getElementById('selectedPlantName').innerText = plantNames[plantCode];
+  document.getElementById('plantInfo').style.display = 'block';
+  
+  // 힌트 초기화
+  document.getElementById('hint').innerText = '🔒 힌트를 보려면 클릭하세요!';
+  hintPowerData = null;
+}
 
 function adjustPrediction(val){
   const input = document.getElementById('prediction');
-  input.value = Math.max(0, parseInt(input.value)+val);
+  input.value = Math.max(0, parseFloat(input.value) + val).toFixed(1);
 }
 
-function generateHint(){
-  return Math.floor(Math.random()*300 + 200) + " MWh (전날 같은 시간)";
+async function fetchPowerData(plantCode) {
+  // 시뮬레이션 모드
+  if (!USE_REAL_API) {
+    console.log('🎮 시뮬레이션 모드 - 가상 데이터 사용');
+    const basePower = plantAvgPower[plantCode] || 50;
+    const variation = (Math.random() - 0.5) * 0.6;
+    return parseFloat((basePower * (1 + variation)).toFixed(1));
+  }
+  
+  // 실제 API 모드 (백엔드 프록시 사용)
+  try {
+    console.log(`🔌 실시간 API 호출: ${plantCode}`);
+    const url = `${API_URL}?genName=${plantCode}`;
+    const response = await fetch(url);
+    const data = await response.json();
+    
+    if (data.success && data.genOutput) {
+      console.log(`✅ 실시간 발전량: ${data.genOutput} MW`);
+      return data.genOutput;
+    } else {
+      throw new Error(data.message || 'API 응답 오류');
+    }
+    
+  } catch (error) {
+    console.error('⚠️ API 호출 에러:', error.message);
+    console.log('→ 시뮬레이션 데이터로 전환');
+    // API 실패 시 시뮬레이션 데이터 사용
+    const basePower = plantAvgPower[plantCode] || 50;
+    const variation = (Math.random() - 0.5) * 0.6;
+    return parseFloat((basePower * (1 + variation)).toFixed(1));
+  }
 }
 
-function revealHint(){
-  document.getElementById('hint').innerText = generateHint();
+async function revealHint(){
+  if (!selectedPlant) {
+    alert('먼저 발전소를 선택해주세요!');
+    return;
+  }
+  
+  if (!hintPowerData) {
+    document.getElementById('hint').innerText = '⏳ 힌트 데이터 로딩 중...';
+    hintPowerData = await fetchPowerData(selectedPlant);
+  }
+  
+  // 힌트는 실제값의 ±15% 범위로 제공
+  const hintMin = (hintPowerData * 0.85).toFixed(1);
+  const hintMax = (hintPowerData * 1.15).toFixed(1);
+  document.getElementById('hint').innerText = `💡 힌트: ${hintMin}~${hintMax} MW 사이`;
 }
 
-function submitPrediction(){
-  const prediction = parseInt(document.getElementById('prediction').value);
-  const actual = Math.floor(Math.random()*300 + 200); 
-  const errorRate = Math.abs(prediction-actual)/actual*100;
-  const points = errorRate<=20?3: errorRate<=50?2:1;
+async function submitPrediction(){
+  if (!selectedPlant) {
+    alert('먼저 발전소를 선택해주세요!');
+    return;
+  }
+
+  // 실제 발전량 데이터 가져오기
+  document.getElementById('inputCard').style.opacity = '0.6';
+  actualPowerData = await fetchPowerData(selectedPlant);
+  document.getElementById('inputCard').style.opacity = '1';
+  
+  const prediction = parseFloat(document.getElementById('prediction').value);
+  const actual = actualPowerData;
+  
+  const errorRate = Math.abs(prediction - actual) / actual * 100;
+  const points = errorRate <= 10 ? 3 : errorRate <= 30 ? 2 : 1;
+  
   totalScore += points; 
   gamesPlayed++;
 
-  document.getElementById('score').innerText = points+"점";
-  document.getElementById('totalScore').innerText = totalScore+"점";
-  document.getElementById('gamesPlayed').innerText = gamesPlayed+"회";
+  document.getElementById('score').innerText = points + "점";
+  document.getElementById('totalScore').innerText = totalScore + "점";
+  document.getElementById('gamesPlayed').innerText = gamesPlayed + "회";
 
   // 서버로 점수 전송
   fetch('http://localhost:3000/update-score', {
@@ -254,13 +427,14 @@ function submitPrediction(){
   .then(data => {
     if(data.success){
       console.log("DB 업데이트 완료, 현재 누적점수:", data.newScore);
-    } else {
-      console.error("DB 업데이트 실패:", data.message);
     }
+  })
+  .catch(err => {
+    console.error('점수 업데이트 실패:', err);
   });
 
-  document.getElementById('displayPred').innerText = prediction;
-  document.getElementById('displayActual').innerText = actual;
+  document.getElementById('displayPred').innerText = prediction.toFixed(1);
+  document.getElementById('displayActual').innerText = actual.toFixed(1);
   document.getElementById('displayError').innerText = errorRate.toFixed(1);
   document.getElementById('displayPoints').innerText = points;
 
@@ -268,18 +442,22 @@ function submitPrediction(){
   document.getElementById('barPred').style.height = (prediction / maxVal * 200) + "px";
   document.getElementById('barActual').style.height = (actual / maxVal * 200) + "px";
 
-  let msg = errorRate<=5?"완벽합니다! 🎉":errorRate<=15?"좋습니다! 👍":"더 노력해보세요! 💪";
+  let msg = errorRate <= 5 ? "완벽합니다! 🎉" : errorRate <= 15 ? "좋습니다! 👍" : "더 노력해보세요! 💪";
   document.getElementById('resultMessage').innerText = msg;
 
   document.getElementById('inputCard').style.display = "none";
-  document.getElementById('resultCard').style.display="block";
+  document.getElementById('resultCard').style.display = "block";
 }
 
 function resetGame(){
-  document.getElementById('resultCard').style.display="none";
-  document.getElementById('inputCard').style.display="block";
-  document.getElementById('prediction').value = 500;
+  document.getElementById('resultCard').style.display = "none";
+  document.getElementById('inputCard').style.display = "block";
+  document.getElementById('prediction').value = 50;
   document.getElementById('hint').innerText = "🔒 힌트를 보려면 클릭하세요!";
+  
+  // 선택 초기화하지 않고 현재 선택 유지
+  hintPowerData = null;
+  actualPowerData = null;
 }
 </script>
 </body>
