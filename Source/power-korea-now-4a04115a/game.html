@@ -344,13 +344,6 @@ function adjustPrediction(val){
 }
 
 async function fetchPowerData(plantCode) {
-  // 시뮬레이션 모드
-  if (!USE_REAL_API) {
-    console.log('🎮 시뮬레이션 모드 - 가상 데이터 사용');
-    const basePower = plantAvgPower[plantCode] || 50;
-    const variation = (Math.random() - 0.5) * 0.6;
-    return parseFloat((basePower * (1 + variation)).toFixed(1));
-  }
   
   // 실제 API 모드 (백엔드 프록시 사용)
   try {
