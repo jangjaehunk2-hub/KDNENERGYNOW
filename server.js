@@ -1060,16 +1060,16 @@ app.get('/api/khnp/realtime-json', async (req, res) => {
     const parser = new xml2js.Parser({ explicitArray: false });
     const result = await parser.parseStringPromise(response.data);
     
-    // 발전량 데이터 추출
-    const item = result?.response?.body?.items?.item;
+    // ✅ 수정: 'genOutput' 대신 'power' 필드 사용
+    const item = result?.response?.body?.item;
     
-    if (item && item.genOutput) {
+    if (item && item.power) {
       res.json({
         success: true,
         genName: genName,
-        genOutput: parseFloat(item.genOutput),
+        genOutput: parseFloat(item.power),  // ✅ power 필드를 genOutput으로 반환
         unit: 'MW',
-        timestamp: new Date().toISOString()
+        timestamp: item.time || new Date().toISOString()
       });
     } else {
       res.status(404).json({

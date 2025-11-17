@@ -216,7 +216,9 @@ input[type=number] { border-radius:10px; padding:8px; border:1px solid #cbd5e1; 
         <div class="prediction-container">
           <button onclick="adjustPrediction(-10)">-10</button>
           <button onclick="adjustPrediction(-1)">-1</button>
-          <input type="number" id="prediction" value="50" min="0" step="1">
+          <button onclick="adjustPrediction(-0.1)">-0.1</button>
+          <input type="number" id="prediction" value="50" min="0" step="0.1">
+          <button onclick="adjustPrediction(0.1)">+0.1</button>
           <button onclick="adjustPrediction(1)">+1</button>
           <button onclick="adjustPrediction(10)">+10</button>
         </div>
@@ -268,6 +270,18 @@ const plantNames = {
   'BS': '보성강',
   'PD': '파로호',
   'GS': '괴산'
+};
+
+const plantAvgPower = {
+  'AH': 35,   // 안흥
+  'CH': 45,   // 청평
+  'UA': 40,   // 의암
+  'HC': 50,   // 화천
+  'CP': 55,   // 춘천
+  'SJ': 80,   // 소양강
+  'BS': 30,   // 보성강
+  'PD': 25,   // 파로호
+  'GS': 20    // 괴산
 };
 
 // API 설정 - 백엔드 프록시 사용
@@ -340,7 +354,6 @@ async function fetchPowerData(plantCode) {
     const data = await response.json();
     
     if (data.success && data.genOutput) {
-      console.log(`✅ 실시간 발전량: ${data.genOutput} MW`);
       return data.genOutput;
     } else {
       throw new Error(data.message || 'API 응답 오류');
@@ -367,10 +380,27 @@ async function revealHint(){
     hintPowerData = await fetchPowerData(selectedPlant);
   }
   
-  // 힌트는 실제값의 ±15% 범위로 제공
-  const hintMin = (hintPowerData * 0.85).toFixed(1);
-  const hintMax = (hintPowerData * 1.15).toFixed(1);
-  document.getElementById('hint').innerText = `💡 힌트: ${hintMin}~${hintMax} MW 사이`;
+  // ✅ 수정: 1 미만일 때는 절대값 범위로 힌트 제공
+  let hintMin, hintMax, hintText;
+  
+  if (hintPowerData < 1) {
+    // 발전량이 1 미만일 때: ±0.2 MW 범위
+    hintMin = Math.max(0, hintPowerData - 0.2).toFixed(1);
+    hintMax = (hintPowerData + 0.2).toFixed(1);
+    hintText = `💡 어제 발전량: ${hintMin}~${hintMax} MW 사이`;
+  } else if (hintPowerData < 5) {
+    // 발전량이 1~5 미만일 때: ±1 MW 범위
+    hintMin = Math.max(0, hintPowerData - 1).toFixed(1);
+    hintMax = (hintPowerData + 1).toFixed(1);
+    hintText = `💡 어제 발전량: ${hintMin}~${hintMax} MW 사이`;
+  } else {
+    // 발전량이 5 이상일 때: ±15% 범위
+    hintMin = (hintPowerData * 0.85).toFixed(1);
+    hintMax = (hintPowerData * 1.15).toFixed(1);
+    hintText = `💡 어제 발전량: ${hintMin}~${hintMax} MW 사이`;
+  }
+  
+  document.getElementById('hint').innerText = hintText;
 }
 
 async function submitPrediction(){
