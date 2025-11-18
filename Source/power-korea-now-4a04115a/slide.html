@@ -199,6 +199,29 @@
             white-space: nowrap;
             text-align: center;
         }
+        #dailySliderContainer {
+            margin-top: 20px;
+        }
+
+        .daily-marker {
+            position: absolute;
+            transform: translateX(-50%);
+        }
+
+        .daily-marker-line {
+            width: 2px;
+            height: 10px;
+            background: #999;
+            margin: 0 auto;
+        }
+
+        .daily-marker-label {
+            margin-top: 5px;
+            font-size: 12px;
+            color: #666;
+            white-space: nowrap;
+            text-align: center;
+        }
         input[type="range"] {
             width: 100%;
             height: 8px;
@@ -445,6 +468,10 @@
                     <input type="range" id="timeSlider" min="0" max="23" value="0" step="1" disabled />
                     <div id="timeMarkers" class="time-markers"></div>
                 </div>
+                <div id="dailySliderContainer" class="hidden">
+                    <input type="range" id="dailySlider" min="0" max="0" value="0" step="1" disabled />
+                    <div id="dailyMarkers" class="time-markers"></div>
+                </div>
             </div>
 
             <div class="content-section">
@@ -481,6 +508,9 @@
 
         let fullChartData = [];
         let currentPlantInfo = null;
+
+        let dailySlider;
+        let dailySliderContainer;
 
         const iconEmoji = {
             'hydro': '💧',
@@ -837,9 +867,11 @@
             const color = colorMap[type] || '#ff3366';
             const yearSlider = document.getElementById('yearSlider');
             const timeSlider = document.getElementById('timeSlider');
+            const dailySlider = document.getElementById('dailySlider')
             
             yearSlider.style.setProperty('--slider-color', color);
             timeSlider.style.setProperty('--slider-color', color);
+            dailySlider.style.setProperty('--slider-color', color);
         }
 
         const typeSelector = document.getElementById('typeSelector');
@@ -853,6 +885,9 @@
         const timeSlider = document.getElementById('timeSlider');
         const timeSliderContainer = document.getElementById('timeSliderContainer');
         const playButton = document.getElementById('playButton');
+
+        dailySlider = document.getElementById('dailySlider');
+        dailySliderContainer = document.getElementById('dailySliderContainer');
 
         function updateSliderProgress(slider) {
             const value = slider.value;
@@ -877,18 +912,28 @@
             updateChartWithSlider(hour);
         });
 
+        // 기존 yearSlider, timeSlider 이벤트 리스너 아래에 추가
+        dailySlider.addEventListener('input', function() {
+            const index = parseInt(this.value);
+            updateSliderProgress(this);
+            updateChartWithSlider(index);
+        });
+
         // 슬라이더 색상 업데이트 함수 수정
         function updateSliderColor(type) {
             const color = colorMap[type] || '#ff3366';
             const yearSlider = document.getElementById('yearSlider');
             const timeSlider = document.getElementById('timeSlider');
+            const dailySlider = document.getElementById('dailySlider');
             
             yearSlider.style.setProperty('--slider-color', color);
             timeSlider.style.setProperty('--slider-color', color);
-            
+            dailySlider.style.setProperty('--slider-color', color);
+
             // 현재 진행 상태 유지
             updateSliderProgress(yearSlider);
             updateSliderProgress(timeSlider);
+            updateSliderProgress(dailySlider);
         }
 
         typeSelector.addEventListener('change', function() {
@@ -1393,26 +1438,40 @@
             this.classList.add('playing');
             
             const selectedType = typeSelector.value;
+            const isKwater = currentPlantInfo && (currentPlantInfo.operator.includes('한국수자원공사') || currentPlantInfo.operator.includes('K-water'));
             
-            if (selectedType === 'nuclear' || selectedType === 'hydro') {
+            if (selectedType === 'hydro' && isKwater) {
+                // 수자원공사 수력은 일별 슬라이더 사용
+                playInterval = setInterval(() => {
+                    let current = parseInt(dailySlider.value);
+                    if (current >= parseInt(dailySlider.max)) {
+                        stopPlayback();
+                        return;
+                    } else {
+                        current++;
+                    }
+                    dailySlider.value = current;
+                    updateSliderProgress(dailySlider);
+                    updateChartWithSlider(current);
+                }, 500);
+            } else if (selectedType === 'nuclear' || (selectedType === 'hydro' && !isKwater)) {
                 playInterval = setInterval(() => {
                     let current = parseInt(yearSlider.value);
                     if (current >= parseInt(yearSlider.max)) {
-                        stopPlayback(); 
+                        stopPlayback();
                         return;
                     } else {
                         current++;
                     }
                     yearSlider.value = current;
                     updateSliderProgress(yearSlider);
-                    const years = fullChartData.map(d => d.year + '년');
                     updateChartWithSlider(current);
                 }, 500);
             } else {
                 playInterval = setInterval(() => {
                     let current = parseInt(timeSlider.value);
                     if (current >= 23) {
-                        stopPlayback(); 
+                        stopPlayback();
                         return;
                     } else {
                         current++;
