@@ -1088,40 +1088,6 @@ app.get('/api/khnp/realtime-json', async (req, res) => {
   }
 });
 
-console.log(`📍 API 엔드포인트:`);
-console.log(`   - GET  /api/plants                 (모든 발전소)`);
-console.log(`   - GET  /api/khnp/realtime          (한수원 실시간 데이터 - XML)`);
-console.log(`   - GET  /api/khnp/realtime-json     (한수원 실시간 데이터 - JSON)`);
-// server.js
-import express from 'express';
-import pg from 'pg';
-
-const app = express();
-const port = 3000;
-
-// JSON 요청 처리
-app.use(express.json());
-
-// PostgreSQL 연결
-const pool = new pg.Pool({
-  user: 'postgres',           // DB 계정
-  host: '116.122.157.223',           // DB 서버 주소
-  database: 'postgres',// DB 이름
-  password: '1',        // 여기에 PostgreSQL 비밀번호 입력
-  port: 5432,
-});
-
-// ===== DB 연결 테스트 =====
-app.get('/api/test-db', async (req, res) => {
-  try {
-    const result = await pool.query('SELECT NOW() as now');
-    res.json({ success: true, message: 'DB 연결 성공', time: result.rows[0].now });
-  } catch (err) {
-    console.error('❌ DB 연결 실패:', err);
-    res.status(500).json({ success: false, message: 'DB 연결 실패', error: err.message });
-  }
-});
-
 // ===== 절전 챌린지 데이터 조회 =====
 app.get('/api/challenge/:userId', async (req, res) => {
   const { userId } = req.params;
@@ -1230,9 +1196,4 @@ app.get('/api/challenge-stats/:userId', async (req, res) => {
     console.error('❌ 절전 챌린지 통계 조회 오류:', err);
     res.status(500).json({ success: false, message: 'DB 조회 실패', error: err.message });
   }
-});
-
-// 서버 시작
-app.listen(port, () => {
-  console.log(`Server running at http://localhost:${port}`);
 });

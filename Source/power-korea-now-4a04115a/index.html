@@ -198,6 +198,55 @@
             min-width: 200px;
             z-index: 1000;
         }
+        .power-ratio-card {
+            position: absolute;
+            top: 20px;
+            right: 15px;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            min-width: 280px;
+            z-index: 1000;
+        }
+        .ratio-title {
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        .ratio-chart-container {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            margin: 0 auto 15px;
+        }
+        .ratio-legend {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .ratio-legend-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 13px;
+        }
+        .ratio-legend-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .ratio-legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 3px;
+        }
+        .ratio-legend-value {
+            font-weight: bold;
+            min-width: 45px;
+            text-align: right;
+        }
         .stats-title {
             font-size: 1rem;
             font-weight: bold;
@@ -417,6 +466,52 @@
 
                     <div class="map-container" id="map">
                         <div class="loading-message" id="loadingMessage">데이터를 불러오는 중...</div>
+                        
+                        <!-- 발전량 비율 카드 -->
+                        <div class="power-ratio-card">
+                            <div class="ratio-title">⚡ 발전량 비율</div>
+                            <div class="ratio-chart-container">
+                                <canvas id="ratioChart"></canvas>
+                            </div>
+                            <div class="ratio-legend">
+                                <div class="ratio-legend-item">
+                                    <span class="ratio-legend-label">
+                                        <span class="ratio-legend-color" style="background: #00aaff;"></span>
+                                        💧 수력
+                                    </span>
+                                    <span class="ratio-legend-value" id="hydroRatio">0%</span>
+                                </div>
+                                <div class="ratio-legend-item">
+                                    <span class="ratio-legend-label">
+                                        <span class="ratio-legend-color" style="background: #ff3366;"></span>
+                                        ☢️ 원자력
+                                    </span>
+                                    <span class="ratio-legend-value" id="nuclearRatio">0%</span>
+                                </div>
+                                <div class="ratio-legend-item">
+                                    <span class="ratio-legend-label">
+                                        <span class="ratio-legend-color" style="background: #90ee90;"></span>
+                                        💨 풍력
+                                    </span>
+                                    <span class="ratio-legend-value" id="windRatio">0%</span>
+                                </div>
+                                <div class="ratio-legend-item">
+                                    <span class="ratio-legend-label">
+                                        <span class="ratio-legend-color" style="background: #ffd700;"></span>
+                                        ☀️ 태양광
+                                    </span>
+                                    <span class="ratio-legend-value" id="solarRatio">0%</span>
+                                </div>
+                                <div class="ratio-legend-item">
+                                    <span class="ratio-legend-label">
+                                        <span class="ratio-legend-color" style="background: #ff6347;"></span>
+                                        🔥 화력
+                                    </span>
+                                    <span class="ratio-legend-value" id="thermalRatio">0%</span>
+                                </div>
+                            </div>
+                        </div>
+                        
                         <div class="stats-card">
                             <div class="stats-title">발전소 현황</div>
                             <div class="stats-row">
@@ -469,6 +564,7 @@
         let alertAudio = null; // 오디오 객체
 
         let chartInstances = {}; // 차트 인스턴스 저장용
+        let ratioChart = null; // 비율 도넛 차트
         const colorMap = { 
             hydro: "#00aaff",
             nuclear: "#ff3366",
@@ -749,6 +845,9 @@
             try {
                 // 1️⃣ 발전소 데이터 로드
                 allPowerPlants = await fetchAllPlant();
+                
+                // 비율 도넛 차트 초기화
+                initRatioChart();
                 
                 // 2️⃣ 원자력 발전량 데이터 로드 (먼저 로드해야 팝업에 호기 정보가 있음)
                 console.log('\n⏳ 원자력 발전량 데이터 로드 중...');
@@ -1050,6 +1149,31 @@
             document.getElementById('solarPlants').textContent = `${solarCount}개`;
             document.getElementById('thermalPlants').textContent = `${thermalCount}개`;
             document.getElementById('totalPlants').textContent = `${allPowerPlants.length}개`;
+
+            // 비율 계산 및 업데이트
+            const total = allPowerPlants.length;
+            if (total > 0) {
+                const hydroRatio = ((hydroCount / total) * 100).toFixed(1);
+                const nuclearRatio = ((nuclearCount / total) * 100).toFixed(1);
+                const windRatio = ((windCount / total) * 100).toFixed(1);
+                const solarRatio = ((solarCount / total) * 100).toFixed(1);
+                const thermalRatio = ((thermalCount / total) * 100).toFixed(1);
+
+                document.getElementById('hydroRatio').textContent = `${hydroRatio}%`;
+                document.getElementById('nuclearRatio').textContent = `${nuclearRatio}%`;
+                document.getElementById('windRatio').textContent = `${windRatio}%`;
+                document.getElementById('solarRatio').textContent = `${solarRatio}%`;
+                document.getElementById('thermalRatio').textContent = `${thermalRatio}%`;
+
+                // 도넛 차트 업데이트
+                updateRatioChart([
+                    parseFloat(hydroRatio),
+                    parseFloat(nuclearRatio),
+                    parseFloat(windRatio),
+                    parseFloat(solarRatio),
+                    parseFloat(thermalRatio)
+                ]);
+            }
 
             // 각 발전소에 대해 마커 생성
             filteredPlants.forEach(plant => {
