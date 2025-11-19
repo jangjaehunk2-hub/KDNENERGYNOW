@@ -203,48 +203,48 @@
             top: 20px;
             right: 15px;
             background: white;
-            padding: 20px;
-            border-radius: 12px;
+            padding: 15px;
+            border-radius: 10px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-            min-width: 280px;
+            min-width: 220px;
             z-index: 1000;
         }
         .ratio-title {
-            font-size: 1.1rem;
+            font-size: 0.95rem;
             font-weight: bold;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
             text-align: center;
         }
         .ratio-chart-container {
             position: relative;
-            width: 200px;
-            height: 200px;
-            margin: 0 auto 15px;
+            width: 150px;
+            height: 150px;
+            margin: 0 auto 10px;
         }
         .ratio-legend {
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 6px;
         }
         .ratio-legend-item {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            font-size: 13px;
+            font-size: 11px;
         }
         .ratio-legend-label {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
         }
         .ratio-legend-color {
-            width: 16px;
-            height: 16px;
-            border-radius: 3px;
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
         }
         .ratio-legend-value {
             font-weight: bold;
-            min-width: 45px;
+            min-width: 38px;
             text-align: right;
         }
         .stats-title {
@@ -2069,6 +2069,54 @@
                 updateMarkers();
             });
         });
+
+        // ===== 비율 도넛 차트 초기화 =====
+        function initRatioChart() {
+            const ctx = document.getElementById('ratioChart').getContext('2d');
+            ratioChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['💧 수력', '☢️ 원자력', '💨 풍력', '☀️ 태양광', '🔥 화력'],
+                    datasets: [{
+                        data: [0, 0, 0, 0, 0],
+                        backgroundColor: [
+                            '#00aaff',  // 수력
+                            '#ff3366',  // 원자력
+                            '#90ee90',  // 풍력
+                            '#ffd700',  // 태양광
+                            '#ff6347'   // 화력
+                        ],
+                        borderWidth: 2,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.label + ': ' + context.parsed.toFixed(1) + '%';
+                                }
+                            }
+                        }
+                    },
+                    cutout: '65%'  // 도넛 구멍 크기
+                }
+            });
+        }
+
+        // ===== 비율 차트 업데이트 =====
+        function updateRatioChart(ratios) {
+            if (ratioChart) {
+                ratioChart.data.datasets[0].data = ratios;
+                ratioChart.update();
+            }
+        }
 
         // ===== 페이지 로드 시 실행 =====
         window.addEventListener('DOMContentLoaded', () => {
