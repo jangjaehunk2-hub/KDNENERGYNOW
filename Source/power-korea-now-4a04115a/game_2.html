@@ -489,7 +489,7 @@
     ];
 
     const QUESTIONS_PER_SESSION = 5;
-    const POINTS = { easy:10, normal:15, hard:20 };
+    const POINTS = { easy:2, normal:3, hard:5 };
 
     // 쿨다운 설정: 6시간
     const COOLDOWN_MS = 6 * 60 * 60 * 1000;
@@ -500,6 +500,8 @@
     let currentQuestions = [];
     let idx = 0;
     let score = 0;
+    let totalScore = 0;
+    let userId = null;
 
     const setupEl = document.getElementById('setup');
     const quizEl = document.getElementById('quiz');
@@ -515,6 +517,33 @@
     const startBtn = document.getElementById('startBtn');
     const diffBtns = document.querySelectorAll('.diff-btn');
     const remainingEl = document.getElementById('remaining');
+
+    // 로그인 체크 및 점수 로드
+    const isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
+    if (!isLoggedIn) {
+        alert('퀴즈를 이용하려면 먼저 로그인해야 합니다.');
+        window.location.href = 'login.html';
+    } else {
+        // sessionStorage에서 사용자 정보 가져오기
+        const userStr = sessionStorage.getItem('user');
+        if (userStr) {
+            const user = JSON.parse(userStr);
+            userId = user.user_id;
+        }
+        
+        if (userId) {
+            fetch(`http://localhost:3000/get-score?user_id=${userId}`)
+              .then(res => res.json())
+              .then(data => {
+                  totalScore = data.score || 0;
+                  console.log('현재 누적 점수:', totalScore);
+              })
+              .catch(err => {
+                  console.error('점수 로드 실패:', err);
+                  totalScore = 0;
+              });
+        }
+    }
 
     function shuffleArray(a) {
       for (let i = a.length - 1; i > 0; i--) {
@@ -618,6 +647,25 @@
         feedbackEl.textContent = '✅ 정답입니다!';
         score += POINTS_PER_CORRECT;
         scoreEl.textContent = score;
+        
+        // 서버로 점수 전송
+        if (userId) {
+          fetch('http://localhost:3000/update-score', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user_id: userId, score: POINTS_PER_CORRECT })
+          })
+          .then(res => res.json())
+          .then(data => {
+            if(data.success){
+              totalScore = data.newScore;
+              console.log('점수 업데이트 완료, 누적:', totalScore);
+            }
+          })
+          .catch(err => {
+            console.error('점수 업데이트 실패:', err);
+          });
+        }
       } else {
         feedbackEl.className = 'result wrong';
         feedbackEl.textContent = '❌ 오답입니다';

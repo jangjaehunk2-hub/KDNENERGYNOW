@@ -548,6 +548,14 @@
                 
                 console.log('✅ 발전소 데이터:', data.length + '개');
                 
+                // ✅ 발전소 유형별 개수 확인
+                const typeCounts = {};
+                data.forEach(plant => {
+                    const type = plant.plant_type || 'unknown';
+                    typeCounts[type] = (typeCounts[type] || 0) + 1;
+                });
+                console.log('📊 발전소 유형별 원본 데이터:', typeCounts);
+                
                 return data.map((plant, index) => {
                     const plantType = plant.plant_type || '알 수 없음';
                     
@@ -630,6 +638,7 @@
             const json = await response.json();
             thermalPowerData = json.data;
             console.log("🔥 화력 발전량 데이터 로드 완료");
+            console.log("🔥 화력 호기 목록:", Object.keys(thermalPowerData));
         }
 
         async function loadSolarPowerData() {
@@ -650,12 +659,16 @@
             const response = await fetch('http://localhost:3000/api/hydro/daily-power');
             const json = await response.json();
             hydroPowerData = json.data;
-            console.log("💧 수력 발전량 데이터 로드 완료");
+            console.log("💧 수력 발전량 데이터 로드 완료 (수자원공사)");
+            console.log("   - 발전소 목록:", Object.keys(hydroPowerData));
+            console.log("   - 첫 번째 발전소 데이터 샘플:", Object.keys(hydroPowerData[Object.keys(hydroPowerData)[0]] || {}).slice(0, 5));
 
             const khnpResponse = await fetch('http://localhost:3000/api/hydro/khnp-yearly');
             const khnpJson = await khnpResponse.json();
             hydroKHNPData = khnpJson.data;
-            console.log("💧 수력 발전량 데이터 (한수원) 로드 완료");
+            console.log("💧 수력 발전량 데이터 로드 완료 (한수원)");
+            console.log("   - 발전소 목록:", Object.keys(hydroKHNPData));
+            console.log("   - 첫 번째 발전소 데이터:", hydroKHNPData[Object.keys(hydroKHNPData)[0]]);
         }
 
         async function loadAllPlants() {
@@ -673,6 +686,15 @@
             ]);
             
             console.log('✅ 모든 데이터 로드 완료');
+            
+            // ✅ 최종 발전소 유형별 개수 확인
+            const finalTypeCounts = {};
+            allPowerPlants.forEach(plant => {
+                const type = plant.type || 'unknown';
+                finalTypeCounts[type] = (finalTypeCounts[type] || 0) + 1;
+            });
+            console.log('🏭 최종 발전소 분류:', finalTypeCounts);
+            console.log('🔥 화력 발전소 목록:', allPowerPlants.filter(p => p.type === 'thermal').map(p => `${p.name} (${p.latitude}, ${p.longitude})`));
         }
 
         function createChart(canvasId, data, plantName) {
@@ -969,11 +991,17 @@
                 plantSelectorGroup.classList.remove('hidden');
                 unitSelectorGroup.classList.remove('hidden');
             } else if (selectedType === 'thermal') {
+                // ✅ 화력 발전소를 /api/plants에서 가져오기
+                const thermalPlants = allPowerPlants.filter(p => p.type === 'thermal');
+                console.log(`🔥 화력 발전소 ${thermalPlants.length}개 발견:`, thermalPlants.map(p => p.name));
+                
+                // 호기명을 unitSelector에 추가 (기존 방식 유지)
                 const units = Object.keys(thermalPowerData);
                 units.forEach(unit => {
                     const option = document.createElement('option');
                     option.value = unit;
                     option.textContent = unit;
+                    option.setAttribute('data-plant-count', thermalPlants.length); // 발전소 개수 저장
                     unitSelector.appendChild(option);
                 });
                 unitSelectorGroup.classList.remove('hidden');
@@ -1067,12 +1095,31 @@
                 const selectedPlant = plantSelector.value;
                 loadNuclearData(selectedPlant, selectedUnit);
             } else if (selectedType === 'thermal') {
-                // ⭐ 이 부분 수정
-                const plantName = selectedUnit.split('#')[0]; // 호기명에서 발전소명 추출
-                const plant = allPowerPlants.find(p => p.name === plantName || p.name.includes(plantName));
-                if (plant) {
+                // ✅ /api/plants에서 화력 발전소 찾기
+                const thermalPlants = allPowerPlants.filter(p => p.type === 'thermal');
+                
+                if (thermalPlants.length > 0) {
+                    // 첫 번째 화력 발전소 사용 (분당화력)
+                    const plant = thermalPlants[0];
                     currentPlantInfo = plant;
                     initMap(plant);
+                    console.log(`✅ 화력 발전소 지도 표시: ${plant.name} (호기: ${selectedUnit})`);
+                } else {
+                    console.warn(`⚠️ /api/plants에서 화력 발전소를 찾을 수 없음`);
+                    
+                    // 대체: 임시 발전소 정보 생성
+                    const tempPlant = {
+                        name: '분당화력',
+                        type: 'thermal',
+                        latitude: 37.3544,
+                        longitude: 127.1236,
+                        plant_name: '분당화력',
+                        operator: '한국남동발전',
+                        location: '경기도 성남시'
+                    };
+                    currentPlantInfo = tempPlant;
+                    initMap(tempPlant);
+                    console.log(`⚠️ 임시 위치 정보 사용: ${tempPlant.name}`);
                 }
                 
                 dateSelector.innerHTML = '<option value="">일자 선택</option>';
@@ -1302,7 +1349,12 @@
             const isKwater = currentPlantInfo && (currentPlantInfo.operator.includes('한국수자원공사') || currentPlantInfo.operator.includes('K-water'));
             const isKHNP = currentPlantInfo && (currentPlantInfo.operator.includes('한국수력원자력') || currentPlantInfo.operator.includes('한수원'));
             
+            console.log(`💧 수력 데이터 로드: ${plantName}`);
+            console.log(`   - 수자원공사: ${isKwater}`);
+            console.log(`   - 한수원: ${isKHNP}`);
+            
             if ((isKwater && !hydroPowerData[plantName]) || (isKHNP && !hydroKHNPData[plantName])) {
+                console.error(`❌ 발전량 데이터 없음: ${plantName}`);
                 if (currentChart) {
                     currentChart.destroy();
                     currentChart = null;
@@ -1324,7 +1376,11 @@
             const timeMarkers = document.getElementById('timeMarkers');
 
             if (isKwater && hydroPowerData[plantName]) {
+                console.log(`✅ 수자원공사 데이터 처리 시작`);
                 const damData = hydroPowerData[plantName];
+                console.log(`   - 데이터 개수: ${Object.keys(damData).length}일`);
+                
+                // ✅ 일별 데이터를 연도별로 집계
                 const chartData = Object.entries(damData)
                     .sort(([a], [b]) => new Date(a) - new Date(b))
                     .map(([date, value]) => ({
@@ -1344,6 +1400,9 @@
                     .sort(([a], [b]) => Number(a) - Number(b))
                     .map(([year, value]) => ({ year: Number(year), value }));
                 
+                console.log(`   - 연도별 집계 완료: ${fullChartData.length}년`);
+                console.log(`   - 연도 범위: ${fullChartData[0]?.year} ~ ${fullChartData[fullChartData.length - 1]?.year}`);
+                
                 const years = fullChartData.map(d => d.year + '년');
                 
                 yearSlider.max = fullChartData.length - 1;
@@ -1351,13 +1410,15 @@
                 yearSlider.disabled = false;
                 playButton.disabled = false;
 
+                // ✅ yearSlider 표시
                 document.getElementById('yearSlider').style.display = 'block';
                 if (yearMarkers) yearMarkers.style.display = 'block';
 
                 timeSliderContainer.classList.add('hidden');
+                dailySliderContainer.classList.add('hidden');
                 
-                yearMarkers.innerHTML = ''; // 기존 마커 제거            
-                timeMarkers.innerHTML = ''; // 기존 마커 제거                
+                yearMarkers.innerHTML = '';
+                timeMarkers.innerHTML = '';
 
                 const totalYears = years.length;
                 const step = Math.ceil(totalYears / 10);
@@ -1374,14 +1435,15 @@
                     yearMarkers.appendChild(marker);
                 }
                 
-                timeSliderContainer.classList.add('hidden');
-                
+                console.log(`✅ 차트 생성: ${plantName} (${fullChartData.length}개 데이터)`);
                 createChart('powerChart', fullChartData, plantName);
                 updateChartWithSlider(0);
                 updateSliderProgress(yearSlider);
                 
             } else if (isKHNP && hydroKHNPData[plantName]) {
+                console.log(`✅ 한수원 데이터 처리 시작`);
                 fullChartData = hydroKHNPData[plantName];
+                console.log(`   - 데이터 개수: ${fullChartData.length}년`);
                 
                 const years = fullChartData.map(d => d.year + '년');
                 
@@ -1389,9 +1451,16 @@
                 yearSlider.value = 0;
                 yearSlider.disabled = false;
                 playButton.disabled = false;
+
+                // ✅ yearSlider 표시
+                document.getElementById('yearSlider').style.display = 'block';
+                if (yearMarkers) yearMarkers.style.display = 'block';
+
+                timeSliderContainer.classList.add('hidden');
+                dailySliderContainer.classList.add('hidden');
                 
-                yearMarkers.innerHTML = ''; // 기존 마커 제거            
-                timeMarkers.innerHTML = ''; // 기존 마커 제거
+                yearMarkers.innerHTML = '';
+                timeMarkers.innerHTML = '';
 
                 const totalYears = years.length;
                 const step = Math.ceil(totalYears / 10);
@@ -1408,8 +1477,7 @@
                     yearMarkers.appendChild(marker);
                 }
                 
-                timeSliderContainer.classList.add('hidden');
-                
+                console.log(`✅ 차트 생성: ${plantName} (${fullChartData.length}개 데이터)`);
                 createChart('powerChart', fullChartData, plantName);
                 updateChartWithSlider(0);
                 updateSliderProgress(yearSlider);
@@ -1515,6 +1583,16 @@
         window.dispatchEvent(new Event('scroll'));
 
         loadAllPlants();
+
+        // 게임 버튼 클릭 시 로그인 체크
+        document.querySelector('.sidebar-button[data-tab="game"]')?.addEventListener('click', (e) => {
+            const isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
+            if(!isLoggedIn){
+                e.preventDefault();
+                alert('게임을 이용하려면 먼저 로그인해야 합니다.');
+                window.location.href = 'login.html';
+            }
+        });
     </script>
 </body>
 </html>

@@ -47,56 +47,403 @@
             font-size: 14px;
         }
     * { margin:0; padding:0; box-sizing:border-box; }
-    body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif; padding:24px; background:#f7f9fc; color:#111; margin-left:140px; }
-    .container { max-width:900px; margin:0 auto; }
-    h1 { margin-bottom:24px; font-size:24px; text-align:center; }
-    .header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:12px; }
-    .nav-btn { padding:8px 12px; border:1px solid #d6dde6; background:#fff; border-radius:6px; cursor:pointer; }
-    .nav-btn:hover { background:#f2f6fb; }
-    .month-year { font-size:18px; font-weight:600; }
-    .calendar { display:grid; grid-template-columns:repeat(7,1fr); gap:8px; margin-bottom:24px; }
-    .weekday { text-align:center; font-weight:600; color:#666; padding:12px 0; font-size:13px; }
-    .day { background:#fff; border:1px solid #d6dde6; border-radius:8px; padding:12px; min-height:100px; cursor:pointer; position:relative; transition:all 0.2s; }
-    .day:hover { border-color:#0366d6; box-shadow:0 2px 8px rgba(3,102,214,0.1); }
-    .day.other-month { background:#f7f9fc; color:#999; }
-    .day.today { background:#e6f2ff; border-color:#0366d6; }
-    .day.selected { background:#0366d6; color:#fff; }
-    .day-num { font-weight:600; margin-bottom:4px; }
-    .day-badges { display:flex; gap:4px; flex-wrap:wrap; }
-    .badge { display:inline-block; width:20px; height:20px; border-radius:50%; font-size:10px; line-height:20px; text-align:center; font-weight:600; }
-    .badge.air { background:#4CAF50; color:#fff; title: "에어컨"; }
-    .badge.off { background:#2196F3; color:#fff; title: "전등"; }
-    .badge.power { background:#FF9800; color:#fff; title: "대기전력"; }
-    .badge.efficiency { background:#9C27B0; color:#fff; title: "효율"; }
-    .detail-panel { background:#fff; border:1px solid #d6dde6; border-radius:8px; padding:20px; }
-    .detail-title { font-size:16px; font-weight:600; margin-bottom:12px; }
-    .detail-date { color:#666; font-size:13px; margin-bottom:16px; }
-    .task { background:#f7f9fc; border-left:3px solid #0366d6; padding:12px; margin-bottom:12px; border-radius:4px; }
-    .task-name { font-weight:600; margin-bottom:4px; }
-    .task.completed { opacity:0.8; background:#e6fbef; }
-    .task.completed .task-name { text-decoration:line-through; }
-    .read-only { color:#999; font-size:13px; margin-top:8px; }
-    .btn { padding:8px 12px; background:#0366d6; color:#fff; border:none; border-radius:6px; cursor:pointer; font-size:13px; }
-    .btn:hover { background:#024a9a; }
-    .btn.secondary { background:#6c757d; }
-    .btn.secondary:hover { background:#545b62; }
+    body { 
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif; 
+      padding:24px; 
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color:#111; 
+      margin-left:140px; 
+      min-height: 100vh;
+    }
+    .container { max-width:1100px; margin:0 auto; }
+    h1 { 
+      margin-bottom:24px; 
+      font-size:32px; 
+      text-align:center; 
+      color: white;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+      font-weight: 700;
+    }
+    .header { 
+      display:flex; 
+      justify-content:space-between; 
+      align-items:center; 
+      margin-bottom:24px; 
+      flex-wrap:wrap; 
+      gap:12px; 
+      background: white;
+      padding: 16px 24px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .nav-btn { 
+      padding:10px 16px; 
+      border:none; 
+      background:#667eea; 
+      color: white;
+      border-radius:8px; 
+      cursor:pointer; 
+      font-weight: 600;
+      transition: all 0.3s;
+    }
+    .nav-btn:hover { 
+      background:#5568d3; 
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(102,126,234,0.4);
+    }
+    .month-year { font-size:22px; font-weight:700; color:#333; }
+    .calendar { 
+      display:grid; 
+      grid-template-columns:repeat(7,1fr); 
+      gap:12px; 
+      margin-bottom:24px; 
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .weekday { 
+      text-align:center; 
+      font-weight:700; 
+      color:#667eea; 
+      padding:16px 0; 
+      font-size:14px; 
+      text-transform: uppercase;
+    }
+    .day { 
+      background:#fff; 
+      border:2px solid #e5e7eb; 
+      border-radius:12px; 
+      padding:10px; 
+      min-height:110px; 
+      cursor:pointer; 
+      position:relative; 
+      transition:all 0.3s;
+      display: flex;
+      flex-direction: column;
+    }
+    .day:hover { 
+      border-color:#667eea; 
+      box-shadow:0 6px 16px rgba(102,126,234,0.2);
+      transform: translateY(-4px);
+    }
+    .day.other-month { background:#f9fafb; color:#9ca3af; opacity: 0.6; }
+    .day.today { 
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-color:#667eea; 
+      color: white;
+    }
+    .day.today .day-num { color: white; }
+    .day.selected { background:#f0f4ff; border-color:#667eea; }
+    .day-num { 
+      font-weight:700; 
+      margin-bottom:8px; 
+      font-size: 16px;
+      color: #333;
+    }
+    .day-badges { 
+      display:flex; 
+      gap:5px; 
+      flex-wrap:wrap; 
+      margin-top: auto;
+      justify-content: center;
+    }
+    .badge { 
+      display:inline-block; 
+      width:12px; 
+      height:12px; 
+      border-radius:50%; 
+      border: 2px solid white;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .badge.air { background:#10b981; }
+    .badge.off { background:#3b82f6; }
+    .badge.power { background:#f59e0b; }
+    .badge.efficiency { background:#8b5cf6; }
+    .day-kwh {
+      font-size: 10px;
+      color: #667eea;
+      font-weight: 600;
+      text-align: center;
+      margin-top: 4px;
+    }
+    .day.today .day-kwh {
+      color: white;
+    }
+    .btn { 
+      padding:10px 16px; 
+      background:#667eea; 
+      color:#fff; 
+      border:none; 
+      border-radius:8px; 
+      cursor:pointer; 
+      font-size:14px; 
+      font-weight: 600;
+      transition: all 0.3s;
+    }
+    .btn:hover { 
+      background:#5568d3; 
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(102,126,234,0.4);
+    }
+    .btn.secondary { background:#6b7280; }
+    .btn.secondary:hover { background:#4b5563; }
     .btn:disabled { opacity:0.5; cursor:not-allowed; }
-    .today-btn { padding:8px 12px; background:#0366d6; color:#fff; border:none; border-radius:6px; cursor:pointer; }
-    .today-btn:hover { background:#024a9a; }
-    .modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); align-items:center; justify-content:center; z-index:2000; }
+    .today-btn { 
+      padding:10px 16px; 
+      background:#10b981; 
+      color:#fff; 
+      border:none; 
+      border-radius:8px; 
+      cursor:pointer; 
+      font-weight: 600;
+      transition: all 0.3s;
+    }
+    .today-btn:hover { 
+      background:#059669; 
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(16,185,129,0.4);
+    }
+    .modal { 
+      display:none; 
+      position:fixed; 
+      top:0; 
+      left:0; 
+      width:100%; 
+      height:100%; 
+      background:rgba(0,0,0,0.6); 
+      backdrop-filter: blur(4px);
+      align-items:center; 
+      justify-content:center; 
+      z-index:2000; 
+    }
     .modal.active { display:flex; }
-    .modal-content { background:#fff; border-radius:8px; padding:24px; max-width:600px; width:90%; max-height:80vh; overflow-y:auto; }
-    .modal-header { font-size:18px; font-weight:600; margin-bottom:16px; }
-    .modal-body { margin-bottom:16px; }
-    .modal-footer { display:flex; gap:8px; justify-content:flex-end; }
-    .stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin-bottom:20px; }
-    .stat-card { background:#f7f9fc; border:1px solid #d6dde6; border-radius:8px; padding:12px; text-align:center; }
-    .stat-num { font-size:24px; font-weight:600; color:#0366d6; }
-    .stat-label { font-size:12px; color:#666; margin-top:4px; }
-    .method-energy { font-size:11px; background:#fff3cd; color:#856404; padding:8px; border-radius:4px; margin-bottom:12px; }
-    .user-info { padding:12px; background:#f7f9fc; border-radius:6px; margin-bottom:16px; font-size:13px; }
+    .modal-content { 
+      background:#fff; 
+      border-radius:16px; 
+      padding:32px; 
+      max-width:600px; 
+      width:90%; 
+      max-height:80vh; 
+      overflow-y:auto; 
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    .modal-header { 
+      font-size:24px; 
+      font-weight:700; 
+      margin-bottom:20px; 
+      color:#667eea;
+    }
+    .modal-body { margin-bottom:20px; }
+    .modal-footer { display:flex; gap:10px; justify-content:flex-end; }
+    .stats { 
+      display:grid; 
+      grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); 
+      gap:16px; 
+      margin-bottom:24px; 
+    }
+    .stat-card { 
+      background: white;
+      border:none;
+      border-radius:12px; 
+      padding:20px; 
+      text-align:center; 
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      transition: all 0.3s;
+    }
+    .stat-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 6px 16px rgba(102,126,234,0.2);
+    }
+    .stat-num { 
+      font-size:36px; 
+      font-weight:700; 
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .stat-label { 
+      font-size:13px; 
+      color:#6b7280; 
+      margin-top:8px; 
+      font-weight: 600;
+    }
+    .method-energy { 
+      font-size:12px; 
+      background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+      color:#92400e; 
+      padding:12px; 
+      border-radius:8px; 
+      margin-bottom:16px; 
+      font-weight: 600;
+    }
+    .user-info { 
+      padding:16px; 
+      background: white;
+      border-radius:12px; 
+      margin-bottom:20px; 
+      font-size:14px; 
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      font-weight: 600;
+      color: #333;
+    }
+    .info-bar {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      justify-content: space-between;
+      background: white;
+      padding: 16px 24px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .info-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #333;
+    }
+    .info-value {
+      font-size: 20px;
+      font-weight: 700;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .detail-panel {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+      display: none;
+    }
+    .detail-panel.active {
+      display: block;
+      animation: slideDown 0.3s ease;
+    }
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    .detail-header {
+      font-size: 20px;
+      font-weight: 700;
+      color: #667eea;
+      margin-bottom: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .close-detail {
+      background: #f3f4f6;
+      border: none;
+      border-radius: 6px;
+      padding: 6px 12px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      color: #6b7280;
+      transition: all 0.3s;
+    }
+    .close-detail:hover {
+      background: #e5e7eb;
+      color: #374151;
+    }
+    .detail-date {
+      font-size: 16px;
+      color: #6b7280;
+      margin-bottom: 16px;
+      font-weight: 600;
+    }
+    .detail-content {
+      display: grid;
+      gap: 12px;
+    }
+    .detail-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      background: #f9fafb;
+      border-radius: 8px;
+      border-left: 4px solid #667eea;
+    }
+    .detail-item.completed {
+      background: #ecfdf5;
+      border-left-color: #10b981;
+    }
+    .detail-item-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+    .detail-item-text {
+      flex: 1;
+      font-size: 14px;
+      font-weight: 600;
+      color: #374151;
+    }
+    .detail-kwh-box {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 16px;
+      border-radius: 8px;
+      text-align: center;
+      margin-top: 12px;
+    }
+    .detail-kwh-label {
+      font-size: 12px;
+      opacity: 0.9;
+      margin-bottom: 4px;
+    }
+    .detail-kwh-value {
+      font-size: 28px;
+      font-weight: 700;
+    }
     .loading { text-align:center; color:#666; padding:20px; }
-    .error { background:#ffebee; color:#c62828; padding:12px; border-radius:6px; margin-bottom:12px; }
+    .error { background:#fee2e2; color:#991b1b; padding:12px; border-radius:8px; margin-bottom:12px; }
+    .challenge-legend {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      margin-bottom: 20px;
+      background: white;
+      padding: 16px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: #4b5563;
+      font-weight: 600;
+    }
+    .legend-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      border: 2px solid white;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
   </style>
 </head>
 <body>
@@ -124,29 +471,75 @@
       </button>
   </aside>
   <div class="container">
-    <h1>절전 챌린지 달력</h1>
+    <h1>🌱 절전 챌린지 달력</h1>
     
-    <div id="userSection" class="user-info" style="display:none;">
-      사용자: <strong id="userName"></strong>
+    <!-- 사용자 정보 + 통계 한 줄로 표시 -->
+    <div class="info-bar" id="infoBar" style="display:none;">
+      <div class="info-item">
+        <span>👤</span>
+        <span id="userName"></span>
+      </div>
+      <div class="info-item">
+        <span>⚡</span>
+        <span>총 절감량:</span>
+        <span class="info-value" id="totalKwhValue">0.00 kWh</span>
+      </div>
+      <div class="info-item">
+        <span>🟢</span>
+        <span id="airCount">0</span>
+      </div>
+      <div class="info-item">
+        <span>🔵</span>
+        <span id="offCount">0</span>
+      </div>
+      <div class="info-item">
+        <span>🟠</span>
+        <span id="powerCount">0</span>
+      </div>
+      <div class="info-item">
+        <span>🟣</span>
+        <span id="efficiencyCount">0</span>
+      </div>
+    </div>
+
+    <div class="challenge-legend">
+      <div class="legend-item">
+        <div class="legend-dot" style="background:#10b981;"></div>
+        <span>에어컨 조절</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background:#3b82f6;"></div>
+        <span>전등 끄기</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background:#f59e0b;"></div>
+        <span>대기전력 제거</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background:#8b5cf6;"></div>
+        <span>효율 가전</span>
+      </div>
     </div>
 
     <div class="header">
-      <button class="nav-btn" id="prevMonth">이전</button>
+      <button class="nav-btn" id="prevMonth">◀ 이전</button>
       <div class="month-year" id="monthYear"></div>
-      <button class="nav-btn" id="nextMonth">다음 ></button>
-      <button class="today-btn" id="todayBtn">오늘</button>
-      <button class="btn" id="openChallengeBtn">절전 챌린지 시작</button>
+      <button class="nav-btn" id="nextMonth">다음 ▶</button>
+      <button class="today-btn" id="todayBtn">📅 오늘</button>
+      <button class="btn" id="openChallengeBtn">✨ 절전 챌린지 시작</button>
     </div>
 
-    <div class="stats" id="statsContainer"></div>
+    <!-- 상세 정보 패널 -->
+    <div class="detail-panel" id="detailPanel">
+      <div class="detail-header">
+        <span id="detailTitle">날짜 정보</span>
+        <button class="close-detail" id="closeDetail">✕ 닫기</button>
+      </div>
+      <div class="detail-date" id="detailDate"></div>
+      <div class="detail-content" id="detailContent"></div>
+    </div>
 
     <div class="calendar" id="calendar"></div>
-
-    <div class="detail-panel">
-      <div class="detail-title">선택된 날짜</div>
-      <div class="detail-date" id="selectedDate">날짜를 선택하세요</div>
-      <div id="tasksContainer"></div>
-    </div>
   </div>
 
   <!-- 절전 챌린지 모달 -->
@@ -182,23 +575,47 @@
     let selectedDate = null;
     let currentUser = null;
 
-    // 로그인 사용자 확인
+    // sessionStorage 또는 localStorage에서 사용자 정보 불러오기
     function initUser() {
-      const user = JSON.parse(sessionStorage.getItem('user') || localStorage.getItem('user'));
-      if (!user) {
-        alert('로그인이 필요합니다.');
+      try {
+        // sessionStorage에서 먼저 확인
+        const sessionData = sessionStorage.getItem('user');
+        if (sessionData) {
+          currentUser = JSON.parse(sessionData);
+          console.log('✅ sessionStorage에서 사용자 로드:', currentUser);
+        } else {
+          // localStorage에서 확인
+          const localData = localStorage.getItem('user');
+          if (localData) {
+            currentUser = JSON.parse(localData);
+            console.log('✅ localStorage에서 사용자 로드:', currentUser);
+          }
+        }
+
+        // user_id 검증
+        if (!currentUser || !currentUser.user_id) {
+          alert('⚠️ 로그인 정보를 찾을 수 없습니다.\n로그인 페이지로 이동합니다.');
+          console.error('❌ user_id 없음');
+          window.location.href = 'login.html';
+          return;
+        }
+
+        // 사용자 정보 표시
+        document.getElementById('userName').textContent = currentUser.nick_name || currentUser.user_id;
+        document.getElementById('infoBar').style.display = 'flex';
+        console.log('✅ 사용자 인증 완료:', currentUser.user_id);
+
+      } catch (err) {
+        console.error('❌ 사용자 정보 로드 오류:', err);
+        alert('⚠️ 사용자 정보를 불러오는 중 오류가 발생했습니다.\n로그인 페이지로 이동합니다.');
         window.location.href = 'login.html';
-        return;
       }
-      currentUser = user;
-      document.getElementById('userName').textContent = user.nick_name || user.user_id;
-      document.getElementById('userSection').style.display = 'block';
     }
 
     // API 함수들
     async function fetchChallengeData(userId) {
       try {
-        const res = await fetch(`/api/challenge/${userId}`);
+        const res = await fetch(`http://localhost:3000/api/challenge/${userId}`);
         if (!res.ok) throw new Error('데이터 조회 실패');
         const json = await res.json();
         return json.data || [];
@@ -210,12 +627,17 @@
 
     async function saveChallengeData(challengeData) {
       try {
-        const res = await fetch('/api/challenge', {
+        console.log('📤 저장 요청 데이터:', challengeData);
+        const res = await fetch('http://localhost:3000/api/challenge', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(challengeData)
         });
-        if (!res.ok) throw new Error('데이터 저장 실패');
+        if (!res.ok) {
+          const errorText = await res.text();
+          console.error('❌ 서버 응답 오류:', errorText);
+          throw new Error('데이터 저장 실패');
+        }
         const json = await res.json();
         return json;
       } catch (err) {
@@ -227,7 +649,7 @@
 
     async function deleteChallengeData(userId, date) {
       try {
-        const res = await fetch(`/api/challenge/${userId}/${date}`, {
+        const res = await fetch(`http://localhost:3000/api/challenge/${userId}/${date}`, {
           method: 'DELETE'
         });
         if (!res.ok) throw new Error('데이터 삭제 실패');
@@ -241,7 +663,7 @@
 
     async function fetchStats(userId) {
       try {
-        const res = await fetch(`/api/challenge-stats/${userId}`);
+        const res = await fetch(`http://localhost:3000/api/challenge-stats/${userId}`);
         if (!res.ok) throw new Error('통계 조회 실패');
         const json = await res.json();
         return json.data || {};
@@ -291,50 +713,27 @@
 
     function renderStats() {
       const stats = {
-        totalDays: 0,
+        totalKwh: 0,
         airCount: 0,
         offCount: 0,
         powerCount: 0,
-        efficiencyCount: 0,
-        totalKwh: 0
+        efficiencyCount: 0
       };
 
       Object.values(challengeData).forEach(day => {
-        stats.totalDays++;
+        stats.totalKwh += Number(day.saveKwh) || 0;
         if (day.stamps.air) stats.airCount++;
         if (day.stamps.off) stats.offCount++;
         if (day.stamps.power) stats.powerCount++;
         if (day.stamps.efficiency) stats.efficiencyCount++;
-        stats.totalKwh += day.saveKwh;
       });
 
-      const statsEl = document.getElementById('statsContainer');
-      statsEl.innerHTML = `
-        <div class="stat-card">
-          <div class="stat-num">${stats.totalDays}</div>
-          <div class="stat-label">실천한 날</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-num">${stats.airCount}</div>
-          <div class="stat-label">에어컨 조절</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-num">${stats.offCount}</div>
-          <div class="stat-label">전등 끄기</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-num">${stats.powerCount}</div>
-          <div class="stat-label">대기전력</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-num">${stats.efficiencyCount}</div>
-          <div class="stat-label">효율 가전</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-num">${stats.totalKwh.toFixed(2)}</div>
-          <div class="stat-label">총 절감 (kWh)</div>
-        </div>
-      `;
+      // info-bar 업데이트
+      document.getElementById('totalKwhValue').textContent = `${stats.totalKwh.toFixed(2)} kWh`;
+      document.getElementById('airCount').textContent = stats.airCount;
+      document.getElementById('offCount').textContent = stats.offCount;
+      document.getElementById('powerCount').textContent = stats.powerCount;
+      document.getElementById('efficiencyCount').textContent = stats.efficiencyCount;
     }
 
     function renderCalendar() {
@@ -375,7 +774,9 @@
         if (dateKey === today) {
           dayEl.classList.add('today');
         }
-
+        if (selectedDate && dateKey === getDateKey(selectedDate)) {
+          dayEl.classList.add('selected');
+        }
         const dayNumEl = document.createElement('div');
         dayNumEl.className = 'day-num';
         dayNumEl.textContent = date.getDate();
@@ -388,95 +789,141 @@
           if (dayData.stamps.air) {
             const badge = document.createElement('div');
             badge.className = 'badge air';
-            badge.textContent = '냉';
+            badge.title = '에어컨 온도 조절';
             badgesEl.appendChild(badge);
           }
           if (dayData.stamps.off) {
             const badge = document.createElement('div');
             badge.className = 'badge off';
-            badge.textContent = '전';
+            badge.title = '불필요한 전등 끄기';
             badgesEl.appendChild(badge);
           }
           if (dayData.stamps.power) {
             const badge = document.createElement('div');
             badge.className = 'badge power';
-            badge.textContent = '대';
+            badge.title = '대기전력 제거';
             badgesEl.appendChild(badge);
           }
           if (dayData.stamps.efficiency) {
             const badge = document.createElement('div');
             badge.className = 'badge efficiency';
-            badge.textContent = '효';
+            badge.title = '에너지 효율 가전 사용';
             badgesEl.appendChild(badge);
+          }
+          
+          // kWh 표시 추가
+          if (dayData.saveKwh > 0) {
+            const kwhEl = document.createElement('div');
+            kwhEl.className = 'day-kwh';
+            kwhEl.textContent = `${dayData.saveKwh.toFixed(1)}kWh`;
+            dayEl.appendChild(kwhEl);
           }
         }
         dayEl.appendChild(badgesEl);
 
-        dayEl.addEventListener('click', () => selectDate(new Date(date)));
+        dayEl.addEventListener('click', () => {
+          selectDate(new Date(date));
+          showDateDetail(dateKey);
+        });
 
         calendarEl.appendChild(dayEl);
         date.setDate(date.getDate() + 1);
       }
-
-      updateDetailPanel();
     }
 
     function selectDate(date) {
       selectedDate = new Date(date);
       renderCalendar();
-      updateDetailPanel();
     }
 
-    function updateDetailPanel() {
-      const dateEl = document.getElementById('selectedDate');
-      const tasksEl = document.getElementById('tasksContainer');
-      tasksEl.innerHTML = '';
-
-      if (!selectedDate) {
-        dateEl.textContent = '날짜를 선택하세요';
-        return;
-      }
-
-      const dateKey = getDateKey(selectedDate);
+    function showDateDetail(dateKey) {
       const dayData = challengeData[dateKey];
-      const today = getTodayKey();
-      const isToday = dateKey === today;
+      const dateObj = new Date(dateKey);
+      const year = dateObj.getFullYear();
+      const month = dateObj.getMonth() + 1;
+      const day = dateObj.getDate();
+      const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
+      const weekday = weekdays[dateObj.getDay()];
 
-      const y = selectedDate.getFullYear();
-      const m = selectedDate.getMonth() + 1;
-      const d = selectedDate.getDate();
-      dateEl.textContent = `${y}년 ${m}월 ${d}일 ${['일', '월', '화', '수', '목', '금', '토'][selectedDate.getDay()]}요일`;
+      document.getElementById('detailTitle').textContent = '📋 상세 정보';
+      document.getElementById('detailDate').textContent = `${year}년 ${month}월 ${day}일 (${weekday})`;
 
-      const taskEl = document.createElement('div');
-      taskEl.className = 'task' + (dayData ? ' completed' : '');
+      const detailContent = document.getElementById('detailContent');
       
-      let content = '<div class="task-name">절전 챌린지</div>';
-      
-      if (dayData) {
-        const methods = [];
-        if (dayData.stamps.air) methods.push('에어컨 조절');
-        if (dayData.stamps.off) methods.push('전등 끄기');
-        if (dayData.stamps.power) methods.push('대기전력 제거');
-        if (dayData.stamps.efficiency) methods.push('효율 가전');
+      if (!dayData || (!dayData.stamps.air && !dayData.stamps.off && !dayData.stamps.power && !dayData.stamps.efficiency && dayData.saveKwh === 0)) {
+        detailContent.innerHTML = `
+          <div style="text-align: center; padding: 40px; color: #9ca3af;">
+            <div style="font-size: 48px; margin-bottom: 12px;">📅</div>
+            <div style="font-size: 16px; font-weight: 600;">이 날짜에는 챌린지 기록이 없습니다.</div>
+            <div style="font-size: 14px; margin-top: 8px;">절전 챌린지를 시작해보세요!</div>
+          </div>
+        `;
+      } else {
+        let html = '';
         
-        content += `<div style="font-size:13px; color:#2e7d32; margin:8px 0; font-weight:600;">✓ 절감: ${dayData.saveKwh.toFixed(2)} kWh</div>`;
-        if (methods.length > 0) {
-          content += `<div style="font-size:12px; color:#666; margin:8px 0;">방법: ${methods.join(', ')}</div>`;
+        if (dayData.stamps.air) {
+          html += `
+            <div class="detail-item completed">
+              <div class="detail-item-icon" style="background: #10b981; color: white;">🌡️</div>
+              <div class="detail-item-text">에어컨 온도 조절 실천 완료</div>
+              <div style="color: #10b981; font-size: 20px;">✓</div>
+            </div>
+          `;
         }
+        
+        if (dayData.stamps.off) {
+          html += `
+            <div class="detail-item completed">
+              <div class="detail-item-icon" style="background: #3b82f6; color: white;">💡</div>
+              <div class="detail-item-text">불필요한 전등 끄기 실천 완료</div>
+              <div style="color: #3b82f6; font-size: 20px;">✓</div>
+            </div>
+          `;
+        }
+        
+        if (dayData.stamps.power) {
+          html += `
+            <div class="detail-item completed">
+              <div class="detail-item-icon" style="background: #f59e0b; color: white;">🔌</div>
+              <div class="detail-item-text">대기전력 제거 실천 완료</div>
+              <div style="color: #f59e0b; font-size: 20px;">✓</div>
+            </div>
+          `;
+        }
+        
+        if (dayData.stamps.efficiency) {
+          html += `
+            <div class="detail-item completed">
+              <div class="detail-item-icon" style="background: #8b5cf6; color: white;">⚡</div>
+              <div class="detail-item-text">에너지 효율 가전 사용 실천 완료</div>
+              <div style="color: #8b5cf6; font-size: 20px;">✓</div>
+            </div>
+          `;
+        }
+        
+        if (dayData.saveKwh > 0) {
+          html += `
+            <div class="detail-kwh-box">
+              <div class="detail-kwh-label">이 날의 전력 절감량</div>
+              <div class="detail-kwh-value">${dayData.saveKwh.toFixed(2)} kWh</div>
+            </div>
+          `;
+        }
+        
+        detailContent.innerHTML = html;
       }
-      
-      content += `<div style="margin-top:8px;">${isToday ? '<button class="btn" style="width:100%;" data-action="edit">수정하기</button>' : '<span class="read-only">' + (dayData ? '완료됨' : '미완료') + ' (오늘만 수정 가능)</span>'}</div>`;
-      
-      taskEl.innerHTML = content;
-      tasksEl.appendChild(taskEl);
 
-      tasksEl.querySelector('button[data-action="edit"]')?.addEventListener('click', openChallengeModal);
+      document.getElementById('detailPanel').classList.add('active');
     }
+
+    document.getElementById('closeDetail').addEventListener('click', () => {
+      document.getElementById('detailPanel').classList.remove('active');
+    });
 
     function openChallengeModal() {
-      const today = getTodayKey();
-      const dayData = challengeData[today];
-
+      const dateKey = selectedDate ? getDateKey(selectedDate) : getTodayKey();
+      const dayData = challengeData[dateKey];
+  
       document.getElementById('stamp_air').checked = dayData?.stamps.air || false;
       document.getElementById('stamp_off').checked = dayData?.stamps.off || false;
       document.getElementById('stamp_power').checked = dayData?.stamps.power || false;
@@ -504,7 +951,8 @@
     });
 
     document.getElementById('saveChallengeBtn').addEventListener('click', async () => {
-      const today = getTodayKey();
+      const dateKey = selectedDate ? getDateKey(selectedDate) : getTodayKey();
+      
       const saveKwh = parseFloat(document.getElementById('saveKwh').value) || 0;
 
       if (saveKwh === 0 && !document.getElementById('stamp_air').checked && 
@@ -517,11 +965,12 @@
 
       const data = {
         user_id: currentUser.user_id,
-        challenge_date: today,
+        challenge_date: dateKey,  // today 대신 dateKey 사용
         stamp_air: document.getElementById('stamp_air').checked ? 'O' : 'X',
         stamp_off: document.getElementById('stamp_off').checked ? 'O' : 'X',
         stamp_power: document.getElementById('stamp_power').checked ? 'O' : 'X',
         stamp_efficiency: document.getElementById('stamp_efficiency').checked ? 'O' : 'X',
+        stamp_etc: '',
         save_kwh: saveKwh
       };
 
@@ -534,9 +983,10 @@
     });
 
     document.getElementById('deleteChallengeBtn').addEventListener('click', async () => {
-      const today = getTodayKey();
+      const dateKey = selectedDate ? getDateKey(selectedDate) : getTodayKey();
+      
       if (confirm('이 날짜의 데이터를 삭제하시겠습니까?')) {
-        const result = await deleteChallengeData(currentUser.user_id, today);
+        const result = await deleteChallengeData(currentUser.user_id, dateKey);
         if (result?.success) {
           alert('삭제되었습니다.');
           document.getElementById('challengeModal').classList.remove('active');
@@ -557,9 +1007,9 @@
 
     document.getElementById('todayBtn').addEventListener('click', () => {
       currentDate = new Date();
-      selectedDate = new Date();
+      selectedDate = new Date();  // 오늘 날짜를 선택된 날짜로 설정
       renderCalendar();
-      updateDetailPanel();
+      showDateDetail(getTodayKey());  // 오늘 날짜의 상세 정보 자동 표시
     });
 
     // 초기화

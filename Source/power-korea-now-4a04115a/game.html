@@ -289,20 +289,31 @@ const USE_REAL_API = true;
 const API_URL = 'http://localhost:3000/api/khnp/realtime-json';
 
 // 로그인 체크 및 점수 로드
-const userId = localStorage.getItem('userId');
-if (!userId) {
+let userId = null;
+const isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
+if (!isLoggedIn) {
+    alert('게임을 이용하려면 먼저 로그인해야 합니다.');
     window.location.href = 'login.html';
 } else {
-    fetch(`http://localhost:3000/get-score?user_id=${userId}`)
-      .then(res => res.json())
-      .then(data => {
-          totalScore = data.score || 0;
-          document.getElementById('totalScore').innerText = totalScore + "점";
-      })
-      .catch(err => {
-          console.error('점수 로드 실패:', err);
-          totalScore = 0;
-      });
+    // sessionStorage에서 사용자 정보 가져오기
+    const userStr = sessionStorage.getItem('user');
+    if (userStr) {
+        const user = JSON.parse(userStr);
+        userId = user.user_id;
+    }
+    
+    if (userId) {
+        fetch(`http://localhost:3000/get-score?user_id=${userId}`)
+          .then(res => res.json())
+          .then(data => {
+              totalScore = data.score || 0;
+              document.getElementById('totalScore').innerText = totalScore + "점";
+          })
+          .catch(err => {
+              console.error('점수 로드 실패:', err);
+              totalScore = 0;
+          });
+    }
 }
 
 // 페이지 로드 시 첫 번째 발전소 자동 선택
@@ -353,7 +364,9 @@ async function fetchPowerData(plantCode) {
     const response = await fetch(url);
     const data = await response.json();
     
-    if (data.success && data.genOutput) {
+    // ✅ 수정: server.js의 응답 구조에 맞춤
+    if (data.success && data.genOutput !== undefined) {
+      console.log(`✅ API 응답 성공: ${data.genOutput} MW`);
       return data.genOutput;
     } else {
       throw new Error(data.message || 'API 응답 오류');

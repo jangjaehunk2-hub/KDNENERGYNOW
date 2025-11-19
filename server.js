@@ -155,6 +155,14 @@ app.get('/api/plants', async (req, res) => {
       console.log(`${idx + 1}. 이름: ${row.plant_name} | 유형: ${row.plant_type} | 좌표: (${row.latitude}, ${row.longitude})`);
     });
     console.log('🔑 필드명:', Object.keys(result.rows[0] || {}));
+    
+    // ✅ 발전소 유형별 개수 확인
+    const typeCounts = {};
+    result.rows.forEach(row => {
+      const type = row.plant_type || 'unknown';
+      typeCounts[type] = (typeCounts[type] || 0) + 1;
+    });
+    console.log('📊 발전소 유형별 개수:', typeCounts);
 
     // 원자력 발전소 호기 정보 함께 반환
     let plantUnits = {};
@@ -1117,6 +1125,8 @@ app.post('/api/challenge', async (req, res) => {
   }
 
   try {
+    console.log('📥 절전 챌린지 저장 요청:', { user_id, challenge_date, stamp_air, stamp_off, stamp_power, stamp_efficiency, stamp_etc, save_kwh });
+    
     const result = await pool.query(
       `INSERT INTO public.member_challenge 
         (user_id, challenge_date, stamp_air, stamp_off, stamp_power, stamp_efficiency, stamp_etc, save_kwh, update_at)
@@ -1133,10 +1143,14 @@ app.post('/api/challenge', async (req, res) => {
        RETURNING *`,
       [user_id, challenge_date, stamp_air || 'X', stamp_off || 'X', stamp_power || 'X', stamp_efficiency || 'X', stamp_etc || '', save_kwh || 0]
     );
+    console.log('✅ 절전 챌린지 저장 성공:', result.rows[0]);
     res.json({ success: true, message: '절전 챌린지 데이터 저장 완료', data: result.rows[0] });
   } catch (err) {
-    console.error('❌ 절전 챌린지 저장 오류:', err);
-    res.status(500).json({ success: false, message: 'DB 저장 실패', error: err.message });
+    console.error('❌ 절전 챌린지 저장 DB 오류:', err);
+    console.error('   - 오류 코드:', err.code);
+    console.error('   - 오류 메시지:', err.message);
+    console.error('   - 상세 정보:', err.detail);
+    res.status(500).json({ success: false, message: 'DB 저장 실패', error: err.message, detail: err.detail });
   }
 });
 
@@ -1184,11 +1198,6 @@ app.get('/api/challenge-stats/:userId', async (req, res) => {
     res.json({
       success: true,
       data: {
-        totalDays: parseInt(stats.total_days) || 0,
-        airCount: parseInt(stats.air_count) || 0,
-        offCount: parseInt(stats.off_count) || 0,
-        powerCount: parseInt(stats.power_count) || 0,
-        efficiencyCount: parseInt(stats.efficiency_count) || 0,
         totalKwh: parseFloat(stats.total_kwh) || 0
       }
     });
