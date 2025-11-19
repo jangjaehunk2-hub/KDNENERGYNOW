@@ -47,7 +47,7 @@
             font-size: 14px;
         }
     * { margin:0; padding:0; box-sizing:border-box; }
-    body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif; padding:24px; background:#f7f9fc; color:#111; }
+    body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif; padding:24px; background:#f7f9fc; color:#111; margin-left:140px; }
     .container { max-width:900px; margin:0 auto; }
     h1 { margin-bottom:24px; font-size:24px; text-align:center; }
     .header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:12px; }
@@ -64,17 +64,16 @@
     .day-num { font-weight:600; margin-bottom:4px; }
     .day-badges { display:flex; gap:4px; flex-wrap:wrap; }
     .badge { display:inline-block; width:20px; height:20px; border-radius:50%; font-size:10px; line-height:20px; text-align:center; font-weight:600; }
-    .badge.challenge { background:#4CAF50; color:#fff; }
-    .badge.quiz { background:#FF9800; color:#fff; }
+    .badge.air { background:#4CAF50; color:#fff; title: "에어컨"; }
+    .badge.off { background:#2196F3; color:#fff; title: "전등"; }
+    .badge.power { background:#FF9800; color:#fff; title: "대기전력"; }
+    .badge.efficiency { background:#9C27B0; color:#fff; title: "효율"; }
     .detail-panel { background:#fff; border:1px solid #d6dde6; border-radius:8px; padding:20px; }
     .detail-title { font-size:16px; font-weight:600; margin-bottom:12px; }
     .detail-date { color:#666; font-size:13px; margin-bottom:16px; }
     .task { background:#f7f9fc; border-left:3px solid #0366d6; padding:12px; margin-bottom:12px; border-radius:4px; }
     .task-name { font-weight:600; margin-bottom:4px; }
-    .checkbox-group { display:flex; align-items:center; gap:8px; margin-top:8px; }
-    .checkbox-group input[type="checkbox"] { cursor:pointer; width:16px; height:16px; }
-    .checkbox-group label { cursor:pointer; font-size:13px; }
-    .task.completed { opacity:0.6; background:#e6fbef; }
+    .task.completed { opacity:0.8; background:#e6fbef; }
     .task.completed .task-name { text-decoration:line-through; }
     .read-only { color:#999; font-size:13px; margin-top:8px; }
     .btn { padding:8px 12px; background:#0366d6; color:#fff; border:none; border-radius:6px; cursor:pointer; font-size:13px; }
@@ -84,7 +83,7 @@
     .btn:disabled { opacity:0.5; cursor:not-allowed; }
     .today-btn { padding:8px 12px; background:#0366d6; color:#fff; border:none; border-radius:6px; cursor:pointer; }
     .today-btn:hover { background:#024a9a; }
-    .modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); align-items:center; justify-content:center; z-index:1000; }
+    .modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); align-items:center; justify-content:center; z-index:2000; }
     .modal.active { display:flex; }
     .modal-content { background:#fff; border-radius:8px; padding:24px; max-width:600px; width:90%; max-height:80vh; overflow-y:auto; }
     .modal-header { font-size:18px; font-weight:600; margin-bottom:16px; }
@@ -94,9 +93,10 @@
     .stat-card { background:#f7f9fc; border:1px solid #d6dde6; border-radius:8px; padding:12px; text-align:center; }
     .stat-num { font-size:24px; font-weight:600; color:#0366d6; }
     .stat-label { font-size:12px; color:#666; margin-top:4px; }
-    .method-list { font-size:12px; color:#666; margin-top:8px; line-height:1.6; }
-    .method-item { display:inline-block; background:#fff; border:1px solid #d6dde6; padding:4px 8px; border-radius:4px; margin:2px; }
     .method-energy { font-size:11px; background:#fff3cd; color:#856404; padding:8px; border-radius:4px; margin-bottom:12px; }
+    .user-info { padding:12px; background:#f7f9fc; border-radius:6px; margin-bottom:16px; font-size:13px; }
+    .loading { text-align:center; color:#666; padding:20px; }
+    .error { background:#ffebee; color:#c62828; padding:12px; border-radius:6px; margin-bottom:12px; }
   </style>
 </head>
 <body>
@@ -110,9 +110,9 @@
           <i class='bx bx-slider'></i>
           <span>Slide</span>
       </button>
-      <button class="sidebar-button active" onclick="window.location.href='game.html'">
-          <i class='bx bx-game'></i>
-          <span>Game</span>
+      <button class="sidebar-button active" onclick="window.location.href='calendar.html'">
+          <i class='bx bx-calendar'></i>
+          <span>Calendar</span>
       </button>
       <button class="sidebar-button" onclick="window.location.href='education.html'">
           <i class='bx bx-book-reader'></i>
@@ -126,13 +126,16 @@
   <div class="container">
     <h1>절전 챌린지 달력</h1>
     
+    <div id="userSection" class="user-info" style="display:none;">
+      사용자: <strong id="userName"></strong>
+    </div>
+
     <div class="header">
       <button class="nav-btn" id="prevMonth">이전</button>
       <div class="month-year" id="monthYear"></div>
       <button class="nav-btn" id="nextMonth">다음 ></button>
       <button class="today-btn" id="todayBtn">오늘</button>
       <button class="btn" id="openChallengeBtn">절전 챌린지 시작</button>
-      <button class="btn" id="openQuizBtn">전기 퀴즈 시작</button>
     </div>
 
     <div class="stats" id="statsContainer"></div>
@@ -151,49 +154,25 @@
     <div class="modal-content">
       <div class="modal-header">오늘의 절전 챌린지</div>
       <div class="modal-body">
-        <div class="method-energy" id="methodEnergyInfo">선택한 항목: 예상 절감량이 표시됩니다</div>
-        <div>
-          <label style="display:block; margin-bottom:8px; font-weight:600;">실천한 절전 방법을 선택하세요</label>
-          <div style="background:#f7f9fc; padding:12px; border-radius:4px; margin-bottom:8px;">
-            <div style="margin-bottom:8px;"><input type="checkbox" id="method1" class="method-check" data-energy="0.5" /> <label for="method1">에어컨 온도 조절 (약 0.5 kWh)</label></div>
-            <div style="margin-bottom:8px;"><input type="checkbox" id="method2" class="method-check" data-energy="0.3" /> <label for="method2">불필요한 전등 끄기 (약 0.3 kWh)</label></div>
-            <div style="margin-bottom:8px;"><input type="checkbox" id="method3" class="method-check" data-energy="0.2" /> <label for="method3">대기전력 제거 (약 0.2 kWh)</label></div>
-            <div style="margin-bottom:8px;"><input type="checkbox" id="method4" class="method-check" data-energy="0.4" /> <label for="method4">에너지 효율 가전 사용 (약 0.4 kWh)</label></div>
-            <div><input type="checkbox" id="method5" class="method-check" data-energy="0" /> <label for="method5">기타</label></div>
+        <div class="method-energy" id="methodEnergyInfo">실천한 항목을 선택하세요</div>
+        <div style="margin-bottom:16px;">
+          <label style="display:block; margin-bottom:8px; font-weight:600;">절전 방법을 선택하세요</label>
+          <div style="background:#f7f9fc; padding:12px; border-radius:4px;">
+            <div style="margin-bottom:8px;"><input type="checkbox" id="stamp_air" /> <label for="stamp_air">에어컨 온도 조절</label></div>
+            <div style="margin-bottom:8px;"><input type="checkbox" id="stamp_off" /> <label for="stamp_off">불필요한 전등 끄기</label></div>
+            <div style="margin-bottom:8px;"><input type="checkbox" id="stamp_power" /> <label for="stamp_power">대기전력 제거</label></div>
+            <div style="margin-bottom:8px;"><input type="checkbox" id="stamp_efficiency" /> <label for="stamp_efficiency">에너지 효율 가전 사용</label></div>
           </div>
         </div>
-        <div style="margin-top:16px;" id="additionalEnergySection" style="display:none;">
-          <label style="display:block; margin-bottom:8px; font-weight:600;">추가 절감량 입력 (kWh)</label>
-          <input type="number" id="energySaved" placeholder="추가 절감량 입력" style="width:100%; padding:8px; border:1px solid #d6dde6; border-radius:4px;" min="0" step="0.1" />
+        <div>
+          <label style="display:block; margin-bottom:8px; font-weight:600;">절감 전력량 (kWh)</label>
+          <input type="number" id="saveKwh" placeholder="절감 전력량 입력" style="width:100%; padding:8px; border:1px solid #d6dde6; border-radius:4px;" min="0" step="0.1" />
         </div>
       </div>
       <div class="modal-footer">
         <button class="btn secondary" id="closeChallengeModal">취소</button>
+        <button class="btn" id="deleteChallengeBtn">삭제</button>
         <button class="btn" id="saveChallengeBtn">저장</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- 전기 퀴즈 모달 -->
-  <div class="modal" id="quizModal">
-    <div class="modal-content">
-      <div class="modal-header">오늘의 전기 퀴즈</div>
-      <div class="modal-body">
-        <div style="margin-bottom:16px;">
-          <label style="display:block; margin-bottom:8px;">전기 퀴즈를 완료하셨나요?</label>
-          <div style="background:#f7f9fc; padding:12px; border-radius:4px;">
-            <div style="margin-bottom:8px;"><input type="radio" name="quizStatus" value="completed" id="quizCompleted" /> <label for="quizCompleted">완료함</label></div>
-            <div><input type="radio" name="quizStatus" value="not_completed" id="quizNotCompleted" /> <label for="quizNotCompleted">아직 안함</label></div>
-          </div>
-        </div>
-        <div id="quizScoreSection" style="display:none;">
-          <label style="display:block; margin-bottom:8px;">획득한 점수</label>
-          <input type="number" id="quizScore" placeholder="점수 입력" style="width:100%; padding:8px; border:1px solid #d6dde6; border-radius:4px;" min="0" max="100" />
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn secondary" id="closeQuizModal">취소</button>
-        <button class="btn" id="saveQuizBtn">저장</button>
       </div>
     </div>
   </div>
@@ -201,23 +180,93 @@
   <script>
     let currentDate = new Date();
     let selectedDate = null;
+    let currentUser = null;
 
-    const STORAGE_KEY = 'saveEnergyChallenge';
-    const METHODS = [
-      { name: '에어컨 온도 조절', energy: 0.5 },
-      { name: '불필요한 전등 끄기', energy: 0.3 },
-      { name: '대기전력 제거', energy: 0.2 },
-      { name: '에너지 효율 가전 사용', energy: 0.4 },
-      { name: '기타', energy: 0 }
-    ];
-
-    function getStorageData() {
-      const data = localStorage.getItem(STORAGE_KEY);
-      return data ? JSON.parse(data) : {};
+    // 로그인 사용자 확인
+    function initUser() {
+      const user = JSON.parse(sessionStorage.getItem('user') || localStorage.getItem('user'));
+      if (!user) {
+        alert('로그인이 필요합니다.');
+        window.location.href = 'login.html';
+        return;
+      }
+      currentUser = user;
+      document.getElementById('userName').textContent = user.nick_name || user.user_id;
+      document.getElementById('userSection').style.display = 'block';
     }
 
-    function saveToStorage(data) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    // API 함수들
+    async function fetchChallengeData(userId) {
+      try {
+        const res = await fetch(`/api/challenge/${userId}`);
+        if (!res.ok) throw new Error('데이터 조회 실패');
+        const json = await res.json();
+        return json.data || [];
+      } catch (err) {
+        console.error('❌ 절전 챌린지 조회 오류:', err);
+        return [];
+      }
+    }
+
+    async function saveChallengeData(challengeData) {
+      try {
+        const res = await fetch('/api/challenge', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(challengeData)
+        });
+        if (!res.ok) throw new Error('데이터 저장 실패');
+        const json = await res.json();
+        return json;
+      } catch (err) {
+        console.error('❌ 절전 챌린지 저장 오류:', err);
+        alert('저장 실패: ' + err.message);
+        return null;
+      }
+    }
+
+    async function deleteChallengeData(userId, date) {
+      try {
+        const res = await fetch(`/api/challenge/${userId}/${date}`, {
+          method: 'DELETE'
+        });
+        if (!res.ok) throw new Error('데이터 삭제 실패');
+        return await res.json();
+      } catch (err) {
+        console.error('❌ 절전 챌린지 삭제 오류:', err);
+        alert('삭제 실패: ' + err.message);
+        return null;
+      }
+    }
+
+    async function fetchStats(userId) {
+      try {
+        const res = await fetch(`/api/challenge-stats/${userId}`);
+        if (!res.ok) throw new Error('통계 조회 실패');
+        const json = await res.json();
+        return json.data || {};
+      } catch (err) {
+        console.error('❌ 통계 조회 오류:', err);
+        return {};
+      }
+    }
+
+    // 데이터 변환 함수
+    function convertDBToObject(dbData) {
+      const obj = {};
+      dbData.forEach(row => {
+        const date = row.challenge_date;
+        obj[date] = {
+          stamps: {
+            air: row.stamp_air === 'O',
+            off: row.stamp_off === 'O',
+            power: row.stamp_power === 'O',
+            efficiency: row.stamp_efficiency === 'O'
+          },
+          saveKwh: row.save_kwh || 0
+        };
+      });
+      return obj;
     }
 
     function getDateKey(date) {
@@ -231,67 +280,58 @@
       return getDateKey(new Date());
     }
 
-    function calculateMethodEnergy() {
-      let totalEnergy = 0;
-      const checkedMethods = document.querySelectorAll('.method-check:checked');
-      checkedMethods.forEach(checkbox => {
-        totalEnergy += parseFloat(checkbox.getAttribute('data-energy')) || 0;
-      });
-      return totalEnergy;
-    }
+    let challengeData = {};
 
-    function updateMethodEnergyInfo() {
-      const methodEnergy = calculateMethodEnergy();
-      const additionalEnergy = parseFloat(document.getElementById('energySaved').value) || 0;
-      const totalEnergy = methodEnergy + additionalEnergy;
-
-      const infoEl = document.getElementById('methodEnergyInfo');
-      infoEl.innerHTML = `선택한 항목: <strong>${methodEnergy.toFixed(2)} kWh</strong> + 추가 입력: <strong>${additionalEnergy.toFixed(2)} kWh</strong> = <strong style="color:#0366d6; font-size:14px;">총 ${totalEnergy.toFixed(2)} kWh</strong>`;
-    }
-
-    function toggleAdditionalEnergySection() {
-      const method5Checked = document.getElementById('method5').checked;
-      const section = document.getElementById('additionalEnergySection');
-      section.style.display = method5Checked ? 'block' : 'none';
-      
-      // 기타 언체크 시 입력값 초기화
-      if (!method5Checked) {
-        document.getElementById('energySaved').value = '';
-        updateMethodEnergyInfo();
-      }
-    }
-
-    function getStats() {
-      const data = getStorageData();
-      let challengeCount = 0;
-      let quizCount = 0;
-      let totalEnergy = 0;
-
-      Object.values(data).forEach(dayData => {
-        if (dayData.challenge?.completed) {
-          challengeCount++;
-          totalEnergy += dayData.challenge?.energySaved || 0;
-        }
-        if (dayData.quiz?.completed) quizCount++;
-      });
-
-      return { challengeCount, quizCount, totalEnergy };
+    async function loadData() {
+      if (!currentUser) return;
+      challengeData = convertDBToObject(await fetchChallengeData(currentUser.user_id));
+      renderStats();
+      renderCalendar();
     }
 
     function renderStats() {
-      const stats = getStats();
+      const stats = {
+        totalDays: 0,
+        airCount: 0,
+        offCount: 0,
+        powerCount: 0,
+        efficiencyCount: 0,
+        totalKwh: 0
+      };
+
+      Object.values(challengeData).forEach(day => {
+        stats.totalDays++;
+        if (day.stamps.air) stats.airCount++;
+        if (day.stamps.off) stats.offCount++;
+        if (day.stamps.power) stats.powerCount++;
+        if (day.stamps.efficiency) stats.efficiencyCount++;
+        stats.totalKwh += day.saveKwh;
+      });
+
       const statsEl = document.getElementById('statsContainer');
       statsEl.innerHTML = `
         <div class="stat-card">
-          <div class="stat-num">${stats.challengeCount}</div>
-          <div class="stat-label">절전 챌린지 완료</div>
+          <div class="stat-num">${stats.totalDays}</div>
+          <div class="stat-label">실천한 날</div>
         </div>
         <div class="stat-card">
-          <div class="stat-num">${stats.quizCount}</div>
-          <div class="stat-label">퀴즈 완료</div>
+          <div class="stat-num">${stats.airCount}</div>
+          <div class="stat-label">에어컨 조절</div>
         </div>
         <div class="stat-card">
-          <div class="stat-num">${(stats.totalEnergy).toFixed(2)}</div>
+          <div class="stat-num">${stats.offCount}</div>
+          <div class="stat-label">전등 끄기</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num">${stats.powerCount}</div>
+          <div class="stat-label">대기전력</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num">${stats.efficiencyCount}</div>
+          <div class="stat-label">효율 가전</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num">${stats.totalKwh.toFixed(2)}</div>
           <div class="stat-label">총 절감 (kWh)</div>
         </div>
       `;
@@ -310,7 +350,6 @@
       const calendarEl = document.getElementById('calendar');
       calendarEl.innerHTML = '';
 
-      // 요일 헤더
       const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
       weekdays.forEach(day => {
         const el = document.createElement('div');
@@ -319,8 +358,6 @@
         calendarEl.appendChild(el);
       });
 
-      // 날짜들
-      const data = getStorageData();
       const today = getTodayKey();
       let date = new Date(startDate);
 
@@ -333,32 +370,45 @@
         }
 
         const dateKey = getDateKey(date);
-        const dayData = data[dateKey] || {};
+        const dayData = challengeData[dateKey];
 
         if (dateKey === today) {
           dayEl.classList.add('today');
         }
 
-        // 날짜 번호
         const dayNumEl = document.createElement('div');
         dayNumEl.className = 'day-num';
         dayNumEl.textContent = date.getDate();
         dayEl.appendChild(dayNumEl);
 
-        // 뱃지
         const badgesEl = document.createElement('div');
         badgesEl.className = 'day-badges';
-        if (dayData.challenge?.completed) {
-          const badge = document.createElement('div');
-          badge.className = 'badge challenge';
-          badge.textContent = '절전';
-          badgesEl.appendChild(badge);
-        }
-        if (dayData.quiz?.completed) {
-          const badge = document.createElement('div');
-          badge.className = 'badge quiz';
-          badge.textContent = '퀴즈';
-          badgesEl.appendChild(badge);
+        
+        if (dayData) {
+          if (dayData.stamps.air) {
+            const badge = document.createElement('div');
+            badge.className = 'badge air';
+            badge.textContent = '냉';
+            badgesEl.appendChild(badge);
+          }
+          if (dayData.stamps.off) {
+            const badge = document.createElement('div');
+            badge.className = 'badge off';
+            badge.textContent = '전';
+            badgesEl.appendChild(badge);
+          }
+          if (dayData.stamps.power) {
+            const badge = document.createElement('div');
+            badge.className = 'badge power';
+            badge.textContent = '대';
+            badgesEl.appendChild(badge);
+          }
+          if (dayData.stamps.efficiency) {
+            const badge = document.createElement('div');
+            badge.className = 'badge efficiency';
+            badge.textContent = '효';
+            badgesEl.appendChild(badge);
+          }
         }
         dayEl.appendChild(badgesEl);
 
@@ -388,8 +438,7 @@
       }
 
       const dateKey = getDateKey(selectedDate);
-      const data = getStorageData();
-      const dayData = data[dateKey] || {};
+      const dayData = challengeData[dateKey];
       const today = getTodayKey();
       const isToday = dateKey === today;
 
@@ -398,205 +447,102 @@
       const d = selectedDate.getDate();
       dateEl.textContent = `${y}년 ${m}월 ${d}일 ${['일', '월', '화', '수', '목', '금', '토'][selectedDate.getDay()]}요일`;
 
-      // 절전 챌린지
-      const challengeEl = document.createElement('div');
-      const challengeCompleted = dayData.challenge?.completed || false;
-      challengeEl.className = 'task' + (challengeCompleted ? ' completed' : '');
+      const taskEl = document.createElement('div');
+      taskEl.className = 'task' + (dayData ? ' completed' : '');
       
-      let methodsHtml = '';
-      if (challengeCompleted && dayData.challenge.methods?.length > 0) {
-        const selectedMethods = dayData.challenge.methods.map(idx => METHODS[idx].name);
-        methodsHtml = '<div class="method-list"><strong>실천 방법:</strong><br>' + 
-          selectedMethods.map(m => `<span class="method-item">${m}</span>`).join('') + 
-          '</div>';
-      }
-
-      challengeEl.innerHTML = `
-        <div class="task-name">절전 챌린지</div>
-        ${challengeCompleted ? `<div style="font-size:13px; color:#2e7d32; margin:8px 0; font-weight:600;">✓ 절감: ${(dayData.challenge.energySaved || 0).toFixed(2)} kWh</div>` : ''}
-        ${methodsHtml}
-        <div style="margin-top:8px;">${isToday ? '<button class="btn" style="width:100%;" data-action="editChallenge">수정하기</button>' : '<span class="read-only">' + (challengeCompleted ? '완료됨' : '미완료') + ' (오늘만 수정 가능)</span>'}</div>
-      `;
-      tasksEl.appendChild(challengeEl);
-
-      // 절전 퀴즈
-      const quizEl = document.createElement('div');
-      const quizCompleted = dayData.quiz?.completed || false;
-      quizEl.className = 'task' + (quizCompleted ? ' completed' : '');
-      quizEl.innerHTML = `
-        <div class="task-name">전기 퀴즈</div>
-        ${quizCompleted ? `<div style="font-size:13px; color:#f57c00; margin:8px 0; font-weight:600;">✓ 점수: ${dayData.quiz.score || 0}점</div>` : ''}
-        <div style="margin-top:8px;">${isToday ? '<button class="btn" style="width:100%;" data-action="editQuiz">수정하기</button>' : '<span class="read-only">' + (quizCompleted ? '완료됨' : '미완료') + ' (오늘만 수정 가능)</span>'}</div>
-      `;
-      tasksEl.appendChild(quizEl);
-
-      // 버튼 이벤트
-      tasksEl.querySelectorAll('button[data-action]').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          const action = e.target.dataset.action;
-          if (action === 'editChallenge') openChallengeModal();
-          else if (action === 'editQuiz') openQuizModal();
-        });
-      });
-
-      // 선택 표시
-      renderCalendar();
-      const days = document.querySelectorAll('.day');
-      days.forEach(d => {
-        const dayNum = d.querySelector('.day-num')?.textContent;
-        if (dayNum && parseInt(dayNum) === selectedDate.getDate() && selectedDate.getMonth() === currentDate.getMonth()) {
-          d.classList.add('selected');
+      let content = '<div class="task-name">절전 챌린지</div>';
+      
+      if (dayData) {
+        const methods = [];
+        if (dayData.stamps.air) methods.push('에어컨 조절');
+        if (dayData.stamps.off) methods.push('전등 끄기');
+        if (dayData.stamps.power) methods.push('대기전력 제거');
+        if (dayData.stamps.efficiency) methods.push('효율 가전');
+        
+        content += `<div style="font-size:13px; color:#2e7d32; margin:8px 0; font-weight:600;">✓ 절감: ${dayData.saveKwh.toFixed(2)} kWh</div>`;
+        if (methods.length > 0) {
+          content += `<div style="font-size:12px; color:#666; margin:8px 0;">방법: ${methods.join(', ')}</div>`;
         }
-      });
+      }
+      
+      content += `<div style="margin-top:8px;">${isToday ? '<button class="btn" style="width:100%;" data-action="edit">수정하기</button>' : '<span class="read-only">' + (dayData ? '완료됨' : '미완료') + ' (오늘만 수정 가능)</span>'}</div>`;
+      
+      taskEl.innerHTML = content;
+      tasksEl.appendChild(taskEl);
+
+      tasksEl.querySelector('button[data-action="edit"]')?.addEventListener('click', openChallengeModal);
     }
 
-    // 절전 챌린지 모달
     function openChallengeModal() {
-      const data = getStorageData();
       const today = getTodayKey();
-      const dayData = data[today] || {};
-      const challengeData = dayData.challenge || {};
+      const dayData = challengeData[today];
 
-      document.getElementById('energySaved').value = challengeData.energySaved ? 
-        (challengeData.energySaved - (challengeData.methodEnergy || 0)).toFixed(2) : '';
-      
-      ['method1', 'method2', 'method3', 'method4', 'method5'].forEach((id, idx) => {
-        document.getElementById(id).checked = (challengeData.methods || []).includes(idx);
-      });
+      document.getElementById('stamp_air').checked = dayData?.stamps.air || false;
+      document.getElementById('stamp_off').checked = dayData?.stamps.off || false;
+      document.getElementById('stamp_power').checked = dayData?.stamps.power || false;
+      document.getElementById('stamp_efficiency').checked = dayData?.stamps.efficiency || false;
+      document.getElementById('saveKwh').value = dayData?.saveKwh || '';
 
-      toggleAdditionalEnergySection();
       updateMethodEnergyInfo();
       document.getElementById('challengeModal').classList.add('active');
     }
 
-    // 체크박스 변경 시 실시간 업데이트
-    document.querySelectorAll('.method-check').forEach(checkbox => {
-      checkbox.addEventListener('change', (e) => {
-        updateMethodEnergyInfo();
-        toggleAdditionalEnergySection();
-      });
+    function updateMethodEnergyInfo() {
+      const saveKwh = parseFloat(document.getElementById('saveKwh').value) || 0;
+      const infoEl = document.getElementById('methodEnergyInfo');
+      infoEl.innerHTML = `절감 전력량: <strong style="color:#0366d6; font-size:14px;">${saveKwh.toFixed(2)} kWh</strong>`;
+    }
+
+    document.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+      cb.addEventListener('change', updateMethodEnergyInfo);
     });
-    document.getElementById('energySaved').addEventListener('input', updateMethodEnergyInfo);
+    document.getElementById('saveKwh').addEventListener('input', updateMethodEnergyInfo);
 
     document.getElementById('openChallengeBtn').addEventListener('click', openChallengeModal);
     document.getElementById('closeChallengeModal').addEventListener('click', () => {
       document.getElementById('challengeModal').classList.remove('active');
     });
 
-    document.getElementById('saveChallengeBtn').addEventListener('click', () => {
-      const data = getStorageData();
+    document.getElementById('saveChallengeBtn').addEventListener('click', async () => {
       const today = getTodayKey();
-      if (!data[today]) data[today] = {};
+      const saveKwh = parseFloat(document.getElementById('saveKwh').value) || 0;
 
-      const methodEnergy = calculateMethodEnergy();
-      const additionalEnergy = parseFloat(document.getElementById('energySaved').value) || 0;
-      const totalEnergy = methodEnergy + additionalEnergy;
-
-      const methods = [];
-      ['method1', 'method2', 'method3', 'method4', 'method5'].forEach((id, idx) => {
-        if (document.getElementById(id).checked) methods.push(idx);
-      });
-
-      // 아무것도 체크하지 않고 추가 입력도 없으면 저장하지 않음
-      if (methodEnergy === 0 && additionalEnergy === 0) {
-        // 기존 데이터 삭제
-        if (data[today].challenge) {
-          delete data[today].challenge;
-        }
-        saveToStorage(data);
-        
-        // 렌더링 업데이트 (알림 메시지 없음)
-        setTimeout(() => {
-          renderStats();
-          selectedDate = new Date();
-          renderCalendar();
-          updateDetailPanel();
-        }, 100);
-        
-        // 모달 닫기
-        document.getElementById('challengeModal').classList.remove('active');
+      if (saveKwh === 0 && !document.getElementById('stamp_air').checked && 
+          !document.getElementById('stamp_off').checked && 
+          !document.getElementById('stamp_power').checked && 
+          !document.getElementById('stamp_efficiency').checked) {
+        alert('절감 전력량 또는 절전 방법을 선택해주세요.');
         return;
       }
 
-      data[today].challenge = {
-        completed: true,
-        energySaved: totalEnergy,
-        methodEnergy: methodEnergy,
-        methods,
-        timestamp: Date.now()
+      const data = {
+        user_id: currentUser.user_id,
+        challenge_date: today,
+        stamp_air: document.getElementById('stamp_air').checked ? 'O' : 'X',
+        stamp_off: document.getElementById('stamp_off').checked ? 'O' : 'X',
+        stamp_power: document.getElementById('stamp_power').checked ? 'O' : 'X',
+        stamp_efficiency: document.getElementById('stamp_efficiency').checked ? 'O' : 'X',
+        save_kwh: saveKwh
       };
 
-      saveToStorage(data);
-      
-      // 모달 먼저 닫기
-      document.getElementById('challengeModal').classList.remove('active');
-      
-      // 그 다음 렌더링 업데이트
-      setTimeout(() => {
-        renderStats();
-        selectedDate = new Date();
-        renderCalendar();
-        updateDetailPanel();
-      }, 100);
-    });
-
-    // 전기 퀴즈 모달
-    function openQuizModal() {
-      const data = getStorageData();
-      const today = getTodayKey();
-      const dayData = data[today] || {};
-      const quizData = dayData.quiz || {};
-
-      if (quizData.completed) {
-        document.getElementById('quizCompleted').checked = true;
-        document.getElementById('quizScoreSection').style.display = 'block';
-        document.getElementById('quizScore').value = quizData.score || '';
-      } else {
-        document.getElementById('quizNotCompleted').checked = true;
-        document.getElementById('quizScoreSection').style.display = 'none';
-        document.getElementById('quizScore').value = '';
+      const result = await saveChallengeData(data);
+      if (result?.success) {
+        alert('저장되었습니다.');
+        document.getElementById('challengeModal').classList.remove('active');
+        await loadData();
       }
-
-      document.getElementById('quizModal').classList.add('active');
-    }
-
-    document.getElementById('openQuizBtn').addEventListener('click', openQuizModal);
-    document.getElementById('closeQuizModal').addEventListener('click', () => {
-      document.getElementById('quizModal').classList.remove('active');
     });
 
-    document.querySelectorAll('input[name="quizStatus"]').forEach(radio => {
-      radio.addEventListener('change', (e) => {
-        document.getElementById('quizScoreSection').style.display = e.target.value === 'completed' ? 'block' : 'none';
-      });
-    });
-
-    document.getElementById('saveQuizBtn').addEventListener('click', () => {
-      const data = getStorageData();
+    document.getElementById('deleteChallengeBtn').addEventListener('click', async () => {
       const today = getTodayKey();
-      if (!data[today]) data[today] = {};
-
-      const completed = document.getElementById('quizCompleted').checked;
-      const score = completed ? (parseInt(document.getElementById('quizScore').value) || 0) : 0;
-
-      data[today].quiz = {
-        completed,
-        score,
-        timestamp: Date.now()
-      };
-
-      saveToStorage(data);
-      
-      // 모달 먼저 닫기
-      document.getElementById('quizModal').classList.remove('active');
-      
-      // 그 다음 렌더링 업데이트
-      setTimeout(() => {
-        renderStats();
-        selectedDate = new Date();
-        renderCalendar();
-        updateDetailPanel();
-      }, 100);
+      if (confirm('이 날짜의 데이터를 삭제하시겠습니까?')) {
+        const result = await deleteChallengeData(currentUser.user_id, today);
+        if (result?.success) {
+          alert('삭제되었습니다.');
+          document.getElementById('challengeModal').classList.remove('active');
+          await loadData();
+        }
+      }
     });
 
     document.getElementById('prevMonth').addEventListener('click', () => {
@@ -616,12 +562,9 @@
       updateDetailPanel();
     });
 
-    // 초기 렌더
-    const today = new Date();
-    selectedDate = new Date();
-    renderStats();
-    renderCalendar();
-    updateDetailPanel();
+    // 초기화
+    initUser();
+    loadData();
   </script>
 </body>
 </html>
