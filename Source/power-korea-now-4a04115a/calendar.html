@@ -869,8 +869,13 @@
             badge.title = '에너지 효율 가전 사용';
             badgesEl.appendChild(badge);
           }
-          
-          // kWh 표시 추가
+        }
+        
+        // 먼저 badges 추가
+        dayEl.appendChild(badgesEl);
+        
+        // 그 다음 kWh 표시 추가
+        if (dayData) {
           const saveKwhNum = Number(dayData.saveKwh) || 0;
           if (saveKwhNum > 0) {
             const kwhEl = document.createElement('div');
@@ -879,7 +884,6 @@
             dayEl.appendChild(kwhEl);
           }
         }
-        dayEl.appendChild(badgesEl);
 
         const currentDateKey = dateKey;  // 클로저 문제 해결을 위한 상수 생성
         const clickDate = new Date(date);  // 현재 날짜 복사
@@ -1015,14 +1019,53 @@
       document.getElementById('challengeModal').classList.add('active');
     }
 
+    // 절전 방법별 평균 절감 전력량 (kWh/일)
+    const METHOD_SAVINGS = {
+      air: 1.5,        // 에어컨 온도 조절 (1도당 약 7% 절감, 하루 평균 1.5kWh)
+      off: 0.8,        // 불필요한 전등 끄기 (하루 평균 0.8kWh)
+      power: 0.6,      // 대기전력 제거 (하루 평균 0.6kWh)
+      efficiency: 1.2  // 에너지 효율 가전 사용 (하루 평균 1.2kWh)
+    };
+
+    function calculateSavings() {
+      let total = 0;
+      if (document.getElementById('stamp_air').checked) total += METHOD_SAVINGS.air;
+      if (document.getElementById('stamp_off').checked) total += METHOD_SAVINGS.off;
+      if (document.getElementById('stamp_power').checked) total += METHOD_SAVINGS.power;
+      if (document.getElementById('stamp_efficiency').checked) total += METHOD_SAVINGS.efficiency;
+      return total;
+    }
+
     function updateMethodEnergyInfo() {
-      const saveKwh = parseFloat(document.getElementById('saveKwh').value) || 0;
+      const calculatedSavings = calculateSavings();
+      const inputValue = parseFloat(document.getElementById('saveKwh').value) || 0;
+      
       const infoEl = document.getElementById('methodEnergyInfo');
-      infoEl.innerHTML = `절감 전력량: <strong style="color:#0366d6; font-size:14px;">${saveKwh.toFixed(2)} kWh</strong>`;
+      
+      if (calculatedSavings > 0) {
+        // 체크박스로 계산된 값 + 입력 필드 값
+        const totalSavings = calculatedSavings + inputValue;
+        infoEl.innerHTML = `
+          예상 절감량: <strong style="color:#10b981; font-size:14px;">${totalSavings.toFixed(2)} kWh</strong>
+          ${inputValue > 0 ? ` | 입력값: <strong style="color:#0366d6; font-size:14px;">${inputValue.toFixed(2)} kWh</strong>` : ''}
+        `;
+      } else if (inputValue > 0) {
+        // 체크박스 없고 입력값만 있을 때
+        infoEl.innerHTML = `입력값: <strong style="color:#0366d6; font-size:14px;">${inputValue.toFixed(2)} kWh</strong>`;
+      } else {
+        // 둘 다 없을 때
+        infoEl.innerHTML = `실천한 항목을 선택하세요`;
+      }
+    }
+
+    function updateSavingsInput() {
+      // 체크박스 변경 시 입력 필드는 건드리지 않음 (공백 유지)
+      // 대신 정보 표시만 업데이트
+      updateMethodEnergyInfo();
     }
 
     document.querySelectorAll('input[type="checkbox"]').forEach(cb => {
-      cb.addEventListener('change', updateMethodEnergyInfo);
+      cb.addEventListener('change', updateSavingsInput);
     });
     document.getElementById('saveKwh').addEventListener('input', updateMethodEnergyInfo);
 
@@ -1039,7 +1082,10 @@
       console.log('   - dateKey:', dateKey);
       console.log('   - getTodayKey():', getTodayKey());
       
-      const saveKwh = parseFloat(document.getElementById('saveKwh').value) || 0;
+      // 체크박스 계산값 + 입력 필드 값을 합산
+      const inputValue = parseFloat(document.getElementById('saveKwh').value) || 0;
+      const calculatedSavings = calculateSavings();
+      const saveKwh = calculatedSavings + inputValue;
 
       if (saveKwh === 0 && !document.getElementById('stamp_air').checked && 
           !document.getElementById('stamp_off').checked && 
