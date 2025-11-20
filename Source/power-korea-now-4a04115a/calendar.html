@@ -95,10 +95,10 @@
     .calendar { 
       display:grid; 
       grid-template-columns:repeat(7,1fr); 
-      gap:12px; 
+      gap:8px; 
       margin-bottom:24px; 
       background: white;
-      padding: 20px;
+      padding: 16px;
       border-radius: 12px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
@@ -106,7 +106,7 @@
       text-align:center; 
       font-weight:700; 
       color:#667eea; 
-      padding:16px 0; 
+      padding:10px 0; 
       font-size:14px; 
       text-transform: uppercase;
     }
@@ -114,8 +114,8 @@
       background:#fff; 
       border:2px solid #e5e7eb; 
       border-radius:12px; 
-      padding:10px; 
-      min-height:110px; 
+      padding:8px; 
+      min-height:80px; 
       cursor:pointer; 
       position:relative; 
       transition:all 0.3s;
@@ -137,8 +137,8 @@
     .day.selected { background:#f0f4ff; border-color:#667eea; }
     .day-num { 
       font-weight:700; 
-      margin-bottom:8px; 
-      font-size: 16px;
+      margin-bottom:6px; 
+      font-size: 14px;
       color: #333;
     }
     .day-badges { 
@@ -150,8 +150,8 @@
     }
     .badge { 
       display:inline-block; 
-      width:12px; 
-      height:12px; 
+      width:10px; 
+      height:10px; 
       border-radius:50%; 
       border: 2px solid white;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
@@ -161,11 +161,11 @@
     .badge.power { background:#f59e0b; }
     .badge.efficiency { background:#8b5cf6; }
     .day-kwh {
-      font-size: 10px;
+      font-size: 9px;
       color: #667eea;
       font-weight: 600;
       text-align: center;
-      margin-top: 4px;
+      margin-top: 3px;
     }
     .day.today .day-kwh {
       color: white;
@@ -317,21 +317,45 @@
       background-clip: text;
     }
     .detail-panel {
-      background: white;
-      border-radius: 12px;
-      padding: 24px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      margin-bottom: 20px;
       display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(4px);
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
     }
     .detail-panel.active {
-      display: block;
-      animation: slideDown 0.3s ease;
+      display: flex;
+      animation: fadeIn 0.3s ease;
     }
-    @keyframes slideDown {
+    .detail-panel-content {
+      background: white;
+      border-radius: 16px;
+      padding: 32px;
+      max-width: 600px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      animation: slideUp 0.3s ease;
+    }
+    @keyframes fadeIn {
       from {
         opacity: 0;
-        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+      }
+    }
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
       }
       to {
         opacity: 1;
@@ -339,10 +363,10 @@
       }
     }
     .detail-header {
-      font-size: 20px;
+      font-size: 24px;
       font-weight: 700;
       color: #667eea;
-      margin-bottom: 16px;
+      margin-bottom: 20px;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -350,17 +374,22 @@
     .close-detail {
       background: #f3f4f6;
       border: none;
-      border-radius: 6px;
-      padding: 6px 12px;
+      border-radius: 50%;
+      width: 36px;
+      height: 36px;
       cursor: pointer;
-      font-size: 14px;
-      font-weight: 600;
+      font-size: 20px;
+      font-weight: 700;
       color: #6b7280;
       transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
     .close-detail:hover {
       background: #e5e7eb;
       color: #374151;
+      transform: rotate(90deg);
     }
     .detail-date {
       font-size: 16px;
@@ -458,8 +487,8 @@
           <span>Slide</span>
       </button>
       <button class="sidebar-button active" onclick="window.location.href='calendar.html'">
-          <i class='bx bx-calendar'></i>
-          <span>Calendar</span>
+          <i class='bx bx-game'></i>
+          <span>Game</span>
       </button>
       <button class="sidebar-button" onclick="window.location.href='education.html'">
           <i class='bx bx-book-reader'></i>
@@ -485,39 +514,24 @@
         <span class="info-value" id="totalKwhValue">0.00 kWh</span>
       </div>
       <div class="info-item">
-        <span>🟢</span>
+        <div class="legend-dot" style="background:#10b981;"></div>
+        <span>에어컨 조절:</span>
         <span id="airCount">0</span>
       </div>
       <div class="info-item">
-        <span>🔵</span>
+        <div class="legend-dot" style="background:#3b82f6;"></div>
+        <span>전등 끄기:</span>
         <span id="offCount">0</span>
       </div>
       <div class="info-item">
-        <span>🟠</span>
+        <div class="legend-dot" style="background:#f59e0b;"></div>
+        <span>대기전력 제거:</span>
         <span id="powerCount">0</span>
       </div>
       <div class="info-item">
-        <span>🟣</span>
-        <span id="efficiencyCount">0</span>
-      </div>
-    </div>
-
-    <div class="challenge-legend">
-      <div class="legend-item">
-        <div class="legend-dot" style="background:#10b981;"></div>
-        <span>에어컨 조절</span>
-      </div>
-      <div class="legend-item">
-        <div class="legend-dot" style="background:#3b82f6;"></div>
-        <span>전등 끄기</span>
-      </div>
-      <div class="legend-item">
-        <div class="legend-dot" style="background:#f59e0b;"></div>
-        <span>대기전력 제거</span>
-      </div>
-      <div class="legend-item">
         <div class="legend-dot" style="background:#8b5cf6;"></div>
-        <span>효율 가전</span>
+        <span>효율 가전:</span>
+        <span id="efficiencyCount">0</span>
       </div>
     </div>
 
@@ -529,14 +543,16 @@
       <button class="btn" id="openChallengeBtn">✨ 절전 챌린지 시작</button>
     </div>
 
-    <!-- 상세 정보 패널 -->
+    <!-- 상세 정보 모달 -->
     <div class="detail-panel" id="detailPanel">
-      <div class="detail-header">
-        <span id="detailTitle">날짜 정보</span>
-        <button class="close-detail" id="closeDetail">✕ 닫기</button>
+      <div class="detail-panel-content">
+        <div class="detail-header">
+          <span id="detailTitle">날짜 정보</span>
+          <button class="close-detail" id="closeDetail">✕</button>
+        </div>
+        <div class="detail-date" id="detailDate"></div>
+        <div class="detail-content" id="detailContent"></div>
       </div>
-      <div class="detail-date" id="detailDate"></div>
-      <div class="detail-content" id="detailContent"></div>
     </div>
 
     <div class="calendar" id="calendar"></div>
@@ -574,6 +590,23 @@
     let currentDate = new Date();
     let selectedDate = null;
     let currentUser = null;
+    let lastCheckedDate = null;
+
+    // 날짜 변경 체크 및 자동 초기화
+    function checkDateChange() {
+      const today = getTodayKey();
+      
+      if (lastCheckedDate && lastCheckedDate !== today) {
+        console.log('🔄 날짜가 변경되었습니다:', lastCheckedDate, '→', today);
+        // 데이터 새로고침
+        loadData();
+      }
+      
+      lastCheckedDate = today;
+    }
+
+    // 1분마다 날짜 변경 체크
+    setInterval(checkDateChange, 60000);
 
     // sessionStorage 또는 localStorage에서 사용자 정보 불러오기
     function initUser() {
@@ -675,10 +708,12 @@
 
     // 데이터 변환 함수
     function convertDBToObject(dbData) {
+      console.log('📥 DB 데이터:', dbData);
       const obj = {};
       dbData.forEach(row => {
-        const date = row.challenge_date;
-        obj[date] = {
+        const isoDate = row.challenge_date;
+        const dateOnly = isoDate.split('T')[0];
+        obj[dateOnly] = {
           stamps: {
             air: row.stamp_air === 'O',
             off: row.stamp_off === 'O',
@@ -688,6 +723,7 @@
           saveKwh: row.save_kwh || 0
         };
       });
+      console.log('📦 변환된 데이터:', obj);
       return obj;
     }
 
@@ -706,7 +742,11 @@
 
     async function loadData() {
       if (!currentUser) return;
-      challengeData = convertDBToObject(await fetchChallengeData(currentUser.user_id));
+      const dbData = await fetchChallengeData(currentUser.user_id);
+      console.log('📊 DB에서 받은 원본 데이터:', dbData);
+      challengeData = convertDBToObject(dbData);
+      console.log('🗂️ 변환된 challengeData:', challengeData);
+      console.log('🔑 challengeData의 키들:', Object.keys(challengeData))
       renderStats();
       renderCalendar();
     }
@@ -821,9 +861,12 @@
         }
         dayEl.appendChild(badgesEl);
 
+        const currentDateKey = dateKey;  // 클로저 문제 해결을 위한 상수 생성
+        const clickDate = new Date(date);  // 현재 날짜 복사
+
         dayEl.addEventListener('click', () => {
-          selectDate(new Date(date));
-          showDateDetail(dateKey);
+          selectDate(clickDate);
+          showDateDetail(currentDateKey);
         });
 
         calendarEl.appendChild(dayEl);
@@ -837,6 +880,9 @@
     }
 
     function showDateDetail(dateKey) {
+      console.log('📋 상세 정보 표시:', dateKey);
+      console.log('📋 해당 날짜 데이터:', challengeData[dateKey]);
+      
       const dayData = challengeData[dateKey];
       const dateObj = new Date(dateKey);
       const year = dateObj.getFullYear();
@@ -850,7 +896,7 @@
 
       const detailContent = document.getElementById('detailContent');
       
-      if (!dayData || (!dayData.stamps.air && !dayData.stamps.off && !dayData.stamps.power && !dayData.stamps.efficiency && dayData.saveKwh === 0)) {
+      if (!dayData || (!dayData.stamps?.air && !dayData.stamps?.off && !dayData.stamps?.power && !dayData.stamps?.efficiency && (!dayData.saveKwh || dayData.saveKwh === 0))) {
         detailContent.innerHTML = `
           <div style="text-align: center; padding: 40px; color: #9ca3af;">
             <div style="font-size: 48px; margin-bottom: 12px;">📅</div>
@@ -861,7 +907,7 @@
       } else {
         let html = '';
         
-        if (dayData.stamps.air) {
+        if (dayData.stamps?.air) {
           html += `
             <div class="detail-item completed">
               <div class="detail-item-icon" style="background: #10b981; color: white;">🌡️</div>
@@ -871,7 +917,7 @@
           `;
         }
         
-        if (dayData.stamps.off) {
+        if (dayData.stamps?.off) {
           html += `
             <div class="detail-item completed">
               <div class="detail-item-icon" style="background: #3b82f6; color: white;">💡</div>
@@ -881,7 +927,7 @@
           `;
         }
         
-        if (dayData.stamps.power) {
+        if (dayData.stamps?.power) {
           html += `
             <div class="detail-item completed">
               <div class="detail-item-icon" style="background: #f59e0b; color: white;">🔌</div>
@@ -891,7 +937,7 @@
           `;
         }
         
-        if (dayData.stamps.efficiency) {
+        if (dayData.stamps?.efficiency) {
           html += `
             <div class="detail-item completed">
               <div class="detail-item-icon" style="background: #8b5cf6; color: white;">⚡</div>
@@ -901,7 +947,7 @@
           `;
         }
         
-        if (dayData.saveKwh > 0) {
+        if (dayData.saveKwh && dayData.saveKwh > 0) {
           html += `
             <div class="detail-kwh-box">
               <div class="detail-kwh-label">이 날의 전력 절감량</div>
@@ -918,6 +964,13 @@
 
     document.getElementById('closeDetail').addEventListener('click', () => {
       document.getElementById('detailPanel').classList.remove('active');
+    });
+
+    // 모달 배경 클릭시 닫기
+    document.getElementById('detailPanel').addEventListener('click', (e) => {
+      if (e.target.id === 'detailPanel') {
+        document.getElementById('detailPanel').classList.remove('active');
+      }
     });
 
     function openChallengeModal() {
@@ -997,11 +1050,13 @@
 
     document.getElementById('prevMonth').addEventListener('click', () => {
       currentDate.setMonth(currentDate.getMonth() - 1);
+      renderStats();
       renderCalendar();
     });
 
     document.getElementById('nextMonth').addEventListener('click', () => {
       currentDate.setMonth(currentDate.getMonth() + 1);
+      renderStats();
       renderCalendar();
     });
 
@@ -1015,6 +1070,9 @@
     // 초기화
     initUser();
     loadData();
+    
+    // 초기 날짜 체크
+    checkDateChange();
   </script>
 </body>
 </html>
