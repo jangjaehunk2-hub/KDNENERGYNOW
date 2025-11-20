@@ -561,7 +561,7 @@
   <!-- 절전 챌린지 모달 -->
   <div class="modal" id="challengeModal">
     <div class="modal-content">
-      <div class="modal-header">오늘의 절전 챌린지</div>
+      <div class="modal-header" id="challengeModalHeader">오늘의 절전 챌린지</div>
       <div class="modal-body">
         <div class="method-energy" id="methodEnergyInfo">실천한 항목을 선택하세요</div>
         <div style="margin-bottom:16px;">
@@ -591,6 +591,19 @@
     let selectedDate = null;
     let currentUser = null;
     let lastCheckedDate = null;
+    let challengeData = {};
+
+    // 유틸리티 함수들 먼저 정의
+    function getDateKey(date) {
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const d = String(date.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+
+    function getTodayKey() {
+      return getDateKey(new Date());
+    }
 
     // 날짜 변경 체크 및 자동 초기화
     function checkDateChange() {
@@ -685,6 +698,10 @@
         const res = await fetch(`http://localhost:3000/api/challenge/${userId}/${date}`, {
           method: 'DELETE'
         });
+        if (res.status === 404) {
+          alert('⚠️ 해당 날짜에 삭제할 데이터가 없습니다.');
+          return null;
+        }
         if (!res.ok) throw new Error('데이터 삭제 실패');
         return await res.json();
       } catch (err) {
@@ -737,8 +754,6 @@
     function getTodayKey() {
       return getDateKey(new Date());
     }
-
-    let challengeData = {};
 
     async function loadData() {
       if (!currentUser) return;
@@ -852,10 +867,11 @@
           }
           
           // kWh 표시 추가
-          if (dayData.saveKwh > 0) {
+          const saveKwhNum = Number(dayData.saveKwh) || 0;
+          if (saveKwhNum > 0) {
             const kwhEl = document.createElement('div');
             kwhEl.className = 'day-kwh';
-            kwhEl.textContent = `${dayData.saveKwh.toFixed(1)}kWh`;
+            kwhEl.textContent = `${saveKwhNum.toFixed(1)}kWh`;
             dayEl.appendChild(kwhEl);
           }
         }
@@ -947,11 +963,12 @@
           `;
         }
         
-        if (dayData.saveKwh && dayData.saveKwh > 0) {
+        const saveKwhNum = Number(dayData.saveKwh) || 0;
+        if (saveKwhNum > 0) {
           html += `
             <div class="detail-kwh-box">
               <div class="detail-kwh-label">이 날의 전력 절감량</div>
-              <div class="detail-kwh-value">${dayData.saveKwh.toFixed(2)} kWh</div>
+              <div class="detail-kwh-value">${saveKwhNum.toFixed(2)} kWh</div>
             </div>
           `;
         }
@@ -976,6 +993,13 @@
     function openChallengeModal() {
       const dateKey = selectedDate ? getDateKey(selectedDate) : getTodayKey();
       const dayData = challengeData[dateKey];
+      
+      // 모달 헤더에 날짜 표시
+      const dateObj = new Date(dateKey);
+      const year = dateObj.getFullYear();
+      const month = dateObj.getMonth() + 1;
+      const day = dateObj.getDate();
+      document.getElementById('challengeModalHeader').textContent = `${year}년 ${month}월 ${day}일 절전 챌린지`;
   
       document.getElementById('stamp_air').checked = dayData?.stamps.air || false;
       document.getElementById('stamp_off').checked = dayData?.stamps.off || false;
@@ -1006,6 +1030,11 @@
     document.getElementById('saveChallengeBtn').addEventListener('click', async () => {
       const dateKey = selectedDate ? getDateKey(selectedDate) : getTodayKey();
       
+      console.log('🔍 저장할 날짜 정보:');
+      console.log('   - selectedDate:', selectedDate);
+      console.log('   - dateKey:', dateKey);
+      console.log('   - getTodayKey():', getTodayKey());
+      
       const saveKwh = parseFloat(document.getElementById('saveKwh').value) || 0;
 
       if (saveKwh === 0 && !document.getElementById('stamp_air').checked && 
@@ -1027,8 +1056,11 @@
         save_kwh: saveKwh
       };
 
+      console.log('📤 서버로 전송할 데이터:', data);
+
       const result = await saveChallengeData(data);
       if (result?.success) {
+        console.log('✅ 서버 응답:', result);
         alert('저장되었습니다.');
         document.getElementById('challengeModal').classList.remove('active');
         await loadData();
@@ -1037,11 +1069,17 @@
 
     document.getElementById('deleteChallengeBtn').addEventListener('click', async () => {
       const dateKey = selectedDate ? getDateKey(selectedDate) : getTodayKey();
+      const dayData = challengeData[dateKey];
+      
+      if (!dayData) {
+        alert('⚠️ 이 날짜에는 삭제할 데이터가 없습니다.');
+        return;
+      }
       
       if (confirm('이 날짜의 데이터를 삭제하시겠습니까?')) {
         const result = await deleteChallengeData(currentUser.user_id, dateKey);
         if (result?.success) {
-          alert('삭제되었습니다.');
+          alert('✅ 삭제되었습니다.');
           document.getElementById('challengeModal').classList.remove('active');
           await loadData();
         }

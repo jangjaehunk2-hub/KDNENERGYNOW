@@ -1127,10 +1127,11 @@ app.post('/api/challenge', async (req, res) => {
   try {
     console.log('📥 절전 챌린지 저장 요청:', { user_id, challenge_date, stamp_air, stamp_off, stamp_power, stamp_efficiency, stamp_etc, save_kwh });
     
+    // ✅ DATE 타입으로 명시적 변환 (타임존 문제 방지)
     const result = await pool.query(
       `INSERT INTO public.member_challenge 
         (user_id, challenge_date, stamp_air, stamp_off, stamp_power, stamp_efficiency, stamp_etc, save_kwh, update_at)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,CURRENT_TIMESTAMP)
+       VALUES ($1, $2::date, $3, $4, $5, $6, $7, $8, CURRENT_TIMESTAMP)
        ON CONFLICT (user_id, challenge_date)
        DO UPDATE SET
          stamp_air = $3,
