@@ -135,6 +135,10 @@
     }
     .day.today .day-num { color: white; }
     .day.selected { background:#f0f4ff; border-color:#667eea; }
+    .day.today.selected { 
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-color:#667eea; 
+    }
     .day-num { 
       font-weight:700; 
       margin-bottom:6px; 
@@ -728,8 +732,8 @@
       console.log('📥 DB 데이터:', dbData);
       const obj = {};
       dbData.forEach(row => {
-        const isoDate = row.challenge_date;
-        const dateOnly = isoDate.split('T')[0];
+        // 서버에서 이미 'YYYY-MM-DD' 형식 문자열로 반환됨
+        const dateOnly = row.challenge_date;
         obj[dateOnly] = {
           stamps: {
             air: row.stamp_air === 'O',

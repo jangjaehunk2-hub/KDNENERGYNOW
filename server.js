@@ -20,7 +20,9 @@ const pool = new Pool({
   host: "116.122.157.223",
   database: 'postgres',
   password: '1',
-  port: 5432
+  port: 5432,
+  // 타임존 설정 추가
+  options: '-c timezone=Asia/Seoul'
 });
 
 // DB 연결 테스트
@@ -1103,7 +1105,8 @@ app.get('/api/challenge/:userId', async (req, res) => {
 
   try {
     const result = await pool.query(
-      `SELECT user_id, challenge_date, stamp_air, stamp_off, stamp_power, stamp_efficiency, stamp_etc, save_kwh, update_at
+      `SELECT user_id, TO_CHAR(challenge_date, 'YYYY-MM-DD') as challenge_date,
+              stamp_air, stamp_off, stamp_power, stamp_efficiency, stamp_etc, save_kwh, update_at
        FROM public.member_challenge
        WHERE user_id = $1
        ORDER BY challenge_date DESC`,
@@ -1127,11 +1130,14 @@ app.post('/api/challenge', async (req, res) => {
   try {
     console.log('📥 절전 챌린지 저장 요청:', { user_id, challenge_date, stamp_air, stamp_off, stamp_power, stamp_efficiency, stamp_etc, save_kwh });
     
-    // ✅ DATE 타입으로 명시적 변환 (타임존 문제 방지)
+    // ✅ 서버에서 날짜를 직접 파싱하여 YYYY-MM-DD 형식 보장
+    const dateStr = challenge_date.split('T')[0]; // 만약 ISO 형식이면 날짜 부분만 추출
+    console.log('📅 파싱된 날짜:', dateStr);
+    
     const result = await pool.query(
       `INSERT INTO public.member_challenge 
         (user_id, challenge_date, stamp_air, stamp_off, stamp_power, stamp_efficiency, stamp_etc, save_kwh, update_at)
-       VALUES ($1, $2::date, $3, $4, $5, $6, $7, $8, CURRENT_TIMESTAMP)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CURRENT_TIMESTAMP)
        ON CONFLICT (user_id, challenge_date)
        DO UPDATE SET
          stamp_air = $3,
@@ -1141,16 +1147,14 @@ app.post('/api/challenge', async (req, res) => {
          stamp_etc = $7,
          save_kwh = $8,
          update_at = CURRENT_TIMESTAMP
-       RETURNING *`,
-      [user_id, challenge_date, stamp_air || 'X', stamp_off || 'X', stamp_power || 'X', stamp_efficiency || 'X', stamp_etc || '', save_kwh || 0]
+       RETURNING user_id, TO_CHAR(challenge_date, 'YYYY-MM-DD') as challenge_date, stamp_air, stamp_off, stamp_power, stamp_efficiency, stamp_etc, save_kwh`,
+      [user_id, dateStr, stamp_air || 'X', stamp_off || 'X', stamp_power || 'X', stamp_efficiency || 'X', stamp_etc || '', save_kwh || 0]
     );
     console.log('✅ 절전 챌린지 저장 성공:', result.rows[0]);
+    console.log('✅ DB에 저장된 날짜:', result.rows[0].challenge_date);
     res.json({ success: true, message: '절전 챌린지 데이터 저장 완료', data: result.rows[0] });
   } catch (err) {
     console.error('❌ 절전 챌린지 저장 DB 오류:', err);
-    console.error('   - 오류 코드:', err.code);
-    console.error('   - 오류 메시지:', err.message);
-    console.error('   - 상세 정보:', err.detail);
     res.status(500).json({ success: false, message: 'DB 저장 실패', error: err.message, detail: err.detail });
   }
 });
@@ -1167,9 +1171,13 @@ app.delete('/api/challenge/:userId/:date', async (req, res) => {
        RETURNING *`,
       [userId, date]
     );
+    
     if (result.rows.length === 0) {
+      console.log('⚠️ 삭제할 데이터를 찾을 수 없음');
       return res.status(404).json({ success: false, message: '해당 데이터를 찾을 수 없습니다' });
     }
+    
+    console.log('✅ 절전 챌린지 삭제 성공:', result.rows[0]);
     res.json({ success: true, message: '절전 챌린지 데이터 삭제 완료', data: result.rows[0] });
   } catch (err) {
     console.error('❌ 절전 챌린지 삭제 오류:', err);
