@@ -64,38 +64,42 @@
         }
         .main-content {
             flex: 1;
-            padding: 40px;
+            padding: 20px 40px;
             margin-left: 140px;
             display: flex;
             flex-direction: column;
             align-items: center;
         }
         .header {
-            margin-bottom: 40px;
-            text-align: center;
-            width: 100%;
+            position: static;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px 25px;
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            align-self: flex-start;
+            margin-bottom: 20px;
         }
         .header h1 {
-            font-size: 2.5rem;
-            margin: 0 0 10px 0;
+            font-size: 1.6rem;
+            margin: 0 0 5px 0;
         }
         .header p {
-            font-size: 1.2rem;
+            font-size: 0.75rem;
             color: #666;
             margin: 0;
         }
         .controls-container {
             width: 100%;
             max-width: 1400px;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
         }
         .selector-row {
             display: flex;
-            gap: 20px;
-            margin-bottom: 20px;
-            align-items: center;
-            justify-content: center;
-            flex-wrap: wrap;
+            gap: 15px;
+            align-items: flex-end;
+            justify-content: flex-start;
+            flex-wrap: nowrap;
         }
         .selector-group {
             display: flex;
@@ -171,71 +175,109 @@
         .slider-section {
             width: 100%;
             max-width: 1400px;
-            padding: 30px;
-            background: #f8f9fa;
+            padding: 25px 30px;
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
             border-radius: 12px;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+            border: 1px solid rgba(0, 102, 255, 0.1);
         }
         .year-markers, .time-markers {
             position: relative;
             height: 40px;
-            margin-top: 15px;
+            margin-top: 12px;
             width: 100%;
         }
         .year-marker, .time-marker {
             position: absolute;
             transform: translateX(-50%);
+            transition: all 0.2s ease;
+        }
+        .year-marker:hover, .time-marker:hover {
+            transform: translateX(-50%) scale(1.1);
         }
         .year-marker-line, .time-marker-line {
             width: 2px;
             height: 10px;
-            background: #999;
+            background: #666;
             margin: 0 auto;
+            border-radius: 2px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
         .year-marker-label, .time-marker-label {
-            margin-top: 5px;
+            margin-top: 6px;
             font-size: 12px;
-            color: #666;
+            font-weight: 600;
+            color: #555;
             white-space: nowrap;
             text-align: center;
+            text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
         }
         #dailySliderContainer {
-            margin-top: 20px;
+            margin-top: 15px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .daily-markers {
+            position: relative;
+            height: 40px;
+            margin-top: 12px;
+            width: 100%;
+            z-index: 10;
         }
 
         .daily-marker {
             position: absolute;
             transform: translateX(-50%);
+            z-index: 100;
+            transition: all 0.2s ease;
+        }
+
+        .daily-marker:hover {
+            transform: translateX(-50%) scale(1.1);
         }
 
         .daily-marker-line {
             width: 2px;
             height: 10px;
-            background: #999;
+            background: #0066ff;
             margin: 0 auto;
+            border-radius: 2px;
+            box-shadow: 0 1px 3px rgba(0, 102, 255, 0.15);
         }
 
         .daily-marker-label {
-            margin-top: 5px;
+            margin-top: 6px;
             font-size: 12px;
-            color: #666;
+            font-weight: 600;
+            color: #555;
             white-space: nowrap;
             text-align: center;
+            position: relative;
+            z-index: 101;
+            text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
         }
         input[type="range"] {
             width: 100%;
             height: 8px;
             -webkit-appearance: none;
             appearance: none;
-            background: linear-gradient(to right, var(--slider-color, #ff3366) 0%, var(--slider-color, #ff3366) 0%, #e0e0e0 0%, #e0e0e0 100%);
-            border-radius: 4px;
+            background: linear-gradient(to right, var(--slider-color, #ff3366) 0%, var(--slider-color, #ff3366) 0%, #e8ecef 0%, #e8ecef 100%);
+            border-radius: 10px;
             outline: none;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+        }
+
+        input[type="range"]:hover {
+            box-shadow: 0 4px 12px rgba(0, 102, 255, 0.15);
         }
 
         input[type="range"]::-webkit-slider-track {
             height: 8px;
             background: transparent;
-            border-radius: 4px;
+            border-radius: 8px;
         }
 
         input[type="range"]::-webkit-slider-thumb {
@@ -247,13 +289,24 @@
             background: var(--slider-color, #ff3366);
             cursor: pointer;
             border: 3px solid white;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.05);
+            transition: all 0.2s ease;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.15);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(0, 0, 0, 0.05);
+        }
+
+        input[type="range"]::-webkit-slider-thumb:active {
+            transform: scale(1.05);
         }
 
         input[type="range"]::-moz-range-track {
             height: 8px;
-            background: #e0e0e0;
-            border-radius: 4px;
+            background: #e8ecef;
+            border-radius: 8px;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
         }
 
         input[type="range"]::-moz-range-thumb {
@@ -263,13 +316,18 @@
             background: var(--slider-color, #ff3366);
             cursor: pointer;
             border: 3px solid white;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.05);
+            transition: all 0.2s ease;
+        }
+
+        input[type="range"]::-moz-range-thumb:hover {
+            transform: scale(1.15);
         }
 
         input[type="range"]::-moz-range-progress {
             height: 8px;
             background: var(--slider-color, #ff3366);
-            border-radius: 4px;
+            border-radius: 8px;
         }
         .content-section {
             width: 100%;
@@ -470,7 +528,7 @@
                 </div>
                 <div id="dailySliderContainer" class="hidden">
                     <input type="range" id="dailySlider" min="0" max="0" value="0" step="1" disabled />
-                    <div id="dailyMarkers" class="time-markers"></div>
+                    <div id="dailyMarkers" class="daily-markers"></div>
                 </div>
             </div>
 
@@ -708,9 +766,38 @@
 
             const ctx = canvas.getContext('2d');
             
-            const isYearData = data.length > 0 && data[0].year > 100;
-            const labels = data.map(d => isYearData ? d.year + '년' : d.year + '시');
-            const values = data.map(d => d.value || 0);
+            // ✅ 데이터 타입 감지 (년도, 시간, 일자)
+            const hasYear = data.length > 0 && data[0].year !== undefined;
+            const hasDate = data.length > 0 && data[0].date !== undefined;
+            
+            let labels, values;
+            
+            if (hasDate) {
+                // 일별 데이터 (YYYYMMDD 형식)
+                labels = data.map(d => {
+                    const dateStr = String(d.date); // 문자열로 변환
+                    // YYYYMMDD 형식 (8자리)인지 확인
+                    if (dateStr.length === 8) {
+                        return `${dateStr.substring(0, 4)}-${dateStr.substring(4, 6)}-${dateStr.substring(6, 8)}`;
+                    } else {
+                        // 이미 변환된 형식이거나 다른 형식인 경우
+                        console.warn('예상치 못한 날짜 형식:', dateStr);
+                        return dateStr;
+                    }
+                });
+                values = data.map(d => d.value || 0);
+                
+                // 디버깅: 첫 5개 라벨 확인
+                console.log('📅 차트 라벨 생성:', labels.slice(0, 5));
+            } else if (hasYear) {
+                // 년도 또는 시간 데이터
+                const isYearData = data[0].year > 100;
+                labels = data.map(d => isYearData ? d.year + '년' : d.year + '시');
+                values = data.map(d => d.value || 0);
+            } else {
+                labels = [];
+                values = [];
+            }
 
             const selectedType = typeSelector.value || 'thermal';
             const chartColor = colorMap[selectedType] || '#ff3366';
@@ -768,10 +855,10 @@
                         },
                         x: {
                             ticks: { 
-                                font: { size: 11 },
+                                font: { size: hasDate ? 8 : 11 },
                                 maxRotation: 0,
                                 autoSkip: true,
-                                maxTicksLimit: 24
+                                maxTicksLimit: hasDate ? 15 : 24
                             },
                             grid: { display: false }
                         }
@@ -1176,6 +1263,7 @@
             if (yearMarkers) yearMarkers.style.display = 'block';
 
             timeSliderContainer.classList.add('hidden');
+            dailySliderContainer.classList.add('hidden');
 
             const totalYears = years.length;
             const step = Math.ceil(totalYears / 10);
@@ -1220,7 +1308,8 @@
             const yearMarkers = document.getElementById('yearMarkers');
             if (yearMarkers) yearMarkers.style.display = 'none';
             
-            timeSliderContainer.classList.remove('hidden');            
+            timeSliderContainer.classList.remove('hidden');
+            dailySliderContainer.classList.add('hidden');            
             
             const timeMarkers = document.getElementById('timeMarkers');
             timeMarkers.innerHTML = ''; // 기존 마커 제거
@@ -1269,7 +1358,8 @@
             const yearMarkers = document.getElementById('yearMarkers');
             if (yearMarkers) yearMarkers.style.display = 'none';
             
-            timeSliderContainer.classList.remove('hidden');            
+            timeSliderContainer.classList.remove('hidden');
+            dailySliderContainer.classList.add('hidden');            
         
             const timeMarkers = document.getElementById('timeMarkers');
             timeMarkers.innerHTML = ''; // 기존 마커 제거            
@@ -1320,9 +1410,10 @@
             if (yearMarkers) yearMarkers.style.display = 'none';
             
             const timeMarkers = document.getElementById('timeMarkers');
-            timeMarkers.innerHTML = ''; // 기존 마커 제거            
+            timeMarkers.innerHTML = ''; // 기존 마커 제거
             
             timeSliderContainer.classList.remove('hidden');
+            dailySliderContainer.classList.add('hidden');
             
             const dateObj = new Date(date);
             const displayDate = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')}`;
@@ -1380,65 +1471,80 @@
                 const damData = hydroPowerData[plantName];
                 console.log(`   - 데이터 개수: ${Object.keys(damData).length}일`);
                 
-                // ✅ 일별 데이터를 연도별로 집계
-                const chartData = Object.entries(damData)
-                    .sort(([a], [b]) => new Date(a) - new Date(b))
+                // ✅ 일별 데이터를 날짜순으로 정렬
+                fullChartData = Object.entries(damData)
+                    .sort(([a], [b]) => a.localeCompare(b))
                     .map(([date, value]) => ({
-                        year: new Date(date).getFullYear(),
-                        value: Number(value)
+                        date: date,
+                        value: Math.round(Number(value) * 100) / 100
                     }));
                 
-                const yearlyData = {};
-                chartData.forEach(item => {
-                    if (!yearlyData[item.year]) {
-                        yearlyData[item.year] = 0;
-                    }
-                    yearlyData[item.year] += item.value;
-                });
+                console.log(`   - 일별 데이터 정렬 완료: ${fullChartData.length}일`);
+                console.log(`   - 날짜 범위: ${fullChartData[0]?.date} ~ ${fullChartData[fullChartData.length - 1]?.date}`);
                 
-                fullChartData = Object.entries(yearlyData)
-                    .sort(([a], [b]) => Number(a) - Number(b))
-                    .map(([year, value]) => ({ year: Number(year), value }));
-                
-                console.log(`   - 연도별 집계 완료: ${fullChartData.length}년`);
-                console.log(`   - 연도 범위: ${fullChartData[0]?.year} ~ ${fullChartData[fullChartData.length - 1]?.year}`);
-                
-                const years = fullChartData.map(d => d.year + '년');
-                
-                yearSlider.max = fullChartData.length - 1;
-                yearSlider.value = 0;
-                yearSlider.disabled = false;
+                // ✅ 일별 슬라이더 설정
+                dailySlider.max = fullChartData.length - 1;
+                dailySlider.value = 0;
+                dailySlider.disabled = false;
                 playButton.disabled = false;
 
-                // ✅ yearSlider 표시
-                document.getElementById('yearSlider').style.display = 'block';
-                if (yearMarkers) yearMarkers.style.display = 'block';
-
+                // ✅ 다른 슬라이더 숨기고 일별 슬라이더 표시
+                document.getElementById('yearSlider').style.display = 'none';
+                if (yearMarkers) yearMarkers.style.display = 'none';
                 timeSliderContainer.classList.add('hidden');
-                dailySliderContainer.classList.add('hidden');
+                dailySliderContainer.classList.remove('hidden');
                 
                 yearMarkers.innerHTML = '';
                 timeMarkers.innerHTML = '';
 
-                const totalYears = years.length;
-                const step = Math.ceil(totalYears / 10);
-                
-                for (let i = 0; i < totalYears; i += step) {
-                    const percentage = (i / (totalYears - 1)) * 100;
-                    const marker = document.createElement('div');
-                    marker.className = 'year-marker';
-                    marker.style.left = percentage + '%';
-                    marker.innerHTML = `
-                        <div class="year-marker-line"></div>
-                        <div class="year-marker-label">${years[i]}</div>
-                    `;
-                    yearMarkers.appendChild(marker);
-                }
-                
-                console.log(`✅ 차트 생성: ${plantName} (${fullChartData.length}개 데이터)`);
+                // ✅ 차트 먼저 생성 (X축 라벨 생성)
+                console.log(`✅ 차트 생성: ${plantName} (${fullChartData.length}일 데이터)`);
                 createChart('powerChart', fullChartData, plantName);
                 updateChartWithSlider(0);
-                updateSliderProgress(yearSlider);
+                updateSliderProgress(dailySlider);
+
+                // ✅ 차트의 X축 라벨을 사용하여 일별 마커 생성
+                const dailyMarkers = document.getElementById('dailyMarkers');
+                dailyMarkers.innerHTML = '';
+
+                if (currentChart && currentChart.data && currentChart.data.labels) {
+                    const chartLabels = currentChart.data.labels;
+                    const totalLabels = chartLabels.length;
+                    
+                    // 월 단위로 인덱스 추출
+                    const monthlyIndices = [];
+                    let currentMonth = '';
+                    
+                    chartLabels.forEach((label, index) => {
+                        // "2025-01-15" 형식에서 "2025-01" 추출
+                        const month = label.substring(0, 7); // YYYY-MM
+                        if (month !== currentMonth) {
+                            currentMonth = month;
+                            monthlyIndices.push(index);
+                        }
+                    });
+                    
+                    // 너무 많으면 3개월마다 표시
+                    const step = monthlyIndices.length > 15 ? 3 : 1;
+                    for (let i = 0; i < monthlyIndices.length; i += step) {
+                        const index = monthlyIndices[i];
+                        const percentage = (index / (totalLabels - 1)) * 100;
+                        const label = chartLabels[index];
+                        const displayDate = label.substring(0, 7); // "YYYY-MM-DD"에서 "YYYY-MM"만 표시
+                        
+                        const marker = document.createElement('div');
+                        marker.className = 'daily-marker';
+                        marker.style.left = percentage + '%';
+                        marker.innerHTML = `
+                            <div class="daily-marker-line"></div>
+                            <div class="daily-marker-label">${displayDate}</div>
+                        `;
+                        dailyMarkers.appendChild(marker);
+                    }
+                    
+                    console.log(`✅ 일별 마커 생성 완료: ${Math.ceil(monthlyIndices.length / step)}개 마커`);
+                    console.log(`   - 차트 라벨 샘플:`, chartLabels.slice(0, 5));
+                }
                 
             } else if (isKHNP && hydroKHNPData[plantName]) {
                 console.log(`✅ 한수원 데이터 처리 시작`);
@@ -1509,7 +1615,7 @@
             const isKwater = currentPlantInfo && (currentPlantInfo.operator.includes('한국수자원공사') || currentPlantInfo.operator.includes('K-water'));
             
             if (selectedType === 'hydro' && isKwater) {
-                // 수자원공사 수력은 일별 슬라이더 사용
+                // 수자원공사 수력은 일별 슬라이더 사용 (빠른 재생 속도)
                 playInterval = setInterval(() => {
                     let current = parseInt(dailySlider.value);
                     if (current >= parseInt(dailySlider.max)) {
@@ -1521,7 +1627,7 @@
                     dailySlider.value = current;
                     updateSliderProgress(dailySlider);
                     updateChartWithSlider(current);
-                }, 500);
+                }, 200);
             } else if (selectedType === 'nuclear' || (selectedType === 'hydro' && !isKwater)) {
                 playInterval = setInterval(() => {
                     let current = parseInt(yearSlider.value);
@@ -1582,7 +1688,27 @@
 
         window.dispatchEvent(new Event('scroll'));
 
-        loadAllPlants();
+        async function initializeDefaultSelection() {
+            await loadAllPlants();
+            
+            // 기본값 설정: 원자력, 한빛, 1호기
+            typeSelector.value = 'nuclear';
+            typeSelector.dispatchEvent(new Event('change'));
+            
+            // 약간의 지연 후 발전소 선택 (데이터 로드 대기)
+            setTimeout(() => {
+                plantSelector.value = '한빛';
+                plantSelector.dispatchEvent(new Event('change'));
+                
+                // 약간의 지연 후 호기 선택
+                setTimeout(() => {
+                    unitSelector.value = '#1';
+                    unitSelector.dispatchEvent(new Event('change'));
+                }, 100);
+            }, 100);
+        }
+
+        initializeDefaultSelection();
 
         // 게임 버튼 클릭 시 로그인 체크
         document.querySelector('.sidebar-button[data-tab="game"]')?.addEventListener('click', (e) => {

@@ -149,13 +149,17 @@
       display:flex; 
       gap:5px; 
       flex-wrap:wrap; 
-      margin-top: auto;
       justify-content: center;
+      position: absolute;
+      top: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
     }
     .badge { 
       display:inline-block; 
-      width:10px; 
-      height:10px; 
+      width:12px; 
+      height:12px; 
       border-radius:50%; 
       border: 2px solid white;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
@@ -165,7 +169,7 @@
     .badge.power { background:#f59e0b; }
     .badge.efficiency { background:#8b5cf6; }
     .day-kwh {
-      font-size: 9px;
+      font-size: 13px;
       color: #667eea;
       font-weight: 600;
       text-align: center;
