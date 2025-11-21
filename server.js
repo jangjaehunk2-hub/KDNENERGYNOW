@@ -76,6 +76,64 @@ app.post('/login', async (req, res) => {
   }
 });
 
+// ===== 정보 수정 API =====
+app.put('/update-profile', async (req, res) => {
+  const { user_id, nick_name, email, current_password, new_password } = req.body;
+  
+  if (!user_id || !nick_name || !email || !current_password) {
+    return res.status(400).json({ success: false, message: '필수 정보가 누락되었습니다.' });
+  }
+
+  try {
+    // 현재 비밀번호 확인
+    const verifyResult = await pool.query(
+      `SELECT user_id FROM member WHERE user_id=$1 AND pass=$2`,
+      [user_id, current_password]
+    );
+
+    if (verifyResult.rows.length === 0) {
+      return res.status(401).json({ success: false, message: '현재 비밀번호가 일치하지 않습니다.' });
+    }
+
+    // 정보 업데이트 (비밀번호 변경 여부에 따라 쿼리 분기)
+    let updateResult;
+    if (new_password) {
+      updateResult = await pool.query(
+        `UPDATE member 
+         SET nick_name=$1, email=$2, pass=$3
+         WHERE user_id=$4
+         RETURNING user_id, nick_name, email, score, admin_flag`,
+        [nick_name, email, new_password, user_id]
+      );
+    } else {
+      updateResult = await pool.query(
+        `UPDATE member 
+         SET nick_name=$1, email=$2
+         WHERE user_id=$3
+         RETURNING user_id, nick_name, email, score, admin_flag`,
+        [nick_name, email, user_id]
+      );
+    }
+
+    if (updateResult.rows.length > 0) {
+      res.json({ 
+        success: true, 
+        message: '정보가 성공적으로 수정되었습니다.', 
+        user: updateResult.rows[0] 
+      });
+    } else {
+      res.status(404).json({ success: false, message: '해당 유저를 찾을 수 없습니다.' });
+    }
+  } catch (err) {
+    if (err.code === '23505') { 
+      res.status(409).json({ success: false, message: '이미 사용 중인 이메일입니다.' });
+    } else {
+      console.error('정보 수정 서버 오류:', err);
+      res.status(500).json({ success: false, message: '서버 오류' });
+    }
+  }
+});
+
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });

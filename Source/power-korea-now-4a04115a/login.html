@@ -163,7 +163,7 @@ button {
   <button class="sidebar-button" data-tab="slide" onclick="window.location.href='slide.html'">
       <i class='bx bx-slider'></i><span>Slide</span>
   </button>
-  <button class="sidebar-button" data-tab="game" onclick="window.location.href='game.html'">
+  <button class="sidebar-button" data-tab="game" onclick="window.location.href='gameplatform.html'">
       <i class='bx bx-game'></i><span>Game</span>
   </button>
   <button class="sidebar-button" data-tab="education" onclick="window.location.href='education.html'">
@@ -226,8 +226,35 @@ button {
     <div id="logoutForm" class="hidden">
       <h1>로그아웃</h1>
       <p id="logoutMessage"></p>
-      <button class="login-button" onclick="logout()">로그아웃</button>
+      <button class="login-button" onclick="showEditProfile()">정보 수정</button>
+      <button class="login-button" onclick="logout()" style="margin-top: 10px;">로그아웃</button>
       <button class="signup-button" onclick="cancelLogout()">취소</button>
+    </div>
+
+    <!-- 정보 수정 폼 -->
+    <div id="editProfileForm" class="hidden">
+      <h1>정보 수정</h1>
+      <p id="editProfileMessage"></p>
+      <form id="editProfileFormElement">
+        <div class="form-group">
+          <label for="edit-nick">닉네임</label>
+          <input type="text" id="edit-nick" placeholder="새 닉네임 입력" required>
+        </div>
+        <div class="form-group">
+          <label for="edit-email">이메일</label>
+          <input type="email" id="edit-email" placeholder="새 이메일 입력" required>
+        </div>
+        <div class="form-group">
+          <label for="edit-password">새 비밀번호 (선택사항)</label>
+          <input type="password" id="edit-password" placeholder="변경할 비밀번호 입력">
+        </div>
+        <div class="form-group">
+          <label for="current-password">현재 비밀번호 (확인용)</label>
+          <input type="password" id="current-password" placeholder="현재 비밀번호 입력" required>
+        </div>
+        <button type="submit" class="login-button">수정 완료</button>
+      </form>
+      <button class="signup-button" onclick="cancelEdit()">← 뒤로 가기</button>
     </div>
 
   </div>
@@ -347,6 +374,96 @@ button {
     function cancelLogout() {
       window.location.href = 'gameplatform.html';
     }
+
+    // ✅ 정보 수정 화면 표시
+    function showEditProfile() {
+      const userData = sessionStorage.getItem('user');
+      if (!userData) {
+        alert('로그인 정보를 찾을 수 없습니다.');
+        return;
+      }
+      
+      const user = JSON.parse(userData);
+      document.getElementById('edit-nick').value = user.nick_name || '';
+      document.getElementById('edit-email').value = user.email || '';
+      document.getElementById('editProfileMessage').textContent = `${user.nick_name || '사용자'}님의 정보를 수정합니다.`;
+      
+      document.getElementById('logoutForm').classList.add('hidden');
+      document.getElementById('editProfileForm').classList.remove('hidden');
+    }
+
+    // ✅ 정보 수정 취소
+    function cancelEdit() {
+      document.getElementById('editProfileForm').classList.add('hidden');
+      document.getElementById('logoutForm').classList.remove('hidden');
+      // 입력 필드 초기화
+      document.getElementById('edit-password').value = '';
+      document.getElementById('current-password').value = '';
+    }
+
+    // ✅ 정보 수정 폼 제출
+    document.getElementById('editProfileFormElement')?.addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const userData = sessionStorage.getItem('user');
+      if (!userData) {
+        alert('로그인 정보를 찾을 수 없습니다.');
+        return;
+      }
+      
+      const user = JSON.parse(userData);
+      const nickName = document.getElementById('edit-nick').value;
+      const email = document.getElementById('edit-email').value;
+      const newPassword = document.getElementById('edit-password').value;
+      const currentPassword = document.getElementById('current-password').value;
+      
+      const updateData = {
+        user_id: user.user_id,
+        nick_name: nickName,
+        email: email,
+        current_password: currentPassword
+      };
+      
+      // 새 비밀번호가 입력된 경우에만 추가
+      if (newPassword) {
+        updateData.new_password = newPassword;
+      }
+      
+      fetch('http://localhost:3000/update-profile', {
+        method: 'PUT',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(updateData)
+      })
+      .then(res => res.json())
+      .then(result => {
+        if (result.success) {
+          alert(result.message || '정보가 성공적으로 수정되었습니다.');
+          
+          // sessionStorage 업데이트
+          const updatedUser = {
+            ...user,
+            nick_name: nickName,
+            email: email
+          };
+          sessionStorage.setItem('user', JSON.stringify(updatedUser));
+          
+          // 로그아웃 화면으로 돌아가기
+          document.getElementById('editProfileForm').classList.add('hidden');
+          document.getElementById('logoutForm').classList.remove('hidden');
+          document.getElementById('logoutMessage').textContent = `${nickName}님, 로그인 상태입니다.`;
+          
+          // 입력 필드 초기화
+          document.getElementById('edit-password').value = '';
+          document.getElementById('current-password').value = '';
+        } else {
+          alert(result.message || '정보 수정에 실패했습니다.');
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        alert('정보 수정 중 오류가 발생했습니다.');
+      });
+    });
 </script>
 </body>
 </html>
