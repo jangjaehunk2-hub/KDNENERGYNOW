@@ -369,7 +369,7 @@ app.get('/api/nuclear/full', async (req, res) => {
     const powerResult = await pool.query(`
       SELECT "발전소명", "호기명", "년도", "발전량mwh"
       FROM public."원자력발전소_호기별발전량"
-      ORDER BY "발전소명", "호기명", "년도"
+      ORDER BY "발전소명", "호기명", "년도" ASC
     `);
 
     // 3️⃣ 발전소별 호기 정보 그룹화
@@ -468,7 +468,7 @@ app.get('/api/thermal/power', async (req, res) => {
         "발전시간", 
         "발전량_mwh"
       FROM public."남동발전_분당화력_시간대별발전실적"
-      ORDER BY "호기", "일자", "발전시간"
+      ORDER BY "호기" ASC, "일자" ASC, "발전시간" ASC
     `);
 
     const data = {};
@@ -510,7 +510,7 @@ app.get('/api/solar/power', async (req, res) => {
         "발전시간", 
         "발전량_kwh"
       FROM public."남동발전_시간대별태양광발전실적"
-      ORDER BY "발전구분", "일자", "발전시간"
+      ORDER BY "발전구분" ASC, "일자" ASC, "발전시간" ASC
     `);
 
     const data = {};
@@ -552,7 +552,7 @@ app.get('/api/wind/power', async (req, res) => {
         "발전시간", 
         "발전량_mwh"
       FROM public."남동발전_시간대별풍력발전실적"
-      ORDER BY "발전구분", "일자", "발전시간"
+      ORDER BY "발전구분" ASC, "일자" ASC, "발전시간" ASC
     `);
 
     const data = {};
@@ -593,7 +593,7 @@ app.get('/api/hydro/daily-power', async (req, res) => {
         "관측년월일",
         "발전량누계실적"
       FROM public."한국수자원공사_다목적댐일자별발전량"
-      ORDER BY "댐이름", "관측년월일"
+      ORDER BY "댐이름" ASC, "관측년월일" ASC
     `);
 
     const data = {};
@@ -632,7 +632,7 @@ app.get('/api/hydro/khnp-yearly', async (req, res) => {
         "YEAR",
         "발전량_MW"
       FROM public."한국수력원자력_수력발전소별연도별"
-      ORDER BY "발전소명", "YEAR"
+      ORDER BY "발전소명" ASC, "YEAR" ASC
     `);
 
     const data = {};
@@ -740,7 +740,7 @@ app.get('/api/thermal/yearly-power', async (req, res) => {
     const result = await pool.query(`
       SELECT "호기", "일자", "발전시간", "발전량_mwh"
       FROM public."남동발전_분당화력_시간대별발전실적"
-      ORDER BY "호기", "일자", "발전시간"
+      ORDER BY "호기" ASC, "일자" ASC, "발전시간" ASC
     `);
 
     const yearlyData = {};
@@ -794,7 +794,7 @@ app.get('/api/solar/yearly-power', async (req, res) => {
     const result = await pool.query(`
       SELECT "발전구분", "일자", "발전시간", "발전량_kwh"
       FROM public."남동발전_시간대별태양광발전실적"
-      ORDER BY "발전구분", "일자", "발전시간"
+      ORDER BY "발전구분" ASC, "일자" ASC, "발전시간" ASC
     `);
 
     const yearlyData = {};
@@ -848,7 +848,7 @@ app.get('/api/wind/yearly-power', async (req, res) => {
     const result = await pool.query(`
       SELECT "발전구분", "일자", "발전시간", "발전량_mwh"
       FROM public."남동발전_시간대별풍력발전실적"
-      ORDER BY "발전구분", "일자", "발전시간"
+      ORDER BY "발전구분" ASC, "일자" ASC, "발전시간" ASC
     `);
 
     const yearlyData = {};
@@ -900,7 +900,7 @@ app.get('/api/thermal/daily-power', async (req, res) => {
     const result = await pool.query(`
       SELECT "호기", "일자", "발전시간", "발전량_mwh"
       FROM public."남동발전_분당화력_시간대별발전실적"
-      ORDER BY "호기", "일자", "발전시간"
+      ORDER BY "호기" ASC, "일자" ASC, "발전시간" ASC
     `);
 
     console.log(`📊 [화력] 조회된 원본 데이터: ${result.rows.length}행`);
@@ -971,7 +971,7 @@ app.get('/api/solar/daily-power', async (req, res) => {
     const result = await pool.query(`
       SELECT "발전구분", "일자", "발전시간", "발전량_kwh"
       FROM public."남동발전_시간대별태양광발전실적"
-      ORDER BY "발전구분", "일자", "발전시간"
+      ORDER BY "발전구분" ASC, "일자" ASC, "발전시간" ASC
     `);
 
     console.log(`📊 [태양광] 조회된 원본 데이터: ${result.rows.length}행`);
@@ -1040,7 +1040,7 @@ app.get('/api/wind/daily-power', async (req, res) => {
     const result = await pool.query(`
       SELECT "발전구분", "일자", "발전시간", "발전량_mwh"
       FROM public."남동발전_시간대별풍력발전실적"
-      ORDER BY "발전구분", "일자", "발전시간"
+      ORDER BY "발전구분" ASC, "일자" ASC, "발전시간" ASC
     `);
 
     console.log(`📊 [풍력] 조회된 원본 데이터: ${result.rows.length}행`);
