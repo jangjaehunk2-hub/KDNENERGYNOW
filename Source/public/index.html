@@ -1667,7 +1667,7 @@
                                     // 날짜 옵션 생성
                                     const unitData = thermalPowerData[selectedUnit];
                                     if (unitData) {
-                                        const dates = Object.keys(unitData).sort((a, b) => a.localeCompare(b)); // 오름차순 명시적 정렬
+                                        const dates = Object.keys(unitData).sort();
                                         dateSelect.innerHTML = '<option value="">날짜를 선택하세요</option>' +
                                             dates.map(d => {
                                                 // 날짜를 읽기 쉬운 형식으로 변환
@@ -1737,7 +1737,7 @@
                                             legend: { display: false },
                                             title: {
                                                 display: true,
-                                                text: `${selectedUnit} - ${new Date(selectedDate).toLocaleDateString('ko-KR', {year: 'numeric', month: '2-digit', day: '2-digit'}).replace(/\. /g, '-').replace('.', '')} 시간대별 발전량`,
+                                                text: `${selectedUnit} - ${selectedDate.substring(0, 4)}-${selectedDate.substring(4, 6)}-${selectedDate.substring(6, 8)} 시간대별 발전량`,
                                                 font: { size: 12, weight: 'bold' }
                                             }
                                         },
@@ -1802,7 +1802,7 @@
                         }
                         
                         // 날짜 옵션 생성
-                        const dates = Object.keys(plantData).sort((a, b) => a.localeCompare(b)); // 오름차순 명시적 정렬
+                        const dates = Object.keys(plantData).sort();
                         dateSelect.innerHTML = '<option value="">날짜를 선택하세요</option>' +
                             dates.map(d => {
                                 const dateObj = new Date(d);
@@ -1866,7 +1866,7 @@
                                         legend: { display: false },
                                         title: {
                                             display: true,
-                                            text: `${plant.name} - ${new Date(selectedDate).toLocaleDateString('ko-KR', {year: 'numeric', month: '2-digit', day: '2-digit'}).replace(/\. /g, '-').replace('.', '')} 시간대별 발전량`,
+                                            text: `${plant.name} - ${selectedDate.substring(0, 4)}-${selectedDate.substring(4, 6)}-${selectedDate.substring(6, 8)} 시간대별 발전량`,
                                             font: { size: 12, weight: 'bold' }
                                         }
                                     },
@@ -1931,7 +1931,7 @@
                         }
                         
                         // 날짜 옵션 생성
-                        const dates = Object.keys(plantData).sort((a, b) => a.localeCompare(b)); // 오름차순 명시적 정렬
+                        const dates = Object.keys(plantData).sort();
                         dateSelect.innerHTML = '<option value="">날짜를 선택하세요</option>' +
                             dates.map(d => {
                                 const dateObj = new Date(d);
@@ -1995,7 +1995,7 @@
                                         legend: { display: false },
                                         title: {
                                             display: true,
-                                            text: `${plant.name} - ${new Date(selectedDate).toLocaleDateString('ko-KR', {year: 'numeric', month: '2-digit', day: '2-digit'}).replace(/\. /g, '-').replace('.', '')} 시간대별 발전량`,
+                                            text: `${plant.name} - ${selectedDate.substring(0, 4)}-${selectedDate.substring(4, 6)}-${selectedDate.substring(6, 8)} 시간대별 발전량`,
                                             font: { size: 12, weight: 'bold' }
                                         }
                                     },
