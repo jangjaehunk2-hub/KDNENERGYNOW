@@ -12,7 +12,7 @@ app.use(bodyParser.json());
 app.use(cors());
 
 // 정적 파일 제공 설정
-app.use(express.static('.')); 
+app.use(express.static(path.join(__dirname, 'Source/public'))); 
 
 // PostgreSQL 연결 설정
 const pool = new Pool({
@@ -135,7 +135,7 @@ app.put('/update-profile', async (req, res) => {
 });
 
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
+  res.sendFile(path.join(__dirname, 'Source/public/index.html'));
 });
 
 // ===== Education 데이터 조회 API =====
