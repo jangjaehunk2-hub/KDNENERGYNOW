@@ -1995,7 +1995,7 @@
                                         legend: { display: false },
                                         title: {
                                             display: true,
-                                            text: `${plant.name} - ${selectedDate.substring(0, 4)}-${selectedDate.substring(4, 6)}-${selectedDate.substring(6, 8)} 시간대별 발전량`,
+                                            text: `${plant.name} - ${new Date(selectedDate).toLocaleDateString('ko-KR', {year: 'numeric', month: '2-digit', day: '2-digit'}).replace(/\. /g, '-').replace('.', '')} 시간대별 발전량`,
                                             font: { size: 12, weight: 'bold' }
                                         }
                                     },
